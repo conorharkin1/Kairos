@@ -1,34 +1,47 @@
 <template>
-    <div class="side-bar">
-        <div class="side-bar-option">
+    <div :class="side === 'left' ? 'side-bar-left' : 'side-bar-right'">
+        <div class="side-bar-option " v-for="option in side === 'left' ? sidebarOptionsLeft : sidebarOptionsRight" :key="option.icon">
             <button>
-                <Icon icon="iconoir:profile-circle" height="30" width="30" />
-            </button>
-        </div>
-        <div class="side-bar-option">
-            <button>
-                <Icon icon="ep:calendar" height="30" width="30" />
-            </button>
-        </div>
-        <div class="side-bar-option">
-            <button>
-                <Icon icon="uiw:dot-chart" width="30" height="30" />
+                <Icon :icon="option.icon" :height="option.height" :width="option.width" />
             </button>
         </div>
     </div>
 </template>
 
+<script setup>
+const props = defineProps({
+  sidebarOptionsLeft: {
+    type: Array,
+    default: () => ([])
+  },
+  sidebarOptionsRight: {
+    type: Array,
+    default: () => ([])
+  },
+  side: String,
+});
+
+</script>
+
 <style scoped lang="scss">
     .profile-widget {
         color: $primary-red-outline;
     }
-    .side-bar {
+    .side-bar-left{
         display: flex;
         flex-direction: column;
         align-items: center;
         width: 3%;
         background-color: $primary-background-dark;
         margin-right: 1rem;
+    }
+    .side-bar-right{
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 3%;
+        background-color: $primary-background-dark;
+        margin-left: 1rem;
     }
     .side-bar-option {
         display: flex;
