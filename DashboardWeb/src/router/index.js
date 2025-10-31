@@ -1,6 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import Dashboard from '../views/Dashboard.vue'
-import Calendar from '../views/Calendar.vue'
 
 const routes = [
   {
@@ -10,10 +9,6 @@ const routes = [
   {
     path: '/dashboard',
     component: Dashboard,
-  },
-  {
-    path: '/calendar',
-    component: Calendar,
   },
 ]
 const router = createRouter({
