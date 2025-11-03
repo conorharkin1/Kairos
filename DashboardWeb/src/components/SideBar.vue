@@ -1,7 +1,7 @@
 <template>
     <div :class="side === 'left' ? 'side-bar-left' : 'side-bar-right'">
         <div class="side-bar-option " v-for="option in side === 'left' ? sidebarOptionsLeft : sidebarOptionsRight" :key="option.icon">
-            <button>
+            <button v-tooltip="option.tooltip">
                 <Icon :icon="option.icon" :height="option.height" :width="option.width" />
             </button>
         </div>
@@ -9,6 +9,8 @@
 </template>
 
 <script setup>
+import { ref } from 'vue';
+
 const props = defineProps({
   sidebarOptionsLeft: {
     type: Array,
@@ -59,6 +61,7 @@ const props = defineProps({
         cursor: pointer;
         color: $primary-text-light;
         font-size: 1rem;
+        position: relative;
     }
     .side-bar-option button:hover {
         color: $primary-red-outline;

@@ -1,20 +1,31 @@
 <template>
-    <div v-for="course in courses" :key="course.id" class="tab">
-        {{ course.name }}
+    <div v-for="(courseId, index) in courses" :key="index" class="tab">
+        {{ courseId }}
     </div>
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
+import apiClient from '../services/api.js';
 
-const courses = ref([
-    { id: 1, name: 'CSC3032 Software Engineering Project' },
-    { id: 2, name: 'CSC3065 Cloud Computing' },
-    { id: 3, name: 'CSC3045 Team-based Software Innovation' },
-    { id: 4, name: 'My custom course' },
-    { id: 5, name: 'My other custom course' },
-]);
+const courses = ref([]);
+
+const fetchCourses = async () => {
+    try {
+        const response = await apiClient.get('/courses/ids');
+        courses.value = response.data;
+        console.log('Fetched courses:', response.data);
+    } catch (error) {
+        console.error('Error fetching courses:', error);
+    }
+};
+
+onMounted(() => {
+    fetchCourses();
+});
+
 </script>
+
 <style scoped lang="scss">
     .tab {
         border-right: 2px solid $primary-text-light;

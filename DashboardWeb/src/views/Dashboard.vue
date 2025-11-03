@@ -33,12 +33,13 @@ import DashboardTodoGrid from '../components/DashboardTodoGrid.vue';
     
     // fetchCourses();
 const sidebarOptionsLeft = [
-    { icon: 'iconoir:profile-circle', height: 30, width: 30 },
-    { icon: 'ep:calendar', height: 30, width: 30 },
-    { icon: 'uiw:dot-chart', height: 30, width: 30 }
+    { icon: 'iconoir:profile-circle', height: 30, width: 30, tooltip: 'Profile' },
+    { icon: 'ep:calendar', height: 30, width: 30, tooltip: 'Calendar' },
+    { icon: 'uiw:dot-chart', height: 30, width: 30, tooltip: 'View Progress' }
 ];
 const sidebarOptionsRight = [
-    { icon: 'la:download', width: 30, height: 30 }
+    { icon: 'la:download', width: 30, height: 30, tooltip: 'Export Study Guide' },
+    { icon: 'icon-park-outline:redo', width: 30, height: 30, tooltip: 'Redo Study Guide' }
 ];
 
 </script>

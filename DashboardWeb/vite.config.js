@@ -10,6 +10,9 @@ export default defineConfig({
     vue(),
     vueDevTools(),
   ],
+  server: {
+    
+  },
   css: {
     preprocessorOptions: {
       scss: {
