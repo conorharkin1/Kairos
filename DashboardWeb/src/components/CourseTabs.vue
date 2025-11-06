@@ -12,7 +12,7 @@ const courses = ref([]);
 
 const fetchCourses = async () => {
     try {
-        const response = await apiClient.get('/courses/ids');
+        const response = await apiClient.get('api/courses/ids');
         courses.value = response.data;
         console.log('Fetched courses:', response.data);
     } catch (error) {

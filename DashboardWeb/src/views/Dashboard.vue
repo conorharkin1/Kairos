@@ -1,9 +1,9 @@
 <template>
     <div class="dashboard">
-        <div class="calendar-view">
-            <SideBar :sidebarOptionsLeft="sidebarOptionsLeft" side="left"/>
-            <Calendar/>
-            <SideBar :sidebarOptionsRight="sidebarOptionsRight" side="right"/>
+        <div class="current-view-container">
+            <SideBar :sidebarViewsLeft="sidebarViewsLeft" side="left" @change-view="changeView" :currentView="currentView"/>
+            <component :is="currentView" />
+            <SideBar :sidebarViewsRight="sidebarViewsRight" side="right" @change-view="changeView" :currentView="currentView"/>
         </div>
         <div class="course-tabs">
             <CourseTabs/>
@@ -15,32 +15,30 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
-import SideBar from '../components/SideBar.vue';
-import Calendar from '../components/Calendar.vue';
-import CourseTabs from '../components/CourseTabs.vue';
-import DashboardTodoGrid from '../components/DashboardTodoGrid.vue';
-    // function fetchCourses() {
-    //     fetch('http://localhost:5500/api/dashboard/courses')
-    //         .then(response => response.json())
-    //         .then(data => {
-    //             console.log('Fetched courses:', data);
-    //         })
-    //         .catch(error => {
-    //             console.error('Error fetching courses:', error);
-    //         });
-    // }
+import { ref, shallowRef } from 'vue';
+import ProfileView from '@/components/ProfileView.vue';
+import SideBar from '@/components/SideBar.vue';
+import CalendarView from '@/components/Calendar.vue';
+import CourseTabs from '@/components/CourseTabs.vue';
+import DashboardTodoGrid from '@/components/DashboardTodoGrid.vue';
+
+const currentView = shallowRef(ProfileView);
     
-    // fetchCourses();
-const sidebarOptionsLeft = [
-    { icon: 'iconoir:profile-circle', height: 30, width: 30, tooltip: 'Profile' },
-    { icon: 'ep:calendar', height: 30, width: 30, tooltip: 'Calendar' },
-    { icon: 'uiw:dot-chart', height: 30, width: 30, tooltip: 'View Progress' }
+const sidebarViewsLeft = [
+    { icon: 'iconoir:profile-circle', height: 30, width: 30, tooltip: 'Profile', view: ProfileView },
+    { icon: 'ep:calendar', height: 30, width: 30, tooltip: 'Calendar', view: CalendarView },
+    { icon: 'uiw:dot-chart', height: 30, width: 30, tooltip: 'View Progress', view: DashboardTodoGrid },
 ];
-const sidebarOptionsRight = [
-    { icon: 'la:download', width: 30, height: 30, tooltip: 'Export Study Guide' },
-    { icon: 'icon-park-outline:redo', width: 30, height: 30, tooltip: 'Redo Study Guide' }
+const sidebarViewsRight = [
+    { icon: 'la:download', width: 30, height: 30, tooltip: 'Export Study Guide', view: DashboardTodoGrid },
+    { icon: 'icon-park-outline:redo', width: 30, height: 30, tooltip: 'Redo Study Guide', view: DashboardTodoGrid }
 ];
+
+const changeView = (view) => {
+    if (view && view !== currentView.value) {
+        currentView.value = view;
+    }
+}
 
 </script>
 
@@ -50,7 +48,7 @@ const sidebarOptionsRight = [
         flex-direction: column;
         background-color: $primary-background-dark;
     }
-    .calendar-view {
+    .current-view-container {
         display: flex;
         flex-direction: row;
         height: 45vh;
