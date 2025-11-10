@@ -1,3 +1,7 @@
+using DashboardServer.Data;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add CORS for Vue dev
@@ -9,10 +13,18 @@ builder.Services.AddCors(options =>
               .AllowAnyMethod());
 });
 
-builder.Services.AddOpenApi();
 builder.Services.AddControllers();
 builder.Services.AddHttpClient();
-builder.Services.AddEndpointsApiExplorer();
+
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+{
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
+});
+
+builder.Services.AddIdentityApiEndpoints<IdentityUser>()
+    .AddEntityFrameworkStores<ApplicationDbContext>();
+
+builder.Services.AddAuthorization();
 
 
 var app = builder.Build();
@@ -28,8 +40,9 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-app.UseDefaultFiles();
 app.UseStaticFiles();
-app.MapFallbackToFile("index.html");
+
+// Exposes the /login /register endpoints implicitly
+app.MapIdentityApi<IdentityUser>();
 
 app.Run();
