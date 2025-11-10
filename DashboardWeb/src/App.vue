@@ -4,11 +4,11 @@
 
 <script>
 export default {
-  name: 'App'
+  name: 'App',
 }
 </script>
 <style lang="scss">
-  body {
-    background-color: $primary-background-dark;
-  }
+body {
+  background-color: $primary-background-dark;
+}
 </style>
