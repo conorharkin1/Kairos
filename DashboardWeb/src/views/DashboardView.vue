@@ -1,14 +1,14 @@
 <template>
     <div class="dashboard">
         <div class="current-view-container">
-            <SideBar
+            <SideBarComponent
                 :sidebarViewsLeft="sidebarViewsLeft"
                 side="left"
                 @change-view="changeView"
                 :currentView="currentView"
             />
             <component :is="currentView" />
-            <SideBar
+            <SideBarComponent
                 :sidebarViewsRight="sidebarViewsRight"
                 side="right"
                 @change-view="changeView"
@@ -16,23 +16,23 @@
             />
         </div>
         <div class="course-tabs">
-            <CourseTabs />
+            <CourseTabsComponent />
         </div>
         <div class="todo-grid">
-            <DashboardTodoGrid />
+            <TodoGridComponent />
         </div>
     </div>
 </template>
 
 <script setup>
 import { ref, shallowRef } from 'vue'
-import ProfileView from '@/components/ProfileView.vue'
-import SideBar from '@/components/SideBar.vue'
-import CalendarView from '@/components/CalendarView.vue'
-import CourseTabs from '@/components/CourseTabs.vue'
-import DashboardTodoGrid from '@/components/DashboardTodoGrid.vue'
+import ProfileComponent from '@/components/ProfileComponent.vue'
+import SideBarComponent from '@/components/SideBarComponent.vue'
+import CalendarComponent from '@/components/CalendarComponent.vue'
+import CourseTabsComponent from '@/components/CourseTabsComponent.vue'
+import TodoGridComponent from '@/components/TodoGridComponent.vue'
 
-const currentView = shallowRef(ProfileView)
+const currentView = shallowRef(ProfileComponent)
 
 const sidebarViewsLeft = [
     {
@@ -40,15 +40,15 @@ const sidebarViewsLeft = [
         height: 30,
         width: 30,
         tooltip: 'Profile',
-        view: ProfileView,
+        view: ProfileComponent,
     },
-    { icon: 'ep:calendar', height: 30, width: 30, tooltip: 'Calendar', view: CalendarView },
+    { icon: 'ep:calendar', height: 30, width: 30, tooltip: 'Calendar', view: CalendarComponent },
     {
         icon: 'uiw:dot-chart',
         height: 30,
         width: 30,
         tooltip: 'View Progress',
-        view: DashboardTodoGrid,
+        view: TodoGridComponent,
     },
 ]
 const sidebarViewsRight = [
@@ -57,14 +57,14 @@ const sidebarViewsRight = [
         width: 30,
         height: 30,
         tooltip: 'Export Study Guide',
-        view: DashboardTodoGrid,
+        view: TodoGridComponent,
     },
     {
         icon: 'icon-park-outline:redo',
         width: 30,
         height: 30,
         tooltip: 'Redo Study Guide',
-        view: DashboardTodoGrid,
+        view: TodoGridComponent,
     },
 ]
 

@@ -22,7 +22,7 @@
 </template>
 
 <script setup>
-import DashboardCard from './DashboardCard.vue'
+import DashboardCard from './DashboardCardComponent.vue'
 </script>
 
 <style scoped lang="scss">
