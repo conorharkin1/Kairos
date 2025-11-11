@@ -13,21 +13,25 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import apiClient from '@/services/api'
+import { onMounted, ref } from 'vue'
+import api from '@/services/api'
 
 const apiKey = ref('')
 
 const saveApiKey = async () => {
     console.log(apiKey.value)
-    const response = await apiClient.post('api/profile/key', { key: apiKey.value })
-
-    if (response.status === 200) {
-        console.log('API key set successfully')
-    } else {
-        console.error('Failed to set API key')
-    }
+    api.post('/profile/key', apiKey.value ).then(response => {
+            console.log('API key saved successfully')
+        })
+        .catch(error => {
+            console.error('Error saving API key:', error)
+        })
+        
 }
+
+onMounted(() => {
+    // Any initialization logic can go here
+})
 </script>
 
 <style scoped lang="scss">
