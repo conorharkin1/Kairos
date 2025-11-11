@@ -22,7 +22,25 @@
 </template>
 
 <script setup>
+import { ref, onMounted } from 'vue'
 import DashboardCard from './DashboardCardComponent.vue'
+import api from '../services/api.js'
+
+const assignments = ref([])
+
+const getAssignments = async () => {
+    try {
+        const response = await api.get('api/assignments')
+        assignments.value = response.data
+    } catch (error) {
+        console.error('Error fetching assignments:', error)
+    }
+}
+
+onMounted(() => {
+    getAssignments()
+})
+
 </script>
 
 <style scoped lang="scss">

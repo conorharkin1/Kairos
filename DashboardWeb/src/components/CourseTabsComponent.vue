@@ -6,13 +6,13 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import apiClient from '../services/api.js'
+import api from '../services/api.js'
 
 const courses = ref([])
 
 const fetchCourses = async () => {
     try {
-        const response = await apiClient.get('api/courses/ids')
+        const response = await api.get('course/all/ids')
         courses.value = response.data
         console.log('Fetched courses:', response.data)
     } catch (error) {

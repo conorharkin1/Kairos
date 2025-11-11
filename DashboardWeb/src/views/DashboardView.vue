@@ -35,37 +35,13 @@ import TodoGridComponent from '@/components/TodoGridComponent.vue'
 const currentView = shallowRef(ProfileComponent)
 
 const sidebarViewsLeft = [
-    {
-        icon: 'iconoir:profile-circle',
-        height: 30,
-        width: 30,
-        tooltip: 'Profile',
-        view: ProfileComponent,
-    },
+    { icon: 'iconoir:profile-circle', height: 30, width: 30, tooltip: 'Profile', view: ProfileComponent },
     { icon: 'ep:calendar', height: 30, width: 30, tooltip: 'Calendar', view: CalendarComponent },
-    {
-        icon: 'uiw:dot-chart',
-        height: 30,
-        width: 30,
-        tooltip: 'View Progress',
-        view: TodoGridComponent,
-    },
+    { icon: 'uiw:dot-chart', height: 30, width: 30, tooltip: 'View Progress', /*view: TodoGridComponent,*/ },
 ]
 const sidebarViewsRight = [
-    {
-        icon: 'la:download',
-        width: 30,
-        height: 30,
-        tooltip: 'Export Study Guide',
-        view: TodoGridComponent,
-    },
-    {
-        icon: 'icon-park-outline:redo',
-        width: 30,
-        height: 30,
-        tooltip: 'Redo Study Guide',
-        view: TodoGridComponent,
-    },
+    { icon: 'la:download', width: 30, height: 30, tooltip: 'Export Study Guide', /*view: TodoGridComponent,*/ },
+    { icon: 'icon-park-outline:redo', width: 30, height: 30, tooltip: 'Redo Study Guide', /*view: TodoGridComponent,*/ },
 ]
 
 const changeView = (view) => {
