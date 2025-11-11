@@ -30,15 +30,15 @@ const assignments = ref([])
 
 const getAssignments = async () => {
     try {
-        const response = await api.get('api/assignments')
-        assignments.value = response.data
+        const response = await api.get('assignments')
+        assignments.value = response
     } catch (error) {
         console.error('Error fetching assignments:', error)
     }
 }
 
 onMounted(() => {
-    getAssignments()
+    //getAssignments()
 })
 
 </script>

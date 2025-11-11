@@ -13,8 +13,7 @@ const courses = ref([])
 const fetchCourses = async () => {
     try {
         const response = await api.get('course/all/ids')
-        courses.value = response.data
-        console.log('Fetched courses:', response.data)
+        courses.value = response
     } catch (error) {
         console.error('Error fetching courses:', error)
     }

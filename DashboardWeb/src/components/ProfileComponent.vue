@@ -1,7 +1,9 @@
 <template>
     <div class="profile-container">
         <div class="profile">
-            <h2>Conor Harkin</h2>
+            <h2>Hello! Conor Harkin</h2>
+            <h3>It appears you haven't set your Canvas API key yet,</h3>
+            <h3>Would you like to set it now?</h3>
             <div class="key-input">
                 <input type="text" placeholder="Enter your Canvas API key" v-model="apiKey" />
                 <button @click="saveApiKey" :disabled="!apiKey">Save API Key</button>
