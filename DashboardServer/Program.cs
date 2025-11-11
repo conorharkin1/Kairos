@@ -1,6 +1,8 @@
 using AutoMapper;
 using DashboardServer.Data;
 using DashboardServer.Models;
+using DashboardServer.Repositories;
+using DashboardServer.Repositories.Interfaces;
 using DashboardServer.Services;
 using DashboardServer.Services.Interfaces;
 using Microsoft.AspNetCore.Identity;
@@ -31,6 +33,9 @@ builder.Services.AddAuthorization();
 
 
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IEncryptService, EncryptService>();
+builder.Services.AddScoped<IProfileService, ProfileService>();
+builder.Services.AddScoped<IProfileRepository, ProfileRepository>();
 
 builder.Services.AddAutoMapper(cfg =>
 {
