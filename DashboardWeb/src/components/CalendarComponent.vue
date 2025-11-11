@@ -19,22 +19,22 @@ const vueCalConfig = {
 
 const events = ref([
     {
-        start: '2025-10-28 09:00',
-        end: '2025-10-28 15:00',
+        start: '2025-11-12 09:00',
+        end: '2025-11-12 15:00',
         title: 'CSC3032 Project Work',
         content: 'Working on the dashboard project',
         class: 'custom-work-class',
     },
     {
-        start: '2025-10-29 10:00',
-        end: '2025-10-29 11:30',
+        start: '2025-11-13 10:00',
+        end: '2025-11-13 11:30',
         title: 'CSC3065 Quiz',
         content: 'Preparing for the quiz',
         class: 'custom-quiz-class',
     },
     {
-        start: '2025-10-30 07:00',
-        end: '2025-10-30 15:00',
+        start: '2025-11-14 07:00',
+        end: '2025-11-14 15:00',
         title: 'CSC3045 Study Time',
         content: 'Studying for the exam',
         class: 'custom-study-class',

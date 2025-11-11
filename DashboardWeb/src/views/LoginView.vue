@@ -37,10 +37,11 @@ const loginUser = async (event) => {
     event.preventDefault()
 
     try {
-        await login({
+        const user = await login({
             email: email.value,
             password: password.value,
         })
+        console.log('Login successful', user);
         router.push('/dashboard')
     } catch (error) {
         alert('Login failed: ' + error.message)

@@ -9,22 +9,18 @@ const apiClient = axios.create({
 
 export default {
     async get(url, config = {}) {
-        const { data } = await apiClient.get(url, config)
-        return data
+        return await apiClient.get(url, config)
     },
 
     async delete(url, config = {}) {
-        const { data } = await apiClient.delete(url, config)
-        return data
+        return await apiClient.delete(url, config)
     },
 
     async post(url, body = {}, config = {}) {
-        const { data } = await apiClient.post(url, body, config)
-        return data
+        return await apiClient.post(url, body, config)
     },
 
     async put(url, body = {}, config = {}) {
-        const { data } = await apiClient.put(url, body, config)
-        return data
+        return await apiClient.put(url, body, config)
     },
 }

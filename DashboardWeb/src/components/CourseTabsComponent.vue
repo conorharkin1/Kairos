@@ -11,12 +11,14 @@ import api from '../services/api.js'
 const courses = ref([])
 
 const fetchCourses = async () => {
-    try {
-        const response = await api.get('course/all/ids')
-        courses.value = response
-    } catch (error) {
-        console.error('Error fetching courses:', error)
-    }
+    api.get('course/all/ids')
+        .then(response => {
+            courses.value = response.data;
+            console.log('Fetched courses:', courses.value);
+        })
+        .catch(error => {
+            console.error('Error fetching courses:', error);
+        });
 }
 
 onMounted(() => {

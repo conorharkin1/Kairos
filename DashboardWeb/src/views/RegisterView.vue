@@ -45,7 +45,7 @@ const registerUser = async (event) => {
     }
 
     try {
-        await register({
+        register({
             email: email.value,
             password: password.value,
         })
