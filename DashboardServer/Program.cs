@@ -1,4 +1,8 @@
+using AutoMapper;
 using DashboardServer.Data;
+using DashboardServer.Models;
+using DashboardServer.Services;
+using DashboardServer.Services.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -21,11 +25,17 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
 });
 
-builder.Services.AddIdentityApiEndpoints<IdentityUser>()
+builder.Services.AddIdentityApiEndpoints<ApplicationUser>()
     .AddEntityFrameworkStores<ApplicationDbContext>();
-
 builder.Services.AddAuthorization();
 
+
+builder.Services.AddScoped<IUserService, UserService>();
+
+builder.Services.AddAutoMapper(cfg =>
+{
+    cfg.AddMaps(typeof(Program).Assembly);
+}, typeof(Program));
 
 var app = builder.Build();
 
