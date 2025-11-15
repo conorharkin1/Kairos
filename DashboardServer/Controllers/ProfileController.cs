@@ -2,6 +2,7 @@ using System.Security.Cryptography;
 using System.Threading.Tasks;
 using DashboardServer.Models;
 using DashboardServer.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
@@ -9,6 +10,7 @@ namespace DashboardServer.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class ProfileController : ControllerBase
     {
         private readonly UserManager<ApplicationUser> _userManager;
@@ -24,7 +26,6 @@ namespace DashboardServer.Controllers
         {
             try
             {
-                // TODO add some authentication for users, currently this always returns null as I have no auth set up.
                 var user = await _userManager.GetUserAsync(User);
                 user = user ?? throw new Exception("User not found");
                 var userId = user.Id;

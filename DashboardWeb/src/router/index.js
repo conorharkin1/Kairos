@@ -5,14 +5,24 @@ import RegisterView from '@/views/RegisterView.vue'
 
 const routes = [
     { path: '/', redirect: '/login' },
-    { path: '/login', component: LoginView },
-    { path: '/register', component: RegisterView },
-    { path: '/dashboard', component: Dashboard },
+    { path: '/login', component: LoginView, meta: { requiresAuth: false }},
+    { path: '/register', component: RegisterView, meta: { requiresAuth: false }},
+    { path: '/dashboard', component: Dashboard, meta: { requiresAuth: true } },
 ]
 
 const router = createRouter({
     history: createWebHistory(),
     routes,
+})
+
+router.beforeEach((to, from, next) => {
+    const isLoggedIn = !!localStorage.getItem('authToken')
+
+    if (to.meta.requiresAuth && !isLoggedIn) {
+        return next('/login')
+    }
+
+    next()
 })
 
 export default router

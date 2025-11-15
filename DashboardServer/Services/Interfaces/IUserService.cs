@@ -4,7 +4,7 @@ namespace DashboardServer.Services.Interfaces
 {
     public interface IUserService
     {
-        Task<UserDTO> RegisterAsync(RegisterDTO dto);
-        Task<UserDTO> LoginAsync(LoginDTO dto);
+        Task<AuthResultDTO> RegisterAsync(RegisterDTO dto);
+        Task<AuthResultDTO> LoginAsync(LoginDTO dto);
     }
 }
