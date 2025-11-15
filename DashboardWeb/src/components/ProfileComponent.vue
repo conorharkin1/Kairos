@@ -20,7 +20,7 @@ const apiKey = ref('')
 
 const saveApiKey = async () => {
     console.log(apiKey.value)
-    api.post('/profile/key', apiKey.value ).then(response => {
+    api.post('/user/key', apiKey.value ).then(response => {
             console.log('API key saved successfully')
         })
         .catch(error => {

@@ -1,89 +1,22 @@
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
-using AutoMapper;
-using DashboardServer.DTOs;
-using DashboardServer.Models;
+using DashboardServer.Repositories.Interfaces;
 using DashboardServer.Services.Interfaces;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.IdentityModel.Tokens;
 
 namespace DashboardServer.Services
 {
     public class UserService : IUserService
     {
-        private readonly UserManager<ApplicationUser> _userManager;
-        private readonly IMapper _mapper;
-        private readonly IConfiguration _config;
-
-        public UserService(UserManager<ApplicationUser> userManager, IMapper mapper, IConfiguration config)
+        private readonly IEncryptService _encryptService;
+        private readonly IUserRepository _userRepository;
+        public UserService(IEncryptService encryptService, IUserRepository userRepository)
         {
-            _userManager = userManager;
-            _mapper = mapper;
-            _config = config;
+            _encryptService = encryptService;
+            _userRepository = userRepository;
         }
 
-        public async Task<AuthResultDTO> RegisterAsync(RegisterDTO dto)
+        public async Task SetApiKey(string apiKey, Guid key, string userId)
         {
-            var user = _mapper.Map<ApplicationUser>(dto);
-            user.UserName = dto.Email;
-
-            var result = await _userManager.CreateAsync(user, dto.Password);
-
-            if (!result.Succeeded)
-            {
-                throw new Exception("User registration failed");
-            }
-
-            var token = GenerateJwtToken(user);
-
-            return new AuthResultDTO
-            {
-                Token = token,
-                User = _mapper.Map<UserDTO>(user)
-            };
-        }
-
-        public async Task<AuthResultDTO> LoginAsync(LoginDTO dto)
-        {
-            var user = await _userManager.FindByEmailAsync(dto.Email);
-            if (user == null || !await _userManager.CheckPasswordAsync(user, dto.Password))
-            {
-                throw new UnauthorizedAccessException();
-            }
-
-            var token = GenerateJwtToken(user);
-    
-            return new AuthResultDTO
-            {
-                Token = token,
-                User = _mapper.Map<UserDTO>(user)
-            };
-        }
-
-        private string GenerateJwtToken(ApplicationUser user)
-        {
-            var claims = new[]
-            {
-                new Claim(JwtRegisteredClaimNames.Sub, user.Id),
-                new Claim(JwtRegisteredClaimNames.Email, user.Email ?? ""),
-                new Claim("uid", user.Id)
-            };
-
-            var key = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(_config["JwtSettings:Key"] ?? throw new InvalidOperationException("JWT key not configured")));
-
-            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-
-            var token = new JwtSecurityToken(
-                issuer: _config["JwtSettings:Issuer"],
-                audience: _config["JwtSettings:Audience"],
-                claims: claims,
-                expires: DateTime.UtcNow.AddHours(24),
-                signingCredentials: creds
-            );
-
-            return new JwtSecurityTokenHandler().WriteToken(token);
+            var encryptedKey = _encryptService.Encrypt(apiKey, key);
+            await _userRepository.SetApiKey(userId, encryptedKey);
         }
     }
 }

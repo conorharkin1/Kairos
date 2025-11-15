@@ -10,11 +10,11 @@ namespace DashboardServer.Controllers
     [ApiController]
     public class AuthController : ControllerBase
     {
-        private readonly IUserService _userService;
+        private readonly IAuthService _authService;
 
-        public AuthController(IUserService userService)
+        public AuthController(IAuthService authService)
         {
-            _userService = userService;
+            _authService = authService;
         }
 
         [HttpPost("register")]
@@ -23,7 +23,7 @@ namespace DashboardServer.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var user = await _userService.RegisterAsync(dto);
+            var user = await _authService.RegisterAsync(dto);
 
             if (user == null)
                 return BadRequest("Registration failed. Please try again.");
@@ -36,7 +36,7 @@ namespace DashboardServer.Controllers
         {
             try
             {
-                var user = await _userService.LoginAsync(dto);
+                var user = await _authService.LoginAsync(dto);
                 return Ok(user);
             }
             catch (UnauthorizedAccessException)

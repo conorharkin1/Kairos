@@ -1,5 +1,3 @@
-using System.Security.Cryptography;
-using System.Threading.Tasks;
 using DashboardServer.Models;
 using DashboardServer.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -11,14 +9,14 @@ namespace DashboardServer.Controllers
     [ApiController]
     [Route("api/[controller]")]
     [Authorize]
-    public class ProfileController : ControllerBase
+    public class UserController : ControllerBase
     {
         private readonly UserManager<ApplicationUser> _userManager;
-        private readonly IProfileService _profileService;
-        public ProfileController(UserManager<ApplicationUser> userManager, IProfileService profileService)
+        private readonly IUserService _userService;
+        public UserController(UserManager<ApplicationUser> userManager, IUserService userService)
         {
             _userManager = userManager;
-            _profileService = profileService;
+            _userService = userService;
         }
 
         [HttpPost("key")]
@@ -32,7 +30,7 @@ namespace DashboardServer.Controllers
                 // I'm creating a new guid here based on the userId to use as a key for encryption - not suitable for production but for demo it'll be fine
                 Guid encryptionKey = Guid.Parse(userId);
 
-                await _profileService.SetApiKey(apiKey, encryptionKey, userId);
+                await _userService.SetApiKey(apiKey, encryptionKey, userId);
                 
                 return Ok();
             }

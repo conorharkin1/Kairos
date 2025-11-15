@@ -5,11 +5,11 @@ namespace DashboardServer.Repositories
     using Microsoft.EntityFrameworkCore;
     using System.Threading.Tasks;
 
-    public class ProfileRepository : IProfileRepository
+    public class UserRepository : IUserRepository
     {
         private readonly ApplicationDbContext _dbContext;
 
-        public ProfileRepository(ApplicationDbContext dbContext)
+        public UserRepository(ApplicationDbContext dbContext)
         {
             _dbContext = dbContext;
         }
