@@ -15,9 +15,9 @@ namespace DashboardServer.Services
             _profileRepository = profileRepository;
         }
 
-        public async Task SetApiKey(string userId, string apiKey)
+        public async Task SetApiKey(string apiKey, Guid key, string userId)
         {
-            var encryptedKey = _encryptService.Encrypt(apiKey, userId, userId);
+            var encryptedKey = _encryptService.Encrypt(apiKey, key);
             await _profileRepository.SetApiKey(userId, encryptedKey);
         }
     }

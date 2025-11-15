@@ -22,15 +22,17 @@ namespace DashboardServer.Controllers
         }
 
         [HttpPost("key")]
-        public async Task<IActionResult> SetApiKey([FromBody] string key)
+        public async Task<IActionResult> SetApiKey([FromBody] string apiKey)
         {
             try
             {
                 var user = await _userManager.GetUserAsync(User);
                 user = user ?? throw new Exception("User not found");
                 var userId = user.Id;
+                // I'm creating a new guid here based on the userId to use as a key for encryption - not suitable for production but for demo it'll be fine
+                Guid encryptionKey = Guid.Parse(userId);
 
-                await _profileService.SetApiKey(userId, key);
+                await _profileService.SetApiKey(apiKey, encryptionKey, userId);
                 
                 return Ok();
             }

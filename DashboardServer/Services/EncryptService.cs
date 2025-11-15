@@ -8,70 +8,62 @@ namespace DashboardServer.Services
     // I thought I should reference the resource I used to help implement this.
     public class EncryptService : IEncryptService
     {
-        public string Encrypt(string plainText, string key, string iv)
+        public string Encrypt(string plainText, Guid key)
         {
-            if (string.IsNullOrEmpty(key) || string.IsNullOrEmpty(iv))
-            {
-                throw new ArgumentException("Key and IV are required");
-            }
-
-            var KEY = Encoding.UTF32.GetBytes(key);
-            var IV = Encoding.UTF32.GetBytes(iv);
+            string keyBase = key.ToString();
+            byte[] derivedKey = DeriveKey(keyBase, 32);
+            byte[] iv = DeriveKey(keyBase + "IV", 16);
 
             byte[] encrypted;
-
             using (Aes aesAlg = Aes.Create())
             {
-                aesAlg.Key = KEY;
-                aesAlg.IV = IV;
+                aesAlg.Key = derivedKey;
+                aesAlg.IV = iv;
 
-                ICryptoTransform encryptor = aesAlg.CreateEncryptor(aesAlg.Key, aesAlg.IV);
-                using (MemoryStream msEncrypt = new MemoryStream())
+                using (var encryptor = aesAlg.CreateEncryptor())
+                using (var ms = new MemoryStream())
                 {
-                    using (CryptoStream csEncrypt = new CryptoStream(msEncrypt, encryptor, CryptoStreamMode.Write))
+                    using (var cs = new CryptoStream(ms, encryptor, CryptoStreamMode.Write))
+                    using (var sw = new StreamWriter(cs))
                     {
-                        using (StreamWriter swEncrypt = new StreamWriter(csEncrypt))
-                        {
-                            swEncrypt.Write(plainText);
-                        }
+                        sw.Write(plainText);
                     }
-                    encrypted = msEncrypt.ToArray();
+                    encrypted = ms.ToArray();
                 }
             }
 
-            return Encoding.UTF32.GetString(encrypted);
+            return Convert.ToBase64String(encrypted);
         }
 
-        public string Decrypt(string cipherText, string key, string iv)
+        public string Decrypt(string cipherText, Guid key)
         {
-            if (string.IsNullOrEmpty(key) || string.IsNullOrEmpty(iv))
-            {
-                throw new ArgumentException("Key and IV are required");
-            }
-            
-            var KEY = Encoding.UTF32.GetBytes(key);
-            var IV = Encoding.UTF32.GetBytes(iv);
-            var cipherTextBytes = Encoding.UTF32.GetBytes(cipherText);
+            string keyBase = key.ToString();
+            byte[] derivedKey = DeriveKey(keyBase, 32);
+            byte[] iv = DeriveKey(keyBase + "IV", 16);
+            byte[] cipherBytes = Convert.FromBase64String(cipherText);
 
-            string plaintext;
             using (Aes aesAlg = Aes.Create())
             {
-                aesAlg.Key = KEY;
-                aesAlg.IV = IV;
+                aesAlg.Key = derivedKey;
+                aesAlg.IV = iv;
 
-                ICryptoTransform decryptor = aesAlg.CreateDecryptor(aesAlg.Key, aesAlg.IV);
-                using (MemoryStream msDecrypt = new MemoryStream(cipherTextBytes))
+                using (var decryptor = aesAlg.CreateDecryptor())
+                using (var ms = new MemoryStream(cipherBytes))
+                using (var cs = new CryptoStream(ms, decryptor, CryptoStreamMode.Read))
+                using (var sr = new StreamReader(cs))
                 {
-                    using (CryptoStream csDecrypt = new CryptoStream(msDecrypt, decryptor, CryptoStreamMode.Read))
-                    {
-                        using (StreamReader srDecrypt = new StreamReader(csDecrypt))
-                        {
-                            plaintext = srDecrypt.ReadToEnd();
-                        }
-                    }
+                    return sr.ReadToEnd();
                 }
             }
-            return plaintext;
+        }
+
+        private static byte[] DeriveKey(string input, int keySizeInBytes)
+        {
+            byte[] inputBytes = Encoding.UTF8.GetBytes(input);
+            byte[] hash = SHA256.HashData(inputBytes);
+            byte[] result = new byte[keySizeInBytes];
+            Array.Copy(hash, result, Math.Min(hash.Length, keySizeInBytes));
+            return result;
         }
     }
 }

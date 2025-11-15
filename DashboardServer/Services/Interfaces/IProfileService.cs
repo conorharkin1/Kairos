@@ -2,6 +2,6 @@ namespace DashboardServer.Services.Interfaces
 {
     public interface IProfileService
     {
-        Task SetApiKey(string userId, string apiKey);
+        Task SetApiKey(string apiKey, Guid key, string userId);
     }
 }
