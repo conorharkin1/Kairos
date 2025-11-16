@@ -2,6 +2,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using AutoMapper;
+using DashboardServer.DTOs.ResponseDTOs;
 using DashboardServer.DTOs;
 using DashboardServer.Models;
 using DashboardServer.Services.Interfaces;

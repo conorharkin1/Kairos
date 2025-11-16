@@ -16,10 +16,10 @@
             />
         </div>
         <div class="course-tabs">
-            <CourseTabsComponent />
+            <CourseTabsComponent @change-course="changeCourse" :currentCourse="currentCourse"/>
         </div>
         <div class="todo-grid">
-            <TodoGridComponent />
+            <TodoGridComponent :currentCourse="currentCourse"/>
         </div>
     </div>
 </template>
@@ -33,6 +33,7 @@ import CourseTabsComponent from '@/components/CourseTabsComponent.vue'
 import TodoGridComponent from '@/components/TodoGridComponent.vue'
 
 const currentView = shallowRef(ProfileComponent)
+const currentCourse = ref(0)
 
 const sidebarViewsLeft = [
     { icon: 'iconoir:profile-circle', height: 30, width: 30, tooltip: 'Profile', view: ProfileComponent },
@@ -47,6 +48,12 @@ const sidebarViewsRight = [
 const changeView = (view) => {
     if (view && view !== currentView.value) {
         currentView.value = view
+    }
+}
+
+const changeCourse = (courseId) => {
+    if (courseId && courseId !== currentCourse.value) {
+        currentCourse.value = courseId
     }
 }
 </script>

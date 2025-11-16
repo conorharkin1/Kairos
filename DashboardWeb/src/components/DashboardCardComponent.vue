@@ -1,16 +1,16 @@
 <template>
     <div class="card">
         <div class="card-type">
-            <h2>Assignment</h2>
+            <h2>{{ type }}</h2>
         </div>
         <div class="card-title">
-            <h3>To-Do Item</h3>
+            <h3>{{ title }}</h3>
         </div>
-        <div class="card-due-date">
-            <span class="due-date">Due: 2024-06-30</span>
+        <div v-if="dueDate" class="card-due-date">
+            <span class="due-date">Due: {{ dueDate }}</span>
         </div>
         <div class="card-body">
-            <p>This is a sample to-do item description.</p>
+            <p>{{ description }}</p>
         </div>
         <div class="card-footer">
             <button class="card-btn">Favourite</button>
@@ -18,6 +18,16 @@
         </div>
     </div>
 </template>
+
+<script setup>
+
+const props = defineProps({
+    type: String,
+    title: String,
+    dueDate: String,
+    description: String
+})
+</script>
 
 <style scoped lang="scss">
 .card {

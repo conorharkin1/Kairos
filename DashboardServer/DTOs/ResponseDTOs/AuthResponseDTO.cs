@@ -1,4 +1,4 @@
-namespace DashboardServer.DTOs
+namespace DashboardServer.DTOs.ResponseDTOs
 {
     public class AuthResultDTO
     {

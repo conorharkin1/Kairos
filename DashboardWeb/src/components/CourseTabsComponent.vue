@@ -1,7 +1,7 @@
 <template>
     <div v-if="isLoading" class="loading-container loader"></div>
-    <div v-for="(courseId, index) in courses" :key="index" class="tab">
-        {{ courseId }}
+    <div v-for="(course, index) in courses" :key="index" @click="$emit('change-course', course.id)" class="tab" :class="{ 'selected': course.id === currentCourse }">
+        {{ course.courseCode }}
     </div>
 </template>
 
@@ -9,13 +9,15 @@
 import { ref, onMounted } from 'vue'
 import api, { isLoading } from '../services/api.js'
 
+const props = defineProps({
+    currentCourse: Number,
+})
 const courses = ref([])
 
 const fetchCourses = async () => {
-    api.get('course/all/ids')
+    api.get('course/ids')
         .then(response => {
             courses.value = response.data;
-            console.log('Fetched courses:', courses.value);
         })
         .catch(error => {
             console.error('Error fetching courses:', error);
@@ -25,6 +27,8 @@ const fetchCourses = async () => {
 onMounted(() => {
     fetchCourses()
 })
+
+const emit = defineEmits(['change-course'])
 </script>
 
 <style scoped lang="scss">
@@ -54,6 +58,10 @@ onMounted(() => {
 }
 .loader:before {
   content:"Loading..."
+}
+
+.tab.selected {
+    color: $primary-red-outline;
 }
 @keyframes l2 {to{background-size: 100% 3px}}
 </style>

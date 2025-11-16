@@ -1,8 +1,10 @@
 using System.Net.Http.Headers;
 using AutoMapper;
 using DashboardServer.DTOs;
+using DashboardServer.DTOs.ResponseDTOs;
 using Microsoft.AspNetCore.Mvc;
 using CourseModel = DashboardServer.Models.Course;
+using AssignmentModel = DashboardServer.Models.Assignment;
 
 namespace DashboardServer.Controllers
 {
@@ -19,7 +21,7 @@ namespace DashboardServer.Controllers
             _mapper = mapper;
         }
 
-        [HttpGet("all/ids")]
+        [HttpGet("ids")]
         public async Task<IActionResult> GetCourseIds()
         {
             // temporarily hardcoding the API key and base URL in appsettings.Development for testing
@@ -32,13 +34,23 @@ namespace DashboardServer.Controllers
 
             var canvasCourseDTOs = await canvasHttpClient.GetFromJsonAsync<List<CanvasCourseDTO>>("/api/v1/users/self/favorites/courses");
             var courses = _mapper.Map<List<CourseModel>>(canvasCourseDTOs);
-            return Ok(courses.Select(c => c.CourseId));
+            return Ok(_mapper.Map<List<CourseDTO>>(courses));
         }
 
-        [HttpGet("all/{courseId}/assignments")]
-        public IActionResult GetCourseAssignments(int courseId)
+        [HttpGet("{courseId}/assignments")]
+        public async Task<IActionResult> GetCourseAssignments(int courseId)
         {
-            return Ok($"Retrieved assignments for course with ID: {courseId}");
+            // temporarily hardcoding the API key and base URL in appsettings.Development for testing
+            var canvas_api_key = HttpContext.RequestServices.GetRequiredService<IConfiguration>()["Canvas:ApiKey"];
+            var base_url = HttpContext.RequestServices.GetRequiredService<IConfiguration>()["Canvas:BaseUrl"];
+
+            var canvasHttpClient = _httpClientFactory.CreateClient();
+            canvasHttpClient.BaseAddress = new Uri(base_url);
+            canvasHttpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", canvas_api_key);
+
+            var canvasAssignmentDTOs = await canvasHttpClient.GetFromJsonAsync<List<CanvasAssignmentDTO>>($"/api/v1/courses/{courseId}/assignments");
+            var assignments = _mapper.Map<List<AssignmentModel>>(canvasAssignmentDTOs);
+            return Ok(_mapper.Map<List<AssignmentDTO>>(assignments));
         }
     }
 }

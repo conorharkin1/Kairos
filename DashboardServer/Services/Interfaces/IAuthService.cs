@@ -1,3 +1,4 @@
+using DashboardServer.DTOs.ResponseDTOs;
 using DashboardServer.DTOs;
 
 namespace DashboardServer.Services.Interfaces
