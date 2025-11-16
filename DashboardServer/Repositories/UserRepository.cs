@@ -23,5 +23,16 @@ namespace DashboardServer.Repositories
                 await _dbContext.SaveChangesAsync();
             }
         }
+
+        public async Task<string> GetEncryptedApiKey(string userId)
+        {
+            var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Id == userId);
+            if (user != null && !String.IsNullOrEmpty(user.CanvasApiKey))
+            {
+                return user.CanvasApiKey;
+            }
+            
+            throw new Exception("User not found or API key not set");
+        }
     }
 }

@@ -29,6 +29,9 @@
 import { ref, watch } from 'vue'
 import DashboardCard from './DashboardCardComponent.vue'
 import api from '../services/api.js'
+import { useToast } from 'vue-toastification'
+
+const toast = useToast()
 
 const props = defineProps({
     currentCourse: Number,
@@ -42,7 +45,7 @@ const getAssignmentsForCourse = async () => {
         const response = await api.get(`course/${props.currentCourse}/assignments`)
         assignments.value = response.data
     } catch (error) {
-        console.error('Error fetching assignments:', error)
+        toast.error('Error fetching assignments:', error)
     }
 }
 
@@ -51,7 +54,7 @@ const getQuizzesForCourse = async () => {
         const response = await api.get(`course/${props.currentCourse}/quizzes`)
         quizzes.value = response.data
     } catch (error) {
-        console.error('Error fetching quizzes:', error)
+        toast.error('Error fetching quizzes:', error)
     }
 }
 

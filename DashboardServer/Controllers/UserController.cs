@@ -41,9 +41,8 @@ namespace DashboardServer.Controllers
         {
             try
             {
-                var user = await _userManager.GetUserAsync(User);
-                user = user ?? throw new Exception("User not found");
-                var userId = user.Id;
+                var userId = _userManager.GetUserId(HttpContext.User);
+                userId = userId ?? throw new Exception("User not found");
                 // I'm creating a new guid here based on the userId to use as a key for encryption - not suitable for production but for demo it'll be fine
                 Guid encryptionKey = Guid.Parse(userId);
 

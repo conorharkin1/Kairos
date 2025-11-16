@@ -45,7 +45,7 @@ const getCurrentUser = async () => {
             user.value = response.data
         })
         .catch(error => {
-            console.error('Error while fetching user:', error)
+            toast.error('Error while fetching user:', error)
         })
 }
 
@@ -76,7 +76,7 @@ const handleDeleteAccount = async () => {
             await deleteAccount()
         } catch (error) {
             console.error('Error deleting account:', error)
-            alert('Failed to delete account.')
+            toast.error('Failed to delete account.')
         }
     }
 }

@@ -18,5 +18,10 @@ namespace DashboardServer.Services
             var encryptedKey = _encryptService.Encrypt(apiKey, key);
             await _userRepository.SetApiKey(userId, encryptedKey);
         }
+
+        public async Task<string> GetEncryptedApiKey(string userId)
+        {
+            return await _userRepository.GetEncryptedApiKey(userId);
+        }
     }
 }

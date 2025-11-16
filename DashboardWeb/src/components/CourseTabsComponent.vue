@@ -8,6 +8,9 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import api, { isLoading } from '../services/api.js'
+import { useToast } from 'vue-toastification'
+
+const toast = useToast()
 
 const props = defineProps({
     currentCourse: Number,
@@ -15,12 +18,12 @@ const props = defineProps({
 const courses = ref([])
 
 const fetchCourses = async () => {
-    api.get('course/ids')
+    api.get('course')
         .then(response => {
             courses.value = response.data;
         })
         .catch(error => {
-            console.error('Error fetching courses:', error);
+            toast.error('Error fetching courses:', error);
         });
 }
 
