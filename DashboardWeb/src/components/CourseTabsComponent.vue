@@ -1,4 +1,5 @@
 <template>
+    <div v-if="isLoading" class="loading-container loader"></div>
     <div v-for="(courseId, index) in courses" :key="index" class="tab">
         {{ courseId }}
     </div>
@@ -6,7 +7,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import api from '../services/api.js'
+import api, { isLoading } from '../services/api.js'
 
 const courses = ref([])
 
@@ -35,4 +36,24 @@ onMounted(() => {
 .tab:hover {
     color: $primary-red-outline;
 }
+
+.loading-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-grow: 1;
+}
+.loader {
+  width: fit-content;
+  font-weight: bold;
+  font-family: sans-serif;
+  padding-bottom: 8px;
+  background: linear-gradient(currentColor 0 0) 0 100%/0% 3px no-repeat;
+  animation: l2 2s linear infinite;
+  color: $primary-red-outline;
+}
+.loader:before {
+  content:"Loading..."
+}
+@keyframes l2 {to{background-size: 100% 3px}}
 </style>

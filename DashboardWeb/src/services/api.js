@@ -1,6 +1,8 @@
 import router from '@/router'
 import axios from 'axios'
-import { useRouter } from 'vue-router'
+import { ref } from 'vue'
+
+export const isLoading = ref(false)
 
 const apiClient = axios.create({
     baseURL: import.meta.env.VITE_SERVER_BASE_URL || 'http://localhost:5500/api/',
@@ -16,15 +18,23 @@ apiClient.interceptors.request.use(
         if (token) {
             config.headers.Authorization = `Bearer ${token}`
         }
+        isLoading.value = true
         return config
     },
-    error => Promise.reject(error)
+    error => {
+        isLoading.value = false
+        return Promise.reject(error)
+    }
 )
 
 // Add response interceptor to handle 401 errors
 apiClient.interceptors.response.use(
-    response => response,
+    response => {
+        isLoading.value = false
+        return response
+    },
     error => {
+        isLoading.value = false
         if (error.response?.status === 401) {
             localStorage.removeItem('authToken')
             router.push('/login')
