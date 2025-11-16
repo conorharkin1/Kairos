@@ -8,6 +8,8 @@
                 <input type="text" placeholder="Enter your Canvas API key" v-model="apiKey" />
                 <button @click="saveApiKey" :disabled="!apiKey">Save API Key</button>
             </div>
+            <button @click="logout" class="logout-btn">Logout</button>
+            <button @click="handleDeleteAccount" class="delete-account-btn">Delete Account</button>
         </div>
     </div>
 </template>
@@ -15,6 +17,7 @@
 <script setup>
 import { onMounted, ref } from 'vue'
 import api from '@/services/api'
+import { logout, deleteAccount } from '@/services/authService'
 
 const apiKey = ref('')
 
@@ -27,6 +30,18 @@ const saveApiKey = async () => {
             console.error('Error saving API key:', error)
         })
         
+}
+
+const handleDeleteAccount = async () => {
+    const confirmed = window.confirm('Are you sure you want to delete your account? This action cannot be undone.')
+    if (confirmed) {
+        try {
+            await deleteAccount()
+        } catch (error) {
+            console.error('Error deleting account:', error)
+            alert('Failed to delete account.')
+        }
+    }
 }
 
 onMounted(() => {
@@ -60,5 +75,13 @@ onMounted(() => {
     button {
         margin-left: 0.5rem;
     }
+}
+
+.logout-btn {
+    cursor: pointer;
+}
+.delete-account-btn {
+    background-color: $primary-red-outline;
+    cursor: pointer;
 }
 </style>

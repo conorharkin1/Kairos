@@ -6,5 +6,6 @@ namespace DashboardServer.Services.Interfaces
     {
         Task<AuthResultDTO> RegisterAsync(RegisterDTO dto);
         Task<AuthResultDTO> LoginAsync(LoginDTO dto);
+        Task DeleteAccountAsync(string userId);
     }
 }

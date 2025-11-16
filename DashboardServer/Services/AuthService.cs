@@ -85,5 +85,20 @@ namespace DashboardServer.Services
 
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
+
+        public async Task DeleteAccountAsync(string userId)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
+            {
+                throw new Exception("User not found");
+            }
+
+            var result = await _userManager.DeleteAsync(user);
+            if (!result.Succeeded)
+            {
+                throw new Exception("Failed to delete account");
+            }
+        }
     }
 }

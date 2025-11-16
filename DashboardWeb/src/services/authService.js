@@ -1,4 +1,5 @@
 import api from './api.js'
+import router from '@/router'
 
 export async function register(userData) {
     return api.post('auth/register', userData)
@@ -30,6 +31,19 @@ export async function login(credentials) {
 
 export function logout() {
     localStorage.removeItem('authToken')
+    router.push('/login')
+}
+
+export async function deleteAccount() {
+    return api.delete('auth/delete')
+        .then(res => {
+            localStorage.removeItem('authToken')
+            router.push('/login')
+            return res.data
+        })
+        .catch(err => {
+            throw err
+        })
 }
 
 export function getToken() {

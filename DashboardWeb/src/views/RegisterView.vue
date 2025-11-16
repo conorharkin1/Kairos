@@ -1,5 +1,6 @@
 <template>
-    <body>
+    <div v-if="isLoading" class="loading-container loader"></div>
+    <div v-else class="content">
         <div>
             <h2>Organise your thoughts</h2>
         </div>
@@ -21,15 +22,22 @@
                     />
                 </div>
                 <button class="btn" type="submit">Register</button>
+                <div class="login-link">
+                    <p>
+                        <a @click="goToLogin">Already have an account? Login</a>
+                    </p>
+                </div>
             </form>
         </div>
-    </body>
+    </div>
+    
 </template>
 
 <script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { register } from '@/services/authService'
+import { isLoading } from '@/services/api.js'
 
 const email = ref('')
 const password = ref('')
@@ -54,10 +62,13 @@ const registerUser = async (event) => {
         alert('Registration failed: ' + error.message)
     }
 }
+const goToLogin = () => {
+    router.push('/login')
+}
 </script>
 
 <style scoped lang="scss">
-body {
+.content {
     display: flex;
     justify-content: center;
     align-items: center;
@@ -65,20 +76,19 @@ body {
     background: $primary-background-dark;
 }
 
-body h2 {
+.content h2 {
     padding-right: 2rem;
     color: $primary-text-light;
+    font-size: 30px;
 }
 
 .wrapper {
     width: 420px;
-    background: $primary-background-dark;
     color: $primary-text-light;
     border-radius: 10px;
     padding: 30px 40px;
     display: flex;
     justify-content: center;
-    align-items: center;
 }
 
 .wrapper h1 {
@@ -90,10 +100,13 @@ body h2 {
     width: 100%;
     height: 50px;
     margin: 30px 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 .input-box input {
-    width: 80%;
+    width: 100%;
     height: 80%;
     background: transparent;
     border: 2px solid $primary-red-outline;
@@ -115,20 +128,41 @@ body h2 {
     font-weight: 600;
 }
 
-.wrapper .register-link {
+.wrapper .login-link {
     font-size: 14px;
     text-align: center;
     margin: 20px 0 15px;
 }
 
-.register-link p a {
+.login-link p a {
     color: $primary-text-light;
     text-decoration: none;
     font-weight: 600;
     font-size: 16px;
 }
 
-.register-link p a:hover {
+.login-link p a:hover {
     text-decoration: underline;
 }
+
+.loading-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-grow: 1;
+}
+.loader {
+  width: fit-content;
+  font-weight: bold;
+  font-family: sans-serif;
+  padding-bottom: 8px;
+  background: linear-gradient(currentColor 0 0) 0 100%/0% 3px no-repeat;
+  animation: l2 2s linear infinite;
+  color: $primary-red-outline;
+}
+.loader:before {
+  content:"Loading..."
+}
+@keyframes l2 {to{background-size: 100% 3px}}
+
 </style>
