@@ -1,0 +1,27 @@
+$vt-toast-min-width: 326px !default;
+$vt-toast-max-width: 600px !default;
+$vt-toast-background: #141414 !default;
+
+$vt-toast-min-height: 64px !default;
+$vt-toast-max-height: 64px !default;
+
+$vt-color-default: #1976d2 !default;
+$vt-text-color-default: #fff !default;
+$vt-color-info: #303030 !default;
+$vt-text-color-info: #2196f3 !default;
+$vt-color-success: #303030 !default;
+$vt-text-color-success: #4caf50 !default;
+$vt-color-warning: #303030 !default;
+$vt-text-color-warning: #ffc107 !default;
+$vt-color-error: #303030 !default;
+$vt-text-color-error: #ff5252 !default;
+
+$vt-color-progress-default: linear-gradient(to right, #4cd964, #5ac8fa, #007aff, #34aadc, #5856d6, #ff2d55) !default;
+
+@import "vue-toastification/src/scss/_variables";
+@import "vue-toastification/src/scss/_toastContainer";
+@import "vue-toastification/src/scss/_toast";
+@import "vue-toastification/src/scss/_closeButton";
+@import "vue-toastification/src/scss/_progressBar";
+@import "vue-toastification/src/scss/_icon";
+@import "vue-toastification/src/scss/animations/_fade";

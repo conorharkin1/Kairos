@@ -1,3 +1,5 @@
+using AutoMapper;
+using DashboardServer.DTOs;
 using DashboardServer.Models;
 using DashboardServer.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -13,10 +15,25 @@ namespace DashboardServer.Controllers
     {
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly IUserService _userService;
-        public UserController(UserManager<ApplicationUser> userManager, IUserService userService)
+        private readonly IMapper _mapper;
+        public UserController(UserManager<ApplicationUser> userManager, IUserService userService, IMapper mapper)
         {
             _userManager = userManager;
             _userService = userService;
+            _mapper = mapper;
+        }
+
+        [HttpGet("self")]
+        public async Task<IActionResult> GetCurrentUser()
+        {
+            var user = await _userManager.GetUserAsync(User);
+            
+            if (user != null)
+            {
+                return Ok(_mapper.Map<UserDTO>(user)); 
+            }
+
+            return StatusCode(404, "User not found");
         }
 
         [HttpPost("key")]

@@ -18,6 +18,7 @@ export default defineConfig({
       scss: {
         additionalData: `
           @use "@/scss/_theme.scss" as *;
+          @use "@/scss/_toast.scss" as *;
         `
       }
     }
