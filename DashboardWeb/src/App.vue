@@ -10,5 +10,6 @@ export default {
 <style lang="scss">
 body {
     background-color: $primary-background-dark;
+    font-family: $primary-font-family;
 }
 </style>
