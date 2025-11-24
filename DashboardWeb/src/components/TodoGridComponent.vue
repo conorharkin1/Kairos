@@ -1,27 +1,26 @@
 <template>
-    <div class="header">
-        <div class="filter">
-            <select>
-                <option value="all">All Tasks</option>
-                <option value="due-today">Due Today</option>
-                <option value="overdue">Overdue</option>
-                <option value="completed">Completed</option>
-            </select>
-        </div>
-        <div class="search-bar">
-            <input type="text" placeholder="Search tasks..." />
-        </div>
-    </div>
-    <div v-if="assignments.length > 0" class="dashboard-card-grid">
-        <DashboardCard
-            v-for="(assignment, index) in assignments"
-            :key="index"
-            type="Assignment"
-            :title="assignment.name"
-        />
-    </div>
+    <div v-if="isLoading"class="loading-container loader"></div>
     <div v-else>
-        <h2>Please select a course to view your upcoming tasks</h2>
+        <div class="header">
+            <div class="filter">
+                <select>
+                    <option value="all">All Tasks</option>
+                    <option value="due-today">Due Today</option>
+                    <option value="overdue">Overdue</option>
+                    <option value="completed">Completed</option>
+                </select>
+            </div>
+            <div class="search-bar">
+                <input type="text" placeholder="Search tasks..." />
+            </div>
+        </div>
+        <div v-if="assignments.length > 0" class="dashboard-card-grid">
+            <DashboardCard v-for="(assignment, index) in assignments" :key="index" type="Assignment"
+                :title="assignment.name" />
+        </div>
+        <div v-else>
+            <h2>Please select a course to view your upcoming tasks</h2>
+        </div>
     </div>
 </template>
 
@@ -39,13 +38,17 @@ const props = defineProps({
 
 const assignments = ref([])
 const quizzes = ref([])
+const isLoading = ref(false)
 
 const getAssignmentsForCourse = async () => {
     try {
+        isLoading.value = true
         const response = await api.get(`course/${props.currentCourse}/assignments`)
         assignments.value = response.data
     } catch (error) {
         toast.error('Error fetching assignments:', error)
+    } finally {
+        isLoading.value = false
     }
 }
 
@@ -76,12 +79,14 @@ watch(
     margin-bottom: 1rem;
     margin-top: 1rem;
 }
+
 .filter select {
     background-color: $primary-background-dark;
     color: $primary-text-light;
     padding: 0.5rem;
     font-size: 1rem;
 }
+
 .search-bar input {
     background-color: $primary-background-dark;
     color: $primary-text-light;
@@ -90,6 +95,7 @@ watch(
     border: 2px solid $primary-text-light;
     outline: none;
 }
+
 .dashboard-card-grid {
     display: flex;
     flex-direction: row;
