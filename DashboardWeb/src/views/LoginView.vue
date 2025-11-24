@@ -28,14 +28,15 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { login } from '@/services/authService'
-import { isLoading } from '@/services/api.js'
 
 const email = ref('')
 const password = ref('')
 const router = useRouter()
+const isLoading = ref(false)
 
 const loginUser = async (event) => {
     event.preventDefault()
+    isLoading.value = true
 
     try {
         const user = await login({
@@ -45,6 +46,8 @@ const loginUser = async (event) => {
         router.push('/dashboard')
     } catch (error) {
         alert('Login failed: ' + error.message)
+    } finally {
+        isLoading.value = false
     }
 }
 

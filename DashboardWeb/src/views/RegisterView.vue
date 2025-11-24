@@ -37,14 +37,15 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { register } from '@/services/authService'
-import { isLoading } from '@/services/api.js'
 
 const email = ref('')
 const password = ref('')
 const confirmPassword = ref('')
 const router = useRouter()
+const isLoading = ref(false)
 
 const registerUser = async (event) => {
+    isLoading.value = true
     event.preventDefault()
 
     if (password.value !== confirmPassword.value) {
@@ -60,6 +61,8 @@ const registerUser = async (event) => {
         router.push('/login')
     } catch (error) {
         alert('Registration failed: ' + error.message)
+    } finally {
+        isLoading.value = false
     }
 }
 const goToLogin = () => {

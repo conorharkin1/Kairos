@@ -30,7 +30,7 @@
 
 <script setup>
 import { onMounted, ref } from 'vue'
-import api, { isLoading }from '@/services/api'
+import api from '@/services/api'
 import { logout, deleteAccount } from '@/services/authService'
 import { useToast } from "vue-toastification";
 
@@ -38,8 +38,10 @@ const apiKey = ref('')
 const updatedApiKey = ref('')
 const user = ref(null)
 const toast = useToast()
+const isLoading = ref(false)
 
 const getCurrentUser = async () => {
+    isLoading.value = true
     api.get('/user/self')
         .then(response => {
             user.value = response.data
@@ -47,18 +49,26 @@ const getCurrentUser = async () => {
         .catch(error => {
             toast.error('Error while fetching user:', error)
         })
+        .finally(() => {
+            isLoading.value = false
+        })
 }
 
 const saveApiKey = async () => {
+    isLoading.value = true
     api.post('/user/key', apiKey.value ).then(response => {
             toast.success('API key saved successfully')
         })
         .catch(error => {
             toast.error('Error saving API key:', error)
         })
+        .finally(() => {
+            isLoading.value = false
+        })
 }
 
 const updateApiKey = async () => {
+    isLoading.value = true
     api.post('/user/key', updatedApiKey.value ).then(response => {
             toast.success('API key updated successfully')
             updatedApiKey.value = ''
@@ -66,10 +76,13 @@ const updateApiKey = async () => {
         .catch(error => {
             toast.error('Error updating API key:', error)
         })
-        
+        .finally(() => {
+            isLoading.value = false
+        })
 }
 
 const handleDeleteAccount = async () => {
+    isLoading.value = true
     const confirmed = window.confirm('Are you sure you want to delete your account? This action cannot be undone.')
     if (confirmed) {
         try {
@@ -77,6 +90,8 @@ const handleDeleteAccount = async () => {
         } catch (error) {
             console.error('Error deleting account:', error)
             toast.error('Failed to delete account.')
+        } finally {
+            isLoading.value = false
         }
     }
 }
