@@ -62,7 +62,7 @@ const changeCourse = (courseId) => {
 .dashboard {
     display: flex;
     flex-direction: column;
-    background-color: $primary-background-dark;
+    background-color: $primary-dark-background;
 }
 .current-view-container {
     display: flex;

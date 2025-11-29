@@ -9,6 +9,7 @@ using DashboardServer.Services.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -56,8 +57,14 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IEncryptService, EncryptService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ICanvasApiService, CanvasApiService>();
+builder.Services.AddScoped<ICourseService, CourseService>();
+
+// Adding this to attempt injecting the DbContext with HttpContext so I can access the current user and create a global query filter.
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<IUserResolverService, UserResolverService>();
 
 builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<ICourseRepository, CourseRepository>();
 
 builder.Services.AddAutoMapper(cfg =>
 {

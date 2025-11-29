@@ -61,7 +61,7 @@ const goToRegister = () => {
     justify-content: center;
     align-items: center;
     min-height: 100vh;
-    background: $primary-background-dark;
+    background: $primary-dark-background;
 }
 
 .content h2 {
@@ -97,7 +97,7 @@ const goToRegister = () => {
     width: 100%;
     height: 80%;
     background: transparent;
-    border: 2px solid $primary-red-outline;
+    border: 2px solid $primary-red-colour;
     border-radius: 20px;
     outline: none;
     color: $primary-text-light;
@@ -107,7 +107,7 @@ const goToRegister = () => {
 .wrapper .btn {
     width: 100%;
     height: 45px;
-    background: $primary-red-outline;
+    background: $primary-red-colour;
     border: none;
     outline: none;
     border-radius: 20px;
@@ -146,7 +146,7 @@ const goToRegister = () => {
   padding-bottom: 8px;
   background: linear-gradient(currentColor 0 0) 0 100%/0% 3px no-repeat;
   animation: l2 2s linear infinite;
-  color: $primary-red-outline;
+  color: $primary-red-colour;
 }
 .loader:before {
   content:"Loading..."

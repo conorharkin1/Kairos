@@ -18,7 +18,7 @@ const toastOptions = {
     transition: "Vue-Toastification__fade",
     maxToasts: 10,
     newestOnTop: true,
-    timeout: 2000,
+    timeout: 3500,
     draggable: false,
     pauseOnHover: false,
     closeOnClick: true,

@@ -81,14 +81,14 @@ watch(
 }
 
 .filter select {
-    background-color: $primary-background-dark;
+    background-color: $primary-dark-background;
     color: $primary-text-light;
     padding: 0.5rem;
     font-size: 1rem;
 }
 
 .search-bar input {
-    background-color: $primary-background-dark;
+    background-color: $primary-dark-background;
     color: $primary-text-light;
     padding: 0.5rem;
     font-size: 1rem;

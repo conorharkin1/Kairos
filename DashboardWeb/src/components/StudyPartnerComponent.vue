@@ -53,8 +53,8 @@ export default {
     border-radius: 10px;
     padding: 10px;
     font-size: 1rem;
-    background-color: $primary-background-dark;
-    border: 2px solid $primary-red-outline;
+    background-color: $primary-dark-background;
+    border: 2px solid $primary-red-colour;
     color: $primary-text-light;
 }
 .ai-input input::placeholder {

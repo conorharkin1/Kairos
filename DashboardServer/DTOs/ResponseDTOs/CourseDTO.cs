@@ -9,7 +9,7 @@ namespace DashboardServer.DTOs.ResponseDTOs
         /// <summary>
         /// The unique identifier for the course.
         /// </summary>
-        public string? CourseId { get; set; }
+        public int ExternalCourseId { get; set; }
         /// <summary>
         /// The code of the course. eg. CSC3032
         /// </summary>

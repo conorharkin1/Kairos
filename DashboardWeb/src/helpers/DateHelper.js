@@ -1,7 +1,7 @@
-export function getTimeStampLongFormat() {
+export function getTimeStampLongFormat(date) {
     const options = {
         dateStyle: 'medium',
         timeStyle: 'short',
     }
-    return new Date().toLocaleString('en-IE', options)
+    return new Date(date).toLocaleString('en-IE', options)
 }

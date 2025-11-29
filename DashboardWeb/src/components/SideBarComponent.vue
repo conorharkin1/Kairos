@@ -35,14 +35,14 @@ const emit = defineEmits(['change-view'])
 
 <style scoped lang="scss">
 .profile-widget {
-    color: $primary-red-outline;
+    color: $primary-red-colour;
 }
 .side-bar-left {
     display: flex;
     flex-direction: column;
     align-items: center;
     width: 3%;
-    background-color: $primary-background-dark;
+    background-color: $primary-dark-background;
     margin-right: 1rem;
 }
 .side-bar-right {
@@ -50,7 +50,7 @@ const emit = defineEmits(['change-view'])
     flex-direction: column;
     align-items: center;
     width: 3%;
-    background-color: $primary-background-dark;
+    background-color: $primary-dark-background;
     margin-left: 1rem;
 }
 .side-bar-view {
@@ -72,9 +72,9 @@ const emit = defineEmits(['change-view'])
     position: relative;
 }
 .side-bar-view button:hover {
-    color: $primary-red-outline;
+    color: $primary-red-colour;
 }
 .side-bar-view button.selected {
-    color: $primary-red-outline;
+    color: $primary-red-colour;
 }
 </style>
