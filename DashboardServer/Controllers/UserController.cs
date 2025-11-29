@@ -16,11 +16,13 @@ namespace DashboardServer.Controllers
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly IUserService _userService;
         private readonly IMapper _mapper;
-        public UserController(UserManager<ApplicationUser> userManager, IUserService userService, IMapper mapper)
+        private readonly ICanvasApiService _canvasApiService;
+        public UserController(UserManager<ApplicationUser> userManager, IUserService userService, IMapper mapper, ICanvasApiService canvasApiService)
         {
             _userManager = userManager;
             _userService = userService;
             _mapper = mapper;
+            _canvasApiService = canvasApiService;
         }
 
         [HttpGet("self")]
@@ -54,6 +56,26 @@ namespace DashboardServer.Controllers
             {
                 return StatusCode(500, $"An error occurred while setting the API key: {ex}");
             }
+        }
+
+        [HttpPost("refresh/canvas")]
+        public async Task<IActionResult> RefreshCanvasData()
+        {
+            var userId = _userManager.GetUserId(HttpContext.User);
+            if (userId == null)
+            {
+                return Unauthorized("User not found");
+            }
+
+            try
+            {
+                await _canvasApiService.UpdateDataFromCanvasAsync(userId);
+            }
+            catch(BadHttpRequestException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            return Ok();
         }
     }
 }

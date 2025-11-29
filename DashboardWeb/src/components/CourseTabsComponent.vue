@@ -24,8 +24,8 @@ const fetchCourses = async () => {
         .then(response => {
             courses.value = response.data;
         })
-        .catch(error => {
-            toast.error('Error fetching courses:', error);
+        .catch(() => {
+            toast.error('Error fetching courses, have you refreshed your data recently?');
         })
         .finally(() => {
             isLoading.value = false
@@ -46,10 +46,10 @@ const emit = defineEmits(['change-course'])
     padding: 0.5rem 4rem 0.5rem 4rem;
 }
 .tab:hover {
-    color: $primary-red-outline;
+    color: $primary-red-colour;
 }
 
 .tab.selected {
-    color: $primary-red-outline;
+    color: $primary-red-colour;
 }
 </style>

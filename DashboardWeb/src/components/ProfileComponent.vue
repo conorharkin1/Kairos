@@ -10,29 +10,32 @@
                 <h3>Would you like to set it now?</h3>
                 <div class="key-input">
                     <input type="text" placeholder="Enter your Canvas API key" v-model="apiKey" />
-                    <button @click="saveApiKey" :disabled="!apiKey">Save API Key</button>
+                    <button class="btn-primary" @click="saveApiKey" :disabled="!apiKey" :class="{ 'btn-good': apiKey }">Save API Key</button>
                 </div>
             </div>
             <div v-else>
                 <h4>You have already set your API key, would you like to update it?</h4>
                 <div class="key-input">
                     <input type="text" placeholder="Enter a new API key" v-model="updatedApiKey" />
-                    <button @click="updateApiKey" :disabled="!updatedApiKey">Update Key</button>
+                    <button class="btn-primary" @click="updateApiKey" :disabled="!updatedApiKey" :class="{ 'btn-good': updatedApiKey }">Update Key</button>
                 </div>
             </div>
+            <h4>Last refreshed data: {{ formattedLastUpdated }}.</h4>
         </div>
         <div class="profile-footer">
-            <button @click="logout" class="btn logout-btn">Logout</button>
-            <button @click="handleDeleteAccount" class="btn delete-account-btn">Delete Account</button>
+            <button @click="logout" class="btn-primary btn-warning">Logout</button>
+            <button @click="updateDataFromCanvas" class="btn-primary btn-good" v-tooltip="'This will check the systems records against your Canvas and keep everything up to date'">Refresh Data from Canvas</button>
+            <button @click="handleDeleteAccount" class="btn-primary btn-danger">Delete Account</button>
         </div>
     </div>
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import api from '@/services/api'
 import { logout, deleteAccount } from '@/services/authService'
 import { useToast } from "vue-toastification";
+import { getTimeStampLongFormat } from '@/helpers/DateHelper'
 
 const apiKey = ref('')
 const updatedApiKey = ref('')
@@ -42,59 +45,81 @@ const isLoading = ref(false)
 
 const getCurrentUser = async () => {
     isLoading.value = true
-    api.get('/user/self')
-        .then(response => {
-            user.value = response.data
-        })
-        .catch(error => {
-            toast.error('Error while fetching user:', error)
-        })
-        .finally(() => {
-            isLoading.value = false
-        })
+
+    try {
+        const response = await api.get('/user/self');
+        user.value = response.data
+    } catch {
+        toast.error('Error while fetching user:')
+        logout()
+    } finally {
+        isLoading.value = false
+    }
 }
 
 const saveApiKey = async () => {
     isLoading.value = true
-    api.post('/user/key', apiKey.value ).then(response => {
-            toast.success('API key saved successfully')
-        })
-        .catch(error => {
-            toast.error('Error saving API key:', error)
-        })
-        .finally(() => {
-            isLoading.value = false
-        })
+
+    try {
+        await api.post('/user/key', apiKey.value);
+        toast.success('API key saved successfully')
+    } catch {
+        toast.error('Error saving API key')
+    } finally {
+        isLoading.value = false
+    }
 }
 
 const updateApiKey = async () => {
     isLoading.value = true
-    api.post('/user/key', updatedApiKey.value ).then(response => {
-            toast.success('API key updated successfully')
-            updatedApiKey.value = ''
-        })
-        .catch(error => {
-            toast.error('Error updating API key:', error)
-        })
-        .finally(() => {
-            isLoading.value = false
-        })
+
+    try {
+        await api.post('/user/key', updatedApiKey.value);
+        toast.success('API key updated successfully')
+    } catch {
+        toast.error('Error updating API key')
+    } finally {
+        isLoading.value = false
+    }
 }
 
 const handleDeleteAccount = async () => {
     isLoading.value = true
+
     const confirmed = window.confirm('Are you sure you want to delete your account? This action cannot be undone.')
     if (confirmed) {
         try {
             await deleteAccount()
         } catch (error) {
             console.error('Error deleting account:', error)
-            toast.error('Failed to delete account.')
         } finally {
             isLoading.value = false
         }
     }
 }
+
+const updateDataFromCanvas = async () => {
+    isLoading.value = true
+    
+    toast.info('Updating data from Canvas. This may take a few moments...')
+    try {
+        await api.post('/user/refresh/canvas')
+        await getCurrentUser()
+        toast.success('Data updated successfully.')
+    } catch (error) {
+        if (error.response?.data) {
+            toast.error(`${error.response.data}`);
+        } else {
+            toast.error('Error updating data from Canvas');
+        }
+    } finally {
+        isLoading.value = false
+    }
+}
+
+const formattedLastUpdated = computed(() =>
+    user.value?.lastUpdatedData ? getTimeStampLongFormat(user.value.lastUpdatedData) : 'Never refreshed'
+)
 
 onMounted(() => {
     getCurrentUser()
@@ -114,7 +139,7 @@ onMounted(() => {
     justify-content: center;
     padding: 1rem;
     width: 80%;
-    border-bottom: 1px solid $primary-red-outline;
+    border-bottom: 1px solid $primary-red-colour;
     color: $primary-text-light;
 }
 
@@ -128,20 +153,16 @@ onMounted(() => {
     color: $primary-text-light;
 }
 
+.profile-body h4 {
+    margin-top: 2rem;
+}
+
 .profile-footer {
     display: flex;
     flex-direction: row;
     justify-content: space-between;
     width: 80%;
     margin-bottom: 2rem;
-}
-
-.profile-footer .btn {
-    padding: 0.5rem;
-    border: none;
-    border-radius: 5px;
-    width: 20%;
-    font-weight: 600;
 }
 
 .key-input {
@@ -156,15 +177,8 @@ onMounted(() => {
 
     button {
         margin-left: 0.5rem;
+        width: 30%;
     }
-}
-
-.logout-btn {
-    cursor: pointer;
-}
-.delete-account-btn {
-    background-color: $primary-red-outline;
-    cursor: pointer;
 }
 
 .loading-container {
@@ -180,7 +194,7 @@ onMounted(() => {
   padding-bottom: 8px;
   background: linear-gradient(currentColor 0 0) 0 100%/0% 3px no-repeat;
   animation: l2 2s linear infinite;
-  color: $primary-red-outline;
+  color: $primary-red-colour;
 }
 .loader:before {
   content:"Loading..."

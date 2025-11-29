@@ -20,26 +20,29 @@ namespace DashboardServer.Controllers
         private readonly IMapper _mapper;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly ICanvasApiService _canvasApiService;
+        private readonly ICourseService _courseService;
 
-        public CourseController(IMapper mapper, UserManager<ApplicationUser> userManager, ICanvasApiService canvasApiService)
+        public CourseController(IMapper mapper, UserManager<ApplicationUser> userManager, ICanvasApiService canvasApiService, ICourseService courseService)
         {
             _mapper = mapper;
             _userManager = userManager;
             _canvasApiService = canvasApiService;
+            _courseService = courseService;
         }
 
         [HttpGet("")]
-        public async Task<IActionResult> GetCourses()
+        public async Task<IActionResult> GetAllCourses()
         {
             string? userId = _userManager.GetUserId(HttpContext.User);
             if (userId == null)
             {
                 return Unauthorized("User not found");
             }
-            var canvasCourseDtos = await _canvasApiService.GetFavoriteCoursesAsync(userId);
-            var courses = _mapper.Map<List<CourseModel>>(canvasCourseDtos);
 
-            return Ok(_mapper.Map<List<CourseDTO>>(courses));
+            var courses = await _courseService.GetCoursesAsync(userId);
+            var courseDtos = _mapper.Map<List<CourseDTO>>(courses);
+
+            return Ok(courseDtos);
         }
 
         [HttpGet("{courseId}/assignments")]
@@ -50,9 +53,38 @@ namespace DashboardServer.Controllers
             {
                 return Unauthorized("User not found");
             }
-            var canvasAssignmentDtos = await _canvasApiService.GetCourseAssignmentsAsync(userId, courseId);
-            var assignments = _mapper.Map<List<AssignmentModel>>(canvasAssignmentDtos);
-            return Ok(_mapper.Map<List<AssignmentDTO>>(assignments));
+
+            var assignments = await _courseService.GetCourseAssignmentsAsync(userId, courseId);
+            var assignmentDtos = _mapper.Map<List<AssignmentDTO>>(assignments);
+
+            return Ok(assignmentDtos);
         }
+
+        // [HttpGet("canvas")]
+        // public async Task<IActionResult> GetCoursesFromCanvas()
+        // {
+        //     string? userId = _userManager.GetUserId(HttpContext.User);
+        //     if (userId == null)
+        //     {
+        //         return Unauthorized("User not found");
+        //     }
+        //     var canvasCourseDtos = await _canvasApiService.GetFavoriteCoursesFromCanvasAsync(userId);
+        //     var courses = _mapper.Map<List<CourseModel>>(canvasCourseDtos);
+
+        //     return Ok(_mapper.Map<List<CourseDTO>>(courses));
+        // }
+
+        // [HttpGet("canvas/{courseId}/assignments")]
+        // public async Task<IActionResult> GetCourseAssignmentsFromCanvas(int courseId)
+        // {
+        //     string? userId = _userManager.GetUserId(HttpContext.User);
+        //     if (userId == null)
+        //     {
+        //         return Unauthorized("User not found");
+        //     }
+        //     var canvasAssignmentDtos = await _canvasApiService.GetCourseAssignmentsFromCanvasAsync(userId, courseId);
+        //     var assignments = _mapper.Map<List<AssignmentModel>>(canvasAssignmentDtos);
+        //     return Ok(_mapper.Map<List<AssignmentDTO>>(assignments));
+        // }
     }
 }

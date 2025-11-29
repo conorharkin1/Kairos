@@ -11,7 +11,7 @@ namespace DashboardServer.DTOs.ResponseDTOs
         /// <summary>
         /// The unique identifier for the assignment.
         /// </summary>
-        public int AssignmentId { get; set; }
+        public int ExternalAssignmentId { get; set; }
         /// <summary>
         /// Foreign key for the course this assignment belongs to.
         /// </summary>
