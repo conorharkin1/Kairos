@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace DashboardServer.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20251129174051_ChangeExternalCourseIdToNullableInt")]
-    partial class ChangeExternalCourseIdToNullableInt
+    [Migration("20251209215056_MakeLastUpdatedDataNullable")]
+    partial class MakeLastUpdatedDataNullable
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -53,7 +53,7 @@ namespace DashboardServer.Migrations
                     b.Property<string>("LastName")
                         .HasColumnType("text");
 
-                    b.Property<DateTime>("LastUpdatedData")
+                    b.Property<DateTime?>("LastUpdatedData")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<bool>("LockoutEnabled")
@@ -115,8 +115,8 @@ namespace DashboardServer.Migrations
                     b.Property<string>("Description")
                         .HasColumnType("text");
 
-                    b.Property<int>("DueDate")
-                        .HasColumnType("integer");
+                    b.Property<DateTime?>("DueDate")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<int?>("ExternalAssignmentId")
                         .HasColumnType("integer");

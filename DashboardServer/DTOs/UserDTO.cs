@@ -7,6 +7,6 @@ namespace DashboardServer.DTOs
         public string? FirstName { get; set; }
         public string? LastName { get; set; }
         public bool IsApiKeySet { get; set; }
-        public DateTime LastUpdatedData { get; set; }
+        public DateTime? LastUpdatedData { get; set; }
     }
 }

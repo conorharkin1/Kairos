@@ -50,7 +50,7 @@ namespace DashboardServer.Migrations
                     b.Property<string>("LastName")
                         .HasColumnType("text");
 
-                    b.Property<DateTime>("LastUpdatedData")
+                    b.Property<DateTime?>("LastUpdatedData")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<bool>("LockoutEnabled")
@@ -112,8 +112,8 @@ namespace DashboardServer.Migrations
                     b.Property<string>("Description")
                         .HasColumnType("text");
 
-                    b.Property<int>("DueDate")
-                        .HasColumnType("integer");
+                    b.Property<DateTime?>("DueDate")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<int?>("ExternalAssignmentId")
                         .HasColumnType("integer");

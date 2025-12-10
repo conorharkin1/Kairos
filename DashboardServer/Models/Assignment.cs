@@ -9,7 +9,7 @@ namespace DashboardServer.Models
         public Course? Course { get; set; }
         public string? Name { get; set; }
         public string? Description { get; set; }
-        public DueDate DueDate { get; set; }
+        public DateTime? DueDate { get; set; }
         public string? HtmlUrl { get; set; }
     }
 }

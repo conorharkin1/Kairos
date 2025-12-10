@@ -1,5 +1,5 @@
 <template>
-    <div v-if="isLoading"class="loading-container loader"></div>
+    <div v-if="isLoading" class="loading-container loader"></div>
     <div v-else>
         <div class="header">
             <div class="filter">
@@ -11,12 +11,15 @@
                 </select>
             </div>
             <div class="search-bar">
-                <input type="text" placeholder="Search tasks..." />
+                <input type="text" placeholder="Search ..." />
             </div>
+            <button>Add new</button>
         </div>
         <div v-if="assignments.length > 0" class="dashboard-card-grid">
-            <DashboardCard v-for="(assignment, index) in assignments" :key="index" type="Assignment"
-                :title="assignment.name" />
+            <DashboardCard v-for="(assignment, index) in assignments" :key="index" 
+                type="Assignment"
+                :title="assignment.name" :dueDate="assignment.dueDate" :description="assignment.description"  :htmlUrl="assignment.htmlUrl"
+                @save="(updatedData) => saveAssignment(assignment.id, updatedData)" />
         </div>
         <div v-else>
             <h2>Please select a course to view your upcoming tasks</h2>
@@ -61,6 +64,17 @@ const getQuizzesForCourse = async () => {
     }
 }
 
+const saveAssignment = async (id, updatedData) => {
+    toast.success(`Assignment updated successfully: ${updatedData.title}`)
+    // try {
+    //     await api.put(`assignments/${id}`, { name: updatedTitle })
+    //     toast.success(`Assignment updated successfully: ${updatedTitle}`)
+    //     getAssignmentsForCourse()
+    // } catch (error) {
+    //     toast.error('Error updating assignment:', error)
+    // }
+}
+
 watch(
     () => props.currentCourse,
     () => {
@@ -78,6 +92,7 @@ watch(
     gap: 1rem;
     margin-bottom: 1rem;
     margin-top: 1rem;
+    padding-left: 1rem;
 }
 
 .filter select {
@@ -100,7 +115,8 @@ watch(
     display: flex;
     flex-direction: row;
     overflow-x: auto;
-    gap: 1rem;
+    gap: 2rem;
+    padding: 1rem;
     height: 100%;
 }
 </style>
