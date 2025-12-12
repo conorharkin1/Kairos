@@ -20,18 +20,27 @@ namespace DashboardServer.Data
 
         public DbSet<Course> Courses { get; set; }
         public DbSet<Assignment> Assignments { get; set; }
+        public DbSet<Quiz> Quizzes { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
 
-            builder.Entity<Course>().HasQueryFilter(c => c.UserId == CurrentUserId)
+            builder.Entity<Course>()
+                .HasQueryFilter(c => c.UserId == CurrentUserId)
                 .HasMany(c => c.Assignments)
-                .WithOne(a => a.Course)
-                .HasForeignKey(a => a.CourseId)
-                .OnDelete(DeleteBehavior.Cascade);
+                    .WithOne(a => a.Course)
+                    .HasForeignKey(a => a.CourseId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<Course>()
+                .HasMany(c => c.Quizzes)
+                    .WithOne(q => q.Course)
+                    .HasForeignKey(q => q.CourseId)
+                    .OnDelete(DeleteBehavior.Cascade);
 
             builder.Entity<Assignment>().HasQueryFilter(a => a.UserId == CurrentUserId);
+            builder.Entity<Quiz>().HasQueryFilter(q => q.UserId == CurrentUserId);
         }
     }
 }

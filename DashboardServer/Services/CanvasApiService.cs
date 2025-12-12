@@ -37,8 +37,29 @@ namespace DashboardServer.Services
         public async Task<List<CanvasAssignmentDTO>> GetCourseAssignmentsFromCanvasAsync(string userId, int courseId)
         {
             await AddAuthHeaderAsync(userId);
-            var assignments = await _httpClient.GetFromJsonAsync<List<CanvasAssignmentDTO>>($"/api/v1/courses/{courseId}/assignments");
-            return assignments ?? [];
+            try
+            {
+                var assignments = await _httpClient.GetFromJsonAsync<List<CanvasAssignmentDTO>>($"/api/v1/courses/{courseId}/assignments");
+                return assignments ?? [];
+            }
+            catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
+            {
+                return [];
+            }
+        }
+
+        public async Task<List<CanvasQuizDTO>> GetCourseQuizzesFromCanvasAsync(string userId, int courseId)
+        {
+            await AddAuthHeaderAsync(userId);
+            try
+            {
+                var quizzes = await _httpClient.GetFromJsonAsync<List<CanvasQuizDTO>>($"/api/v1/courses/{courseId}/quizzes");
+                return quizzes ?? [];
+            }
+            catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
+            {
+                return [];
+            }
         }
 
         private async Task AddAuthHeaderAsync(string userId)
@@ -109,6 +130,37 @@ namespace DashboardServer.Services
             await _dbContext.SaveChangesAsync();
         }
 
+        private async Task UpdateQuizzesDataAsync(string userId)
+        {
+            var dbCanvasCourses = await _dbContext.Courses.Where(c => c.ExternalCourseId.HasValue).ToListAsync();
+
+            foreach(var course in dbCanvasCourses)
+            {
+                var existingCanvasQuizzes = await _dbContext.Quizzes.Where(q => q.CourseId == course.Id && q.ExternalQuizId.HasValue).ToDictionaryAsync(q => q.ExternalQuizId.Value, q => q);
+
+                var incomingCanvasQuizzes = _mapper.Map<List<Quiz>>(await GetCourseQuizzesFromCanvasAsync(userId, course.ExternalCourseId.Value));
+
+                foreach (var quiz in incomingCanvasQuizzes)
+                {
+                    quiz.CourseId = course.Id;
+
+                    if (!existingCanvasQuizzes.TryGetValue(quiz.ExternalQuizId.Value, out var existingQuiz))
+                    {
+                        // Insert new
+                        quiz.UserId = userId;
+                        await _dbContext.Quizzes.AddAsync(quiz);
+                    }
+                    else
+                    {
+                        // Update existing
+                        _mapper.Map(quiz, existingQuiz);
+                    }
+                }
+            }
+
+            await _dbContext.SaveChangesAsync();
+        }
+
         public async Task UpdateDataFromCanvasAsync(string userId)
         {
             var user = await _dbContext.Users.FindAsync(userId);
@@ -118,6 +170,7 @@ namespace DashboardServer.Services
             }
             await UpdateCoursesDataAsync(userId);
             await UpdateAssignmentsDataAsync(userId);
+            await UpdateQuizzesDataAsync(userId);
 
             user!.LastUpdatedData = DateTime.UtcNow;
             await _dbContext.SaveChangesAsync();

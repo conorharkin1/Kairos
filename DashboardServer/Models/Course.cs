@@ -6,5 +6,6 @@ namespace DashboardServer.Models
         public string? CourseCode { get; set; }
         public string? Name { get; set; }
         public ICollection<Assignment>? Assignments { get; set; }
+        public ICollection<Quiz>? Quizzes { get; set; }
     }
 }

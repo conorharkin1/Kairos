@@ -161,6 +161,43 @@ namespace DashboardServer.Migrations
                     b.ToTable("Courses");
                 });
 
+            modelBuilder.Entity("DashboardServer.Models.Quiz", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CourseId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("DueDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("ExternalQuizId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("HtmlUrl")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("LockDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("text");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CourseId");
+
+                    b.ToTable("Quizzes");
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
                 {
                     b.Property<string>("Id")
@@ -304,6 +341,17 @@ namespace DashboardServer.Migrations
                     b.Navigation("Course");
                 });
 
+            modelBuilder.Entity("DashboardServer.Models.Quiz", b =>
+                {
+                    b.HasOne("DashboardServer.Models.Course", "Course")
+                        .WithMany("Quizzes")
+                        .HasForeignKey("CourseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Course");
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
@@ -358,6 +406,8 @@ namespace DashboardServer.Migrations
             modelBuilder.Entity("DashboardServer.Models.Course", b =>
                 {
                     b.Navigation("Assignments");
+
+                    b.Navigation("Quizzes");
                 });
 #pragma warning restore 612, 618
         }
