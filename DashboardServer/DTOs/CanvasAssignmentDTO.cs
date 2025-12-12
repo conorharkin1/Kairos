@@ -10,8 +10,8 @@ namespace DashboardServer.DTOs
         public int id { get; set; }
         public int course_id { get; set; }
         public string? name { get; set; }
-        // public string? description { get; set; }
-        // public DueDate due_at { get; set; }
-        // public string? html_url { get; set; }
+        public string? description { get; set; }
+        public DateTimeOffset? due_at { get; set; }
+        public string? html_url { get; set; }
     }
 }

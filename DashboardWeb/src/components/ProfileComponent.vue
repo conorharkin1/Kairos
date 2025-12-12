@@ -5,9 +5,8 @@
             <h2>Hello, {{ user.firstName}}</h2>
         </div>
         <div class="profile-body">
-            <div v-if="!user.isApiKeySet" class="key-input">
-                <h3>It appears you haven't set your Canvas API key yet,</h3>
-                <h3>Would you like to set it now?</h3>
+            <div v-if="!user.isApiKeySet">
+                <h3>It appears you haven't set your Canvas API key yet, would you like to set it now?</h3>
                 <div class="key-input">
                     <input type="text" placeholder="Enter your Canvas API key" v-model="apiKey" />
                     <button class="btn-primary" @click="saveApiKey" :disabled="!apiKey" :class="{ 'btn-good': apiKey }">Save API Key</button>
@@ -20,7 +19,7 @@
                     <button class="btn-primary" @click="updateApiKey" :disabled="!updatedApiKey" :class="{ 'btn-good': updatedApiKey }">Update Key</button>
                 </div>
             </div>
-            <h4>Last refreshed data: {{ formattedLastUpdated }}.</h4>
+            <h4 v-if="user.isApiKeySet">Last refreshed data: {{ formattedLastUpdated }}.</h4>
         </div>
         <div class="profile-footer">
             <button @click="logout" class="btn-primary btn-warning">Logout</button>
@@ -35,7 +34,7 @@ import { computed, onMounted, ref } from 'vue'
 import api from '@/services/api'
 import { logout, deleteAccount } from '@/services/authService'
 import { useToast } from "vue-toastification";
-import { getTimeStampLongFormat } from '@/helpers/DateHelper'
+import { convertToUTC, convertToAppTimezone } from "@/utils/dayjsUtils";
 
 const apiKey = ref('')
 const updatedApiKey = ref('')
@@ -62,6 +61,7 @@ const saveApiKey = async () => {
 
     try {
         await api.post('/user/key', apiKey.value);
+        getCurrentUser()
         toast.success('API key saved successfully')
     } catch {
         toast.error('Error saving API key')
@@ -106,6 +106,7 @@ const updateDataFromCanvas = async () => {
         await api.post('/user/refresh/canvas')
         await getCurrentUser()
         toast.success('Data updated successfully.')
+        toast.warning('Please refresh the page for changes to take effect.')
     } catch (error) {
         if (error.response?.data) {
             toast.error(`${error.response.data}`);
@@ -118,7 +119,7 @@ const updateDataFromCanvas = async () => {
 }
 
 const formattedLastUpdated = computed(() =>
-    user.value?.lastUpdatedData ? getTimeStampLongFormat(user.value.lastUpdatedData) : 'Never refreshed'
+    user.value?.lastUpdatedData ? convertToAppTimezone(user.value.lastUpdatedData).format('DD/MM/YYYY HH:mm') : 'Never refreshed'
 )
 
 onMounted(() => {

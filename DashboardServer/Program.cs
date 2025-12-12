@@ -58,6 +58,7 @@ builder.Services.AddScoped<IEncryptService, EncryptService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ICanvasApiService, CanvasApiService>();
 builder.Services.AddScoped<ICourseService, CourseService>();
+builder.Services.AddScoped<IAssignmentService, AssignmentService>();
 
 // Adding this to attempt injecting the DbContext with HttpContext so I can access the current user and create a global query filter.
 builder.Services.AddHttpContextAccessor();
@@ -65,6 +66,7 @@ builder.Services.AddScoped<IUserResolverService, UserResolverService>();
 
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<ICourseRepository, CourseRepository>();
+builder.Services.AddScoped<IAssignmentRepository, AssignmentRepository>();
 
 builder.Services.AddAutoMapper(cfg =>
 {

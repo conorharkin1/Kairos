@@ -17,8 +17,8 @@ namespace DashboardServer.DTOs.ResponseDTOs
         /// </summary>
         public int CourseId { get; set; }
         public string? Name { get; set; }
+        public DateTime? DueDate { get; set; }
         public string? Description { get; set; }
-        public DueDate DueDate { get; set; }
         public string? HtmlUrl { get; set; }
     }
 }

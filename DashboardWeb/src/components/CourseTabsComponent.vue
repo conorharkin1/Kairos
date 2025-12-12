@@ -1,7 +1,7 @@
 <template>
     <div v-if="isLoading" class="loading-container loader"></div>
-    <div v-for="(course, index) in courses" :key="index" @click="$emit('change-course', course.id)" class="tab" :class="{ 'selected': course.id === currentCourse }">
-        {{ course.courseCode }}
+    <div v-for="(course, index) in courses" :key="index" @click="$emit('change-course', course.id)" class="tab btn-primary" :class="{ 'selected': course.id === currentCourse }">
+        <h3>{{ course.courseCode }}</h3>
     </div>
 </template>
 
@@ -14,39 +14,22 @@ const toast = useToast()
 
 const props = defineProps({
     currentCourse: Number,
+    courses: Array,
 })
-const courses = ref([])
+
 const isLoading = ref(false)
-
-const fetchCourses = async () => {
-    isLoading.value = true
-    api.get('course')
-        .then(response => {
-            courses.value = response.data;
-        })
-        .catch(() => {
-            toast.error('Error fetching courses, have you refreshed your data recently?');
-        })
-        .finally(() => {
-            isLoading.value = false
-        });
-}
-
-onMounted(() => {
-    fetchCourses()
-})
 
 const emit = defineEmits(['change-course'])
 </script>
 
 <style scoped lang="scss">
 .tab {
-    border-right: 2px solid $primary-text-light;
-    cursor: pointer;
-    padding: 0.5rem 4rem 0.5rem 4rem;
+    text-align: center;
+    width: 10rem;
 }
 .tab:hover {
     color: $primary-red-colour;
+    box-shadow: 0 4px 8px 0 $primary-red-colour;
 }
 
 .tab.selected {

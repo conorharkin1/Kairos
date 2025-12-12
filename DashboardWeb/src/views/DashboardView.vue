@@ -1,5 +1,6 @@
 <template>
-    <div class="dashboard">
+    <div v-if="isLoading" class="loading-container loader"></div>
+    <div v-else class="dashboard">
         <div class="current-view-container">
             <SideBarComponent
                 :sidebarViewsLeft="sidebarViewsLeft"
@@ -16,24 +17,27 @@
             />
         </div>
         <div class="course-tabs">
-            <CourseTabsComponent @change-course="changeCourse" :currentCourse="currentCourse"/>
+            <CourseTabsComponent @change-course="changeCourse" :currentCourse="currentCourse" :courses="courses"/>
         </div>
         <div class="todo-grid">
-            <TodoGridComponent :currentCourse="currentCourse"/>
+            <TodoGridComponent :currentCourse="currentCourse" :courses="courses"/>
         </div>
     </div>
 </template>
 
 <script setup>
-import { ref, shallowRef } from 'vue'
+import { ref, shallowRef, onMounted } from 'vue'
 import ProfileComponent from '@/components/ProfileComponent.vue'
 import SideBarComponent from '@/components/SideBarComponent.vue'
 import CalendarComponent from '@/components/CalendarComponent.vue'
 import CourseTabsComponent from '@/components/CourseTabsComponent.vue'
 import TodoGridComponent from '@/components/TodoGridComponent.vue'
+import api from '../services/api.js'
 
+const isLoading = ref(false)
 const currentView = shallowRef(ProfileComponent)
 const currentCourse = ref(0)
+const courses = ref([])
 
 const sidebarViewsLeft = [
     { icon: 'iconoir:profile-circle', height: 30, width: 30, tooltip: 'Profile', view: ProfileComponent },
@@ -44,6 +48,20 @@ const sidebarViewsRight = [
     { icon: 'la:download', width: 30, height: 30, tooltip: 'Export Study Guide', /*view: TodoGridComponent,*/ },
     { icon: 'icon-park-outline:redo', width: 30, height: 30, tooltip: 'Redo Study Guide', /*view: TodoGridComponent,*/ },
 ]
+
+const fetchCourses = async () => {
+    isLoading.value = true
+    await api.get('course')
+        .then(response => {
+            courses.value = response.data;
+        })
+        .catch(() => {
+            toast.error('Error fetching courses, have you refreshed your data recently?');
+        })
+        .finally(() => {
+            isLoading.value = false
+        });
+}
 
 const changeView = (view) => {
     if (view && view !== currentView.value) {
@@ -56,6 +74,11 @@ const changeCourse = (courseId) => {
         currentCourse.value = courseId
     }
 }
+
+onMounted(() => {
+    fetchCourses()
+})
+
 </script>
 
 <style scoped lang="scss">
@@ -79,7 +102,7 @@ const changeCourse = (courseId) => {
     color: $primary-text-light;
     border: 2px solid $primary-text-light;
     text-wrap: nowrap;
-    height: 4vh;
+    height: 5vh;
 }
 .todo-grid {
     display: flex;

@@ -1,4 +1,6 @@
 $primary-dark-background: #141414;
+$primary-grey-background: #181717;
+$primary-light-grey-colour: #242222;
 $primary-red-colour: #ff5252;
 $primary-green-colour: #4caf50;
 $primary-blue-colour: #2196f3;
@@ -52,4 +54,8 @@ $primary-font-family: "Lato", Helvetica, "Roboto", Arial, sans-serif !default;
 .btn-warning {
     background-color: $primary-yellow-colour;
     color: $primary-text-dark;
+}
+.btn-grey {
+    background-color: $primary-light-grey-colour;
+    color: $primary-text-light;
 }
