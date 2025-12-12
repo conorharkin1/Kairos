@@ -34,7 +34,7 @@ import { computed, onMounted, ref } from 'vue'
 import api from '@/services/api'
 import { logout, deleteAccount } from '@/services/authService'
 import { useToast } from "vue-toastification";
-import { getTimeStampLongFormat } from '@/helpers/DateHelper'
+import { convertToUTC, convertToAppTimezone } from "@/utils/dayjsUtils";
 
 const apiKey = ref('')
 const updatedApiKey = ref('')
@@ -119,7 +119,7 @@ const updateDataFromCanvas = async () => {
 }
 
 const formattedLastUpdated = computed(() =>
-    user.value?.lastUpdatedData ? getTimeStampLongFormat(user.value.lastUpdatedData) : 'Never refreshed'
+    user.value?.lastUpdatedData ? convertToAppTimezone(user.value.lastUpdatedData).format('DD/MM/YYYY HH:mm') : 'Never refreshed'
 )
 
 onMounted(() => {

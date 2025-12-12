@@ -11,7 +11,7 @@
 </template>
 
 <script>
-import { getTimeStampLongFormat } from '../helpers/DateHelper'
+import { getTimeStampLongFormat } from '../utils/dayjsUtils'
 
 export default {
     data() {

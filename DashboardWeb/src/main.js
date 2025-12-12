@@ -11,6 +11,10 @@ import 'floating-vue/dist/style.css'
 
 // Toast notification library
 import Toast from "vue-toastification";
+import 'vue-select/dist/vue-select.css';
+
+// Vue select
+import vSelect from 'vue-select'
 
 const app = createApp(App)
 
@@ -26,11 +30,17 @@ const toastOptions = {
 }
 
 app.use(router)
+
 // Icons
 app.component('Icon', Icon)
-// Toast notifications
-app.use(Toast, toastOptions);
+
 // Tooltips
 app.use(FloatingVue)
+
+// Toast notifications
+app.use(Toast, toastOptions);
+
+// Vue select
+app.component('v-select', vSelect)
 
 app.mount('#app')
