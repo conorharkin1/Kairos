@@ -95,71 +95,59 @@ const selectedDescription = ref('')
 const selectedUrl = ref('')
 
 const getAssignmentsForCourse = async () => {
+    isLoading.value = true
+
     try {
-        isLoading.value = true
         const response = await api.get(`course/${props.currentCourse}/assignments`)
         assignments.value = response.data
     } catch (error) {
-        toast.error('Error fetching assignments:', error)
+        toast.error('Error fetching assignments')
     } finally {
         isLoading.value = false
     }
 }
 
 const getQuizzesForCourse = async () => {
+    isLoading.value = true
+
     try {
         const response = await api.get(`course/${props.currentCourse}/quizzes`)
         quizzes.value = response.data
     } catch (error) {
-        toast.error('Error fetching quizzes:', error)
+        toast.error('Error fetching quizzes')
+    } finally {
+        isLoading.value = false;
     }
 }
 
 const saveAssignment = async (id, updatedData) => {
+    isLoading.value = true;
+
+    const payload = {
+        name: updatedData.title,
+        dueDate: convertToUTC(updatedData.dueDate),
+        //description: updatedData.description,
+        htmlUrl: updatedData.htmlUrl
+    }
+
     try {
-        await api.put(`assignment/${id}`, {
-            name: updatedData.title,
-            dueDate: convertToUTC(updatedData.dueDate),
-            //description: updatedData.description,
-            htmlUrl: updatedData.htmlUrl
-        })
-        .then(() => {
-            toast.success(`Assignment updated successfully: ${updatedData.title}`)
-            getAssignmentsForCourse()
-        })
-        .catch((error) => {
-            toast.error('Error updating assignment:', error);
-        })
-        .finally(() => {
-            isLoading.value = false
-        });
+        await api.put(`assignment/${id}`, payload);
+        toast.success(`Assignment updated successfully: ${updatedData.title}`)
+        await getAssignmentsForCourse()
     } catch (error) {
-        toast.error('Error updating assignment:', error)
+        toast.error('Error updating assignment')
+    } finally {
+        isLoading.value = false;
     }
 }
 
 const addNew = async () => {
     isLoading.value = true
+
     switch (selectedType.value) {
         case 'Assignment':
-            await api.post('assignment', {
-                courseId: selectedCourseId.value,
-                name: selectedTitle.value,
-                dueDate: convertToUTC(selectedDueDate.value),
-                description: selectedDescription.value,
-                htmlUrl: selectedUrl.value,
-            })
-                .then(response => {
-                    getAssignmentsForCourse()
-                    toast.success('Assignment created successfully!')
-                    toggleCreateView()
-                })
-                .catch((error) => {
-                    toast.error('Error creating assignment:', error);
-                })
-                .finally(() => {
-                    isLoading.value = false
-                });
+            await createAssignment();
+            isLoading.value = false;
             break
         case 'Quiz':
             break
@@ -169,16 +157,41 @@ const addNew = async () => {
             isLoading.value = false
             break
     }
-    // Implement API call to create new task
+    
+}
+
+const createAssignment = async () => {
+    try {
+        const payload = {
+            courseId: selectedCourseId.value,
+            name: selectedTitle.value,
+            dueDate: convertToUTC(selectedDueDate.value),
+            description: selectedDescription.value,
+            htmlUrl: selectedUrl.value,
+        }
+        await api.post('assignment', payload);
+        
+        await getAssignmentsForCourse()
+        
+        toast.success('Assignment created successfully')
+        toggleCreateView()
+
+    } catch (error) {
+        toast.error('Error creating assignment')
+    }
 }
 
 const deleteAssignment = async (id) => {
+    isLoading.value = true;
+
     try {
         await api.delete(`assignment/${id}`)
         toast.success('Assignment deleted successfully')
         getAssignmentsForCourse()
     } catch (error) {
         toast.error('Error deleting assignment:', error)
+    } finally {
+        isLoading.value = false;
     }
 }
 
@@ -188,6 +201,7 @@ const toggleCreateView = () => {
 
 watch(() => props.currentCourse, getAssignmentsForCourse);
 
+// Handle initialising / destroying the flatpickr instance.
 watch(creatingViewVisible, async (visible) => {
     if (!visible) {
         fp?.destroy();
