@@ -22,7 +22,7 @@
             <h4 v-if="user.isApiKeySet">Last refreshed data: {{ formattedLastUpdated }}.</h4>
         </div>
         <div class="profile-footer">
-            <button @click="logout" class="btn-primary btn-warning">Logout</button>
+            <button @click="logout" class="btn-primary btn-grey">Logout</button>
             <button @click="updateDataFromCanvas" class="btn-primary btn-good" v-tooltip="'This will check the systems records against your Canvas and keep everything up to date'">Refresh Data from Canvas</button>
             <button @click="handleDeleteAccount" class="btn-primary btn-danger">Delete Account</button>
         </div>

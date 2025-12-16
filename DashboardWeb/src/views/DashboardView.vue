@@ -94,7 +94,7 @@ onMounted(() => {
 }
 .course-tabs {
     display: flex;
-    overflow-x: auto;
+    overflow: hidden;
     flex-direction: row;
     align-items: center;
     width: 100%;

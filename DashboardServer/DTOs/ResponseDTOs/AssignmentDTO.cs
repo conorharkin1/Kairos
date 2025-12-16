@@ -1,4 +1,4 @@
-using Microsoft.VisualBasic;
+using System.ComponentModel.DataAnnotations;
 
 namespace DashboardServer.DTOs.ResponseDTOs
 {
@@ -12,13 +12,16 @@ namespace DashboardServer.DTOs.ResponseDTOs
         /// The unique identifier for the assignment.
         /// </summary>
         public int ExternalAssignmentId { get; set; }
-        /// <summary>
-        /// Foreign key for the course this assignment belongs to.
-        /// </summary>
         public int CourseId { get; set; }
+        
+        [Required(ErrorMessage = "Assignment name is required")]
         public string? Name { get; set; }
+        
+        [Required(ErrorMessage = "Due date is required")]
         public DateTime? DueDate { get; set; }
+        
         public string? Description { get; set; }
+        
         public string? HtmlUrl { get; set; }
     }
 }

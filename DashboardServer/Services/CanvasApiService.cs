@@ -186,10 +186,10 @@ namespace DashboardServer.Services
         public async Task UpdateDataFromCanvasAsync(string userId)
         {
             var user = await _dbContext.Users.FindAsync(userId);
-            // if (DateTime.UtcNow - user!.LastUpdatedData < TimeSpan.FromMinutes(10))
-            // {
-            //     throw new BadHttpRequestException("Your data was updated less than 10 minutes ago, please wait before refreshing again.");
-            // }
+            if ((DateTime.UtcNow - user!.LastUpdatedData) < TimeSpan.FromMinutes(10))
+            {
+                throw new BadHttpRequestException("Your data was updated less than 10 minutes ago, please wait before refreshing again.");
+            }
             await UpdateCoursesDataAsync(userId);
             await UpdateAssignmentsDataAsync(userId);
             await UpdateQuizzesDataAsync(userId);

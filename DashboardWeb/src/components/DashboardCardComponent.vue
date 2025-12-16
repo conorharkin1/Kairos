@@ -1,5 +1,5 @@
 <template>
-    <div class="card">
+    <div class="card" :class="{ 'assignment': type === 'Assignment', 'quiz': type === 'Quiz' }">
         <div class="header card-type">
             <Icon class="btn-primary delete-btn" icon="fluent:delete-32-light" width="32" height="32" @click="emit('delete', id)"/>
             <h2>{{ type }}</h2>
@@ -12,9 +12,15 @@
             <h3 v-if="!isEditing">{{ title }}</h3>
             <input v-else v-model="updatedData.title" class="input-field" placeholder="Title..."/>
         </div>
-        <div class="card-due-date">
+        <div class="card-due-date" v-if="type === 'Assignment'">
             <h2 v-if="!isEditing">Due on: {{ formattedDueDate }}</h2>
             <input v-else ref="dueDateInput" class="input-field" v-model="updatedData.dueDate" type="text" placeholder="Due date..." />
+        </div>
+        <div class="card-due-date" v-else-if="type === 'Quiz'">
+            <h2 v-if="!isEditing">Due on: {{ formattedDueDate }}</h2>
+            <input v-else ref="dueDateInput" class="input-field" v-model="updatedData.dueDate" type="text" placeholder="Due date..." />
+            <h2 v-if="!isEditing">Locked on: {{ formattedLockDate }}</h2>
+            <input v-else ref="lockDateInput" class="input-field" v-model="updatedData.lockDate" type="text" placeholder="Lock date..." />
         </div>
         <div class="card-body">
             <a v-if="!isEditing" :href="htmlUrl" target="_blank">Go to {{ type }}</a>
@@ -38,12 +44,15 @@ const isEditing = ref(false)
 const updatedData = ref({})
 
 const dueDateInput = ref(null);
-let fp = null;
+const lockDateInput = ref(null);
+let dueDateFp = null;
+let lockDateFp = null;
 
 const props = defineProps({
     type: String,
     title: String,
     dueDate: String,
+    lockDate: String,
     description: String,
     htmlUrl: String,
 })
@@ -53,6 +62,9 @@ const emit = defineEmits(['save', 'delete'])
 const formattedDueDate = computed(() =>
     props.dueDate ? convertToAppTimezone(props.dueDate).format('DD/MM/YYYY HH:mm') : 'No due date'
 )
+const formattedLockDate = computed(() =>
+    props.lockDate ? convertToAppTimezone(props.lockDate).format('DD/MM/YYYY HH:mm') : 'No lock date'
+)
 
 function toggleEditMode() {
     isEditing.value = !isEditing.value
@@ -60,12 +72,16 @@ function toggleEditMode() {
 
 watch(isEditing, async (editing) => {
     if (!editing) {
-        fp?.destroy();
+        dueDateFp?.destroy();
         return;
     }
 
     await nextTick();
-    fp = flatpickr(dueDateInput.value, {
+    dueDateFp = flatpickr(dueDateInput.value, {
+        enableTime: true,
+        dateFormat: "Y-m-d H:i",
+    });
+    lockDateFp = flatpickr(lockDateInput.value, {
         enableTime: true,
         dateFormat: "Y-m-d H:i",
     });
@@ -80,15 +96,24 @@ watch(isEditing, async (editing) => {
     max-width: 28rem;
     min-width: 28rem;
     min-height: 20rem;
+    max-height: 450px;
     background-color: $primary-grey-background;
     color: $primary-text-light;
     height: 90%;
     border-radius: 10px;
-    border-left: solid 4px $primary-red-colour;
 }
 
-.card:hover {
+.assignment {
+    border-left: solid 4px $primary-red-colour;
+}
+.assignment:hover {
     box-shadow: 0 4px 8px 0 $primary-red-colour;
+}
+.quiz {
+    border-left: solid 4px $primary-yellow-colour;
+}
+.quiz:hover {
+    box-shadow: 0 4px 8px 0 $primary-yellow-colour;
 }
 
 .header {
@@ -111,8 +136,13 @@ watch(isEditing, async (editing) => {
     margin-top: 1rem;
 }
 
-.card-type h2 {
+.assignment .card-type h2 {
     color: $primary-red-colour;
+    margin: 0.5rem 0;
+}
+
+.quiz .card-type h2 {
+    color: $primary-yellow-colour;
     margin: 0.5rem 0;
 }
 

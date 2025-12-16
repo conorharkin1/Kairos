@@ -6,5 +6,6 @@ namespace DashboardServer.Repositories.Interfaces
     {
         Task<List<Course>> GetCoursesAsync(string userId);
         Task<List<Assignment>> GetCourseAssignmentsAsync(string userId, int courseId);
+        Task<List<Quiz>> GetCourseQuizzesAsync(string userId, int courseId);
     }
 }

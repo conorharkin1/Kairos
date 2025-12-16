@@ -28,6 +28,10 @@ namespace DashboardServer.Controllers
         [HttpPost]
         public async Task<IActionResult> CreateAssignment([FromBody] AssignmentDTO assignmentDto)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
 
             string? userId = _userManager.GetUserId(HttpContext.User);
             if (userId == null)
@@ -44,6 +48,11 @@ namespace DashboardServer.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateAssignment(int id, [FromBody] AssignmentDTO assignmentDto)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
             string? userId = _userManager.GetUserId(HttpContext.User);
             if (userId == null)
             {

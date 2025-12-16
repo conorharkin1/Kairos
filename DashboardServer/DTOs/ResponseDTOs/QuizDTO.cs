@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using Microsoft.VisualBasic;
 
 namespace DashboardServer.DTOs.ResponseDTOs
@@ -12,10 +13,9 @@ namespace DashboardServer.DTOs.ResponseDTOs
         /// The unique identifier for the quiz.
         /// </summary>
         public int ExternalQuizId { get; set; }
-        /// <summary>
-        /// Foreign key for the course this quiz belongs to.
-        /// </summary>
         public int CourseId { get; set; }
+        
+        [Required(ErrorMessage = "Quiz name is required")]
         public string? Name { get; set; }
         public DateTime? DueDate { get; set; }
         public DateTime? LockDate { get; set; }

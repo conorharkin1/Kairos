@@ -21,5 +21,10 @@ namespace DashboardServer.Services
         {
             return await _courseRepository.GetCourseAssignmentsAsync(userId, courseId);
         }
+
+        public async Task<List<Quiz>> GetCourseQuizzesAsync(string userId, int courseId)
+        {
+            return await _courseRepository.GetCourseQuizzesAsync(userId, courseId);
+        }
     }
 }
