@@ -23,5 +23,10 @@ namespace DashboardServer.Repositories
         {
             return await _dbContext.Assignments.Where(a => a.CourseId == courseId).ToListAsync();
         }
+
+        public async Task<List<Quiz>> GetCourseQuizzesAsync(string userId, int courseId)
+        {
+            return await _dbContext.Quizzes.Where(q => q.CourseId == courseId).ToListAsync();
+        }
     }
 }

@@ -60,31 +60,19 @@ namespace DashboardServer.Controllers
             return Ok(assignmentDtos);
         }
 
-        // [HttpGet("canvas")]
-        // public async Task<IActionResult> GetCoursesFromCanvas()
-        // {
-        //     string? userId = _userManager.GetUserId(HttpContext.User);
-        //     if (userId == null)
-        //     {
-        //         return Unauthorized("User not found");
-        //     }
-        //     var canvasCourseDtos = await _canvasApiService.GetFavoriteCoursesFromCanvasAsync(userId);
-        //     var courses = _mapper.Map<List<CourseModel>>(canvasCourseDtos);
+        [HttpGet("{courseId}/quizzes")]
+        public async Task<IActionResult> GetCourseQuizzes(int courseId)
+        {
+            string? userId = _userManager.GetUserId(HttpContext.User);
+            if (userId == null)
+            {
+                return Unauthorized("User not found");
+            }
 
-        //     return Ok(_mapper.Map<List<CourseDTO>>(courses));
-        // }
+            var quizzes = await _courseService.GetCourseQuizzesAsync(userId, courseId);
+            var quizDtos = _mapper.Map<List<QuizDTO>>(quizzes);
 
-        // [HttpGet("canvas/{courseId}/assignments")]
-        // public async Task<IActionResult> GetCourseAssignmentsFromCanvas(int courseId)
-        // {
-        //     string? userId = _userManager.GetUserId(HttpContext.User);
-        //     if (userId == null)
-        //     {
-        //         return Unauthorized("User not found");
-        //     }
-        //     var canvasAssignmentDtos = await _canvasApiService.GetCourseAssignmentsFromCanvasAsync(userId, courseId);
-        //     var assignments = _mapper.Map<List<AssignmentModel>>(canvasAssignmentDtos);
-        //     return Ok(_mapper.Map<List<AssignmentDTO>>(assignments));
-        // }
+            return Ok(quizDtos);
+        }
     }
 }

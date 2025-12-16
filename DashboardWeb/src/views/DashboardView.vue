@@ -51,16 +51,15 @@ const sidebarViewsRight = [
 
 const fetchCourses = async () => {
     isLoading.value = true
-    await api.get('course')
-        .then(response => {
-            courses.value = response.data;
-        })
-        .catch(() => {
-            toast.error('Error fetching courses, have you refreshed your data recently?');
-        })
-        .finally(() => {
-            isLoading.value = false
-        });
+    
+    try {
+        const response = await api.get('course')
+        courses.value = response.data;
+    } catch (error) {
+        toast.error('Error fetching courses');
+    } finally {
+        isLoading.value = false
+    }
 }
 
 const changeView = (view) => {
@@ -95,7 +94,7 @@ onMounted(() => {
 }
 .course-tabs {
     display: flex;
-    overflow-x: auto;
+    overflow: hidden;
     flex-direction: row;
     align-items: center;
     width: 100%;

@@ -76,14 +76,20 @@ namespace DashboardServer.Services
             return _encryptService.Decrypt(cipherText, encryptionKey);
         }
 
+        /// <summary>
+        /// Updates DB with Courses from Canvas, it's intentional to not update existing courses. This is becuase I do not want
+        /// a user's custom changes to a Course to be over-written every time the data is updated. I feel it is 
+        /// unlikely the name or code of the Course will ever change on Canvas therefore it would be inconvenient for the end user
+        /// to have any custom changes made reset.    
+        /// </summary>
         private async Task UpdateCoursesDataAsync(string userId)
         {
-            var existingCanvasCourses = await _dbContext.Courses.Where(c => c.ExternalCourseId.HasValue).ToDictionaryAsync(c => c.ExternalCourseId.Value, c => c);
+            var existingCanvasCourses = await _dbContext.Courses.Where(c => c.ExternalCourseId.HasValue).ToDictionaryAsync(c => c.ExternalCourseId!.Value, c => c);
             var incomingCanvasCourses = _mapper.Map<List<Course>>(await GetFavoriteCoursesFromCanvasAsync(userId));
             
             foreach (var course in incomingCanvasCourses)
             {
-                if (!existingCanvasCourses.TryGetValue(course.ExternalCourseId.Value, out var existingCourse))
+                if (!existingCanvasCourses.TryGetValue(course.ExternalCourseId!.Value, out var existingCourse))
                 {
                     // Insert new
                     course.UserId = userId;
@@ -91,80 +97,96 @@ namespace DashboardServer.Services
                 }
                 else
                 {
-                    // Update existing
-                    _mapper.Map(course, existingCourse);
+                    continue;
                 }
             }
 
             await _dbContext.SaveChangesAsync();
         }
 
+        /// <summary>
+        /// Fetches Assignments from Canvas, compares to existing records. If any new assignments are present on Canvas,
+        /// new records will be created in the database. Otherwise, if an assignment already exists, only the DueDate field will be updated.
+        /// </summary>
         private async Task UpdateAssignmentsDataAsync(string userId)
         {
-            var dbCanvasCourses = await _dbContext.Courses.Where(c => c.ExternalCourseId.HasValue).ToListAsync();
+            var existingCourseIds = await _dbContext.Courses
+                .Where(c => c.ExternalCourseId.HasValue)
+                .Select(c => new { c.Id, c.ExternalCourseId }).ToListAsync();
+            
+            var existingAssignments = await _dbContext.Assignments.Where(a => a.ExternalAssignmentId.HasValue).ToListAsync();
+            var existingAssignmentsLookup = existingAssignments.ToDictionary(a => a.ExternalAssignmentId!.Value, a => a);
 
-            foreach(var course in dbCanvasCourses)
+            foreach(var existingCourse in existingCourseIds)
             {
-                var existingCanvasAssignments = await _dbContext.Assignments.Where(a => a.CourseId == course.Id && a.ExternalAssignmentId.HasValue).ToDictionaryAsync(a => a.ExternalAssignmentId.Value, a => a);
+                var incomingAssignments = _mapper.Map<List<Assignment>>(await GetCourseAssignmentsFromCanvasAsync(userId, existingCourse.ExternalCourseId!.Value));
 
-                var incomingCanvasAssignments = _mapper.Map<List<Assignment>>(await GetCourseAssignmentsFromCanvasAsync(userId, course.ExternalCourseId.Value));
-
-                foreach (var assignment in incomingCanvasAssignments)
+                foreach (var assignment in incomingAssignments)
                 {
-                    assignment.CourseId = course.Id;
-
-                    if (!existingCanvasAssignments.TryGetValue(assignment.ExternalAssignmentId.Value, out var existingAssignment))
+                    if (!assignment.ExternalAssignmentId.HasValue)
                     {
-                        // Insert new
+                        continue;
+                    }
+
+                    if (!existingAssignmentsLookup.TryGetValue(assignment.ExternalAssignmentId!.Value, out var existingAssignment))
+                    {
                         assignment.UserId = userId;
+                        assignment.CourseId = existingCourse.Id;
                         await _dbContext.Assignments.AddAsync(assignment);
                     }
                     else
                     {
-                        // Update existing
-                        _mapper.Map(assignment, existingAssignment);
+                        existingAssignment.DueDate = assignment.DueDate;
                     }
                 }
             }
 
             await _dbContext.SaveChangesAsync();
         }
-
+        /// <summary>
+        /// Fetches Quizzes from Canvas, compares to existing records. If any new quizzes are present on Canvas,
+        /// new records will be created in the database. Otherwise, if a quiz already exists,
+        /// </summary>
         private async Task UpdateQuizzesDataAsync(string userId)
         {
-            var dbCanvasCourses = await _dbContext.Courses.Where(c => c.ExternalCourseId.HasValue).ToListAsync();
+            var existingCourseIds = await _dbContext.Courses
+                .Where(c => c.ExternalCourseId.HasValue)
+                .Select(c => new { c.Id, c.ExternalCourseId }).ToListAsync();
 
-            foreach(var course in dbCanvasCourses)
+            var existingQuizzes = await _dbContext.Quizzes.Where(q => q.ExternalQuizId.HasValue).ToListAsync();
+            var existingQuizzesLookup = existingQuizzes.ToDictionary(q => q.ExternalQuizId!.Value, q => q);
+
+            foreach(var existingCourse in existingCourseIds)
             {
-                var existingCanvasQuizzes = await _dbContext.Quizzes.Where(q => q.CourseId == course.Id && q.ExternalQuizId.HasValue).ToDictionaryAsync(q => q.ExternalQuizId.Value, q => q);
+                var incomingQuizzes = _mapper.Map<List<Quiz>>(await GetCourseQuizzesFromCanvasAsync(userId, existingCourse.ExternalCourseId!.Value));
 
-                var incomingCanvasQuizzes = _mapper.Map<List<Quiz>>(await GetCourseQuizzesFromCanvasAsync(userId, course.ExternalCourseId.Value));
-
-                foreach (var quiz in incomingCanvasQuizzes)
+                foreach (var quiz in incomingQuizzes)
                 {
-                    quiz.CourseId = course.Id;
-
-                    if (!existingCanvasQuizzes.TryGetValue(quiz.ExternalQuizId.Value, out var existingQuiz))
+                    if (!quiz.ExternalQuizId.HasValue)
                     {
-                        // Insert new
+                        continue;
+                    }
+
+                    if (!existingQuizzesLookup.TryGetValue(quiz.ExternalQuizId!.Value, out var existingQuiz))
+                    {
                         quiz.UserId = userId;
+                        quiz.CourseId = existingCourse.Id;
                         await _dbContext.Quizzes.AddAsync(quiz);
                     }
                     else
                     {
-                        // Update existing
-                        _mapper.Map(quiz, existingQuiz);
+                        existingQuiz.DueDate = quiz.DueDate;
+                        existingQuiz.LockDate = quiz.LockDate;
                     }
                 }
             }
-
             await _dbContext.SaveChangesAsync();
         }
 
         public async Task UpdateDataFromCanvasAsync(string userId)
         {
             var user = await _dbContext.Users.FindAsync(userId);
-            if (DateTime.UtcNow - user!.LastUpdatedData < TimeSpan.FromMinutes(10))
+            if ((DateTime.UtcNow - user!.LastUpdatedData) < TimeSpan.FromMinutes(10))
             {
                 throw new BadHttpRequestException("Your data was updated less than 10 minutes ago, please wait before refreshing again.");
             }

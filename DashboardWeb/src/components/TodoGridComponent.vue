@@ -21,7 +21,7 @@
                 <div class="create-form-left">
                     <span>Select the Course(s) this will belong to</span>
                     <v-select v-model="selectedCourseId" :options="courses" :reduce="course => course.id"
-                        label="name"></v-select>
+                        label="name" required></v-select>
 
                     <span>Select the Type of Task to Create</span>
                     <v-select v-model="selectedType" :options="types"></v-select>
@@ -33,6 +33,9 @@
                     <input ref="dueDateInput" v-model="selectedDueDate" type="text" placeholder="Due date..." />
                 </div>
                 <div class="create-form-right">
+                    <span v-if="selectedType === 'Quiz'">Lock Date</span>
+                    <input v-if="selectedType === 'Quiz'" ref="lockDateInput" v-model="selectedLockDate" type="text" placeholder="Lock date..." />
+
                     <span>Description</span>
                     <input v-model="selectedDescription" type="text" placeholder="E.g. Additional details..." />
 
@@ -51,7 +54,11 @@
         <div v-else-if="assignments.length > 0" class="dashboard-card-grid">
             <DashboardCard v-for="(assignment, index) in assignments" :key="index" type="Assignment"
                 :id="assignment.id" :title="assignment.name" :dueDate="assignment.dueDate" :description="assignment.description"
-                :htmlUrl="assignment.htmlUrl" @save="(updatedData) => saveAssignment(assignment.id, updatedData)" @delete="() => deleteAssignment(assignment.id)" 
+                :htmlUrl="assignment.htmlUrl" @save="(updatedData) => updateAssignment(assignment.id, updatedData)" @delete="() => deleteAssignment(assignment.id)" 
+            />
+            <DashboardCard v-for="(quiz, index) in quizzes" :key="index" type="Quiz"
+                :id="quiz.id" :title="quiz.name" :dueDate="quiz.dueDate" :lockdate="quiz.lockdate"
+                :htmlUrl="quiz.htmlUrl" @save="(updatedData) => updateQuiz(quiz.id, updatedData)" @delete="() => deleteQuiz(quiz.id)" 
             />
         </div>
         <div v-else-if="!props.currentCourse" class="no-selected-course">
@@ -90,95 +97,199 @@ const selectedType = ref(types[0])
 const selectedTitle = ref('')
 const selectedDueDate = ref('')
 const dueDateInput = ref(null);
-let fp = null;
+const lockDateInput = ref(null);
+const selectedLockDate = ref('')
+let dueDateFp = null;
+let lockDateFp = null;
 const selectedDescription = ref('')
 const selectedUrl = ref('')
 
 const getAssignmentsForCourse = async () => {
+    isLoading.value = true
+
     try {
-        isLoading.value = true
         const response = await api.get(`course/${props.currentCourse}/assignments`)
         assignments.value = response.data
     } catch (error) {
-        toast.error('Error fetching assignments:', error)
+        toast.error('Error fetching assignments')
     } finally {
         isLoading.value = false
     }
 }
 
 const getQuizzesForCourse = async () => {
+    isLoading.value = true
+
     try {
         const response = await api.get(`course/${props.currentCourse}/quizzes`)
         quizzes.value = response.data
+        console.log(response.data)
     } catch (error) {
-        toast.error('Error fetching quizzes:', error)
-    }
-}
-
-const saveAssignment = async (id, updatedData) => {
-    try {
-        await api.put(`assignment/${id}`, {
-            name: updatedData.title,
-            dueDate: convertToUTC(updatedData.dueDate),
-            //description: updatedData.description,
-            htmlUrl: updatedData.htmlUrl
-        })
-        .then(() => {
-            toast.success(`Assignment updated successfully: ${updatedData.title}`)
-            getAssignmentsForCourse()
-        })
-        .catch((error) => {
-            toast.error('Error updating assignment:', error);
-        })
-        .finally(() => {
-            isLoading.value = false
-        });
-    } catch (error) {
-        toast.error('Error updating assignment:', error)
+        toast.error('Error fetching quizzes')
+    } finally {
+        isLoading.value = false;
     }
 }
 
 const addNew = async () => {
+    if (!selectedCourseId.value) {
+        toast.error('Please select a course')
+        return
+    }
+    
+    if (!selectedType.value) {
+        toast.error('Please select a task type')
+        return
+    }
+    
+    if (!selectedTitle.value || selectedTitle.value.trim() === '') {
+        toast.error('Please enter a title')
+        return
+    }
+    
+    if (selectedType.value === 'Assignment' && (!selectedDueDate.value || selectedDueDate.value.trim() === '')) {
+        toast.error('Please select a due date')
+        return
+    }
+
     isLoading.value = true
+
     switch (selectedType.value) {
         case 'Assignment':
-            await api.post('assignment', {
-                courseId: selectedCourseId.value,
-                name: selectedTitle.value,
-                dueDate: convertToUTC(selectedDueDate.value),
-                description: selectedDescription.value,
-                htmlUrl: selectedUrl.value,
-            })
-                .then(response => {
-                    getAssignmentsForCourse()
-                    toast.success('Assignment created successfully!')
-                    toggleCreateView()
-                })
-                .catch((error) => {
-                    toast.error('Error creating assignment:', error);
-                })
-                .finally(() => {
-                    isLoading.value = false
-                });
+            await createAssignment();
+            isLoading.value = false;
             break
         case 'Quiz':
+            await createQuiz();
+            isLoading.value = false;
             break
         case 'Todo Item':
+            isLoading.value = false;
             break
         default:
             isLoading.value = false
             break
     }
-    // Implement API call to create new task
+    
+}
+
+const createAssignment = async () => {
+    try {
+        const payload = {
+            courseId: selectedCourseId.value,
+            name: selectedTitle.value,
+            dueDate: convertToUTC(selectedDueDate.value),
+            description: selectedDescription.value,
+            htmlUrl: selectedUrl.value,
+        }
+        await api.post('assignment', payload);
+        
+        await getAssignmentsForCourse()
+        
+        toast.success('Assignment created successfully')
+        toggleCreateView()
+
+    } catch (error) {
+        toast.error('Error creating assignment')
+    }
+}
+
+const updateAssignment = async (id, updatedData) => {
+    isLoading.value = true;
+
+    const payload = {
+        name: updatedData.title,
+        dueDate: convertToUTC(updatedData.dueDate),
+        //description: updatedData.description,
+        htmlUrl: updatedData.htmlUrl
+    }
+
+    try {
+        await api.put(`assignment/${id}`, payload);
+        toast.success(`Assignment updated successfully: ${updatedData.title}`)
+        await getAssignmentsForCourse()
+    } catch (error) {
+        toast.error('Error updating assignment')
+    } finally {
+        isLoading.value = false;
+    }
 }
 
 const deleteAssignment = async (id) => {
+    isLoading.value = true;
+
     try {
         await api.delete(`assignment/${id}`)
         toast.success('Assignment deleted successfully')
-        getAssignmentsForCourse()
+        await getAssignmentsForCourse()
     } catch (error) {
         toast.error('Error deleting assignment:', error)
+    } finally {
+        isLoading.value = false;
+    }
+}
+
+const createQuiz = async () => {
+    try {
+        const payload = {
+            courseId: selectedCourseId.value,
+            name: selectedTitle.value,
+            dueDate: convertToUTC(selectedDueDate.value),
+            lockDate: convertToUTC(selectedLockDate.value),
+            htmlUrl: selectedUrl.value,
+        }
+        await api.post('quiz', payload);
+        
+        await getQuizzesForCourse()
+        
+        toast.success('Quiz created successfully')
+        toggleCreateView()
+
+    } catch (error) {
+        toast.error('Error creating quiz')
+    }
+}
+
+const updateQuiz = async (id, updatedData) => {
+    isLoading.value = true;
+
+    if(!updatedData.title || updatedData.title.trim() === '') {
+        toast.error('Title cannot be empty')
+        isLoading.value = false;
+        return
+    }
+
+    const payload = {
+        name: updatedData.title,
+        dueDate: convertToUTC(updatedData.dueDate),
+        lockDate: convertToUTC(updatedData.lockDate),
+        htmlUrl: updatedData.htmlUrl
+    }
+
+    console.log('Updating quiz with payload:', payload);
+
+    try {
+        await api.put(`quiz/${id}`, payload);
+        toast.success(`Quiz updated successfully: ${updatedData.title}`)
+        await getQuizzesForCourse()
+    } catch (error) {
+        toast.error('Error updating quiz')
+    } finally {
+        isLoading.value = false;
+    }
+}
+
+const deleteQuiz = async (id) => {
+    isLoading.value = true;
+
+    try {
+        await api.delete(`quiz/${id}`)
+        toast.success('Quiz deleted successfully')
+        await getQuizzesForCourse()
+    } catch (error) {
+        toast.error('Error deleting quiz:', error)
+    } finally {
+        isLoading.value = false;
     }
 }
 
@@ -186,19 +297,36 @@ const toggleCreateView = () => {
     creatingViewVisible.value = !creatingViewVisible.value
 }
 
-watch(() => props.currentCourse, getAssignmentsForCourse);
+watch(() => props.currentCourse, () => {
+    getAssignmentsForCourse();
+    getQuizzesForCourse();
+});
 
+// Handle initialising / destroying the flatpickr instance.
 watch(creatingViewVisible, async (visible) => {
     if (!visible) {
-        fp?.destroy();
+        dueDateFp?.destroy();
         return;
     }
 
     await nextTick();
-    fp = flatpickr(dueDateInput.value, {
+    dueDateFp = flatpickr(dueDateInput.value, {
         enableTime: true,
         dateFormat: "Y-m-d H:i",
     });
+});
+
+watch(selectedType, async () => {
+    await nextTick();
+
+    lockDateFp?.destroy();
+
+    if (selectedType.value === 'Quiz') {
+        lockDateFp = flatpickr(lockDateInput.value, {
+            enableTime: true,
+            dateFormat: "Y-m-d H:i",
+        });
+    }
 });
 
 </script>
@@ -233,10 +361,12 @@ watch(creatingViewVisible, async (visible) => {
 .dashboard-card-grid {
     display: flex;
     flex-direction: row;
-    overflow-x: auto;
+    max-width: 100%;
+    flex-wrap: wrap;
     gap: 2rem;
     padding: 1rem;
     height: 100%;
+    justify-content: center;
 }
 
 .no-selected-course {
