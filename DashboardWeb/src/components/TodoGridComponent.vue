@@ -122,7 +122,7 @@ const getAssignmentsForCourse = async () => {
 }
 
 const getQuizzesForCourse = async () => {
-    //isLoading.value = true
+    isLoading.value = true
 
     try {
         const response = await api.get(`course/${props.currentCourse}/quizzes`)
@@ -130,7 +130,7 @@ const getQuizzesForCourse = async () => {
     } catch (error) {
         toast.error('Error fetching quizzes')
     } finally {
-        //isLoading.value = false;
+        isLoading.value = false;
     }
 }
 
