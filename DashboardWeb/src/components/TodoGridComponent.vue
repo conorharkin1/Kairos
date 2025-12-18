@@ -26,8 +26,8 @@
                     <span>Select the Type of Task to Create</span>
                     <v-select v-model="selectedType" :options="types"></v-select>
 
-                    <span>Title</span>
-                    <input v-model="selectedTitle" type="text" placeholder="E.g. Write report..." />
+                    <span>Name</span>
+                    <input v-model="selectedName" type="text" placeholder="E.g. Write report..." />
 
                     <span>Due Date</span>
                     <input ref="dueDateInput" v-model="selectedDueDate" type="text" placeholder="Due date..." />
@@ -52,13 +52,17 @@
             </div>
         </div>
         <div v-else-if="assignments.length > 0" class="dashboard-card-grid">
-            <DashboardCard v-for="(assignment, index) in assignments" :key="index" type="Assignment"
-                :id="assignment.id" :title="assignment.name" :dueDate="assignment.dueDate" :description="assignment.description"
-                :htmlUrl="assignment.htmlUrl" @save="(updatedData) => updateAssignment(assignment.id, updatedData)" @delete="() => deleteAssignment(assignment.id)" 
+            <DashboardCard v-for="(assignment, index) in assignments" :key="index" 
+                type="Assignment"
+                :model="assignment"
+                @save="(updatedModel) => updateAssignment(assignment.id, updatedModel)"
+                @delete="() => deleteAssignment(assignment.id)"
             />
-            <DashboardCard v-for="(quiz, index) in quizzes" :key="index" type="Quiz"
-                :id="quiz.id" :title="quiz.name" :dueDate="quiz.dueDate" :lockdate="quiz.lockdate"
-                :htmlUrl="quiz.htmlUrl" @save="(updatedData) => updateQuiz(quiz.id, updatedData)" @delete="() => deleteQuiz(quiz.id)" 
+            <DashboardCard v-for="(quiz, index) in quizzes" :key="index"
+                type="Quiz"
+                :model="quiz"
+                @save="(updatedModel) => updateQuiz(quiz.id, updatedModel)"
+                @delete="() => deleteQuiz(quiz.id)"
             />
         </div>
         <div v-else-if="!props.currentCourse" class="no-selected-course">
@@ -94,7 +98,7 @@ const creatingViewVisible = ref(false)
 const types = ['Assignment', 'Quiz', 'Todo Item']
 const selectedCourseId = ref(null)
 const selectedType = ref(types[0])
-const selectedTitle = ref('')
+const selectedName = ref('')
 const selectedDueDate = ref('')
 const dueDateInput = ref(null);
 const lockDateInput = ref(null);
@@ -118,16 +122,15 @@ const getAssignmentsForCourse = async () => {
 }
 
 const getQuizzesForCourse = async () => {
-    isLoading.value = true
+    //isLoading.value = true
 
     try {
         const response = await api.get(`course/${props.currentCourse}/quizzes`)
         quizzes.value = response.data
-        console.log(response.data)
     } catch (error) {
         toast.error('Error fetching quizzes')
     } finally {
-        isLoading.value = false;
+        //isLoading.value = false;
     }
 }
 
@@ -142,8 +145,8 @@ const addNew = async () => {
         return
     }
     
-    if (!selectedTitle.value || selectedTitle.value.trim() === '') {
-        toast.error('Please enter a title')
+    if (!selectedName.value || selectedName.value.trim() === '') {
+        toast.error('Please enter a name')
         return
     }
     
@@ -177,7 +180,7 @@ const createAssignment = async () => {
     try {
         const payload = {
             courseId: selectedCourseId.value,
-            name: selectedTitle.value,
+            name: selectedName.value,
             dueDate: convertToUTC(selectedDueDate.value),
             description: selectedDescription.value,
             htmlUrl: selectedUrl.value,
@@ -194,24 +197,38 @@ const createAssignment = async () => {
     }
 }
 
-const updateAssignment = async (id, updatedData) => {
-    isLoading.value = true;
+const updateAssignment = async (id, updatedModel) => {
+    isLoading.value = true
 
-    const payload = {
-        name: updatedData.title,
-        dueDate: convertToUTC(updatedData.dueDate),
-        //description: updatedData.description,
-        htmlUrl: updatedData.htmlUrl
+    const assignment = assignments.value.find(a => a.id === id);
+    if (!assignment) 
+        return
+
+    if (!updatedModel.name || updatedModel.name.trim() === '') {
+        toast.error('Name cannot be empty')
+        isLoading.value = false;
+        return
     }
 
+    if (updatedModel.dueDate && updatedModel.dueDate.trim() === '') {
+        toast.error('Due date cannot be empty')
+        isLoading.value = false;
+        return
+    }
+
+    assignment.name = updatedModel.name;
+    assignment.dueDate = convertToUTC(updatedModel.dueDate),
+    assignment.htmlUrl = updatedModel.htmlUrl;
+    assignment.isComplete = updatedModel.isComplete;
+    assignment.isFavourite = updatedModel.isFavourite;
+
     try {
-        await api.put(`assignment/${id}`, payload);
-        toast.success(`Assignment updated successfully: ${updatedData.title}`)
-        await getAssignmentsForCourse()
+        await api.put(`assignment/${id}`, assignment);
+        toast.success(`Assignment updated successfully: ${assignment.name}`)
     } catch (error) {
         toast.error('Error updating assignment')
     } finally {
-        isLoading.value = false;
+        isLoading.value = false
     }
 }
 
@@ -233,7 +250,7 @@ const createQuiz = async () => {
     try {
         const payload = {
             courseId: selectedCourseId.value,
-            name: selectedTitle.value,
+            name: selectedName.value,
             dueDate: convertToUTC(selectedDueDate.value),
             lockDate: convertToUTC(selectedLockDate.value),
             htmlUrl: selectedUrl.value,
@@ -250,28 +267,29 @@ const createQuiz = async () => {
     }
 }
 
-const updateQuiz = async (id, updatedData) => {
+const updateQuiz = async (id, updatedModel) => {
     isLoading.value = true;
 
-    if(!updatedData.title || updatedData.title.trim() === '') {
-        toast.error('Title cannot be empty')
+    const quiz = quizzes.value.find(q => q.id === id);
+    if (!quiz) 
+        return
+
+    if (!updatedModel.name || updatedModel.name.trim() === '') {
+        toast.error('Name cannot be empty')
         isLoading.value = false;
         return
     }
 
-    const payload = {
-        name: updatedData.title,
-        dueDate: convertToUTC(updatedData.dueDate),
-        lockDate: convertToUTC(updatedData.lockDate),
-        htmlUrl: updatedData.htmlUrl
-    }
-
-    console.log('Updating quiz with payload:', payload);
+    quiz.name = updatedModel.name;
+    quiz.dueDate = convertToUTC(updatedModel.dueDate),
+    quiz.lockDate = convertToUTC(updatedModel.lockDate),
+    quiz.htmlUrl = updatedModel.htmlUrl;
+    quiz.isComplete = updatedModel.isComplete;
+    quiz.isFavourite = updatedModel.isFavourite;
 
     try {
-        await api.put(`quiz/${id}`, payload);
-        toast.success(`Quiz updated successfully: ${updatedData.title}`)
-        await getQuizzesForCourse()
+        await api.put(`quiz/${id}`, quiz);
+        toast.success(`Quiz updated successfully: ${quiz.name}`)
     } catch (error) {
         toast.error('Error updating quiz')
     } finally {

@@ -19,9 +19,9 @@ namespace DashboardServer.DTOs.ResponseDTOs
         
         [Required(ErrorMessage = "Due date is required")]
         public DateTime? DueDate { get; set; }
-        
         public string? Description { get; set; }
-        
         public string? HtmlUrl { get; set; }
+        public bool IsComplete { get; set; }
+        public bool IsFavourite { get; set; }
     }
 }

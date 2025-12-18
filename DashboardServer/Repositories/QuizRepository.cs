@@ -34,6 +34,8 @@ namespace DashboardServer.Repositories
             existingQuiz.DueDate = quiz.DueDate;
             existingQuiz.LockDate = quiz.LockDate;
             existingQuiz.HtmlUrl = quiz.HtmlUrl;
+            existingQuiz.IsComplete = quiz.IsComplete;
+            existingQuiz.IsFavourite = quiz.IsFavourite;
 
             _dbContext.Quizzes.Update(existingQuiz);
             await _dbContext.SaveChangesAsync();

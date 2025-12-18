@@ -34,6 +34,8 @@ namespace DashboardServer.Repositories
             existingAssignment.DueDate = assignment.DueDate;
             existingAssignment.Description = assignment.Description;
             existingAssignment.HtmlUrl = assignment.HtmlUrl;
+            existingAssignment.IsComplete = assignment.IsComplete;
+            existingAssignment.IsFavourite = assignment.IsFavourite;
 
             _dbContext.Assignments.Update(existingAssignment);
             await _dbContext.SaveChangesAsync();
