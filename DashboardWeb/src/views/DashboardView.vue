@@ -1,7 +1,7 @@
 <template>
     <div v-if="isLoading" class="loading-container loader"></div>
     <div v-else class="dashboard">
-        <div class="current-view-container">
+        <div class="current-view-container" :class="{'current-view-container-calendar': currentView === CalendarComponent}">
             <SideBarComponent
                 :sidebarViewsLeft="sidebarViewsLeft"
                 side="left"
@@ -16,11 +16,14 @@
                 :currentView="currentView"
             />
         </div>
-        <div class="course-tabs">
+        <div class="course-tabs" v-if="currentView !== CalendarComponent">
             <CourseTabsComponent @change-course="changeCourse" :currentCourse="currentCourse" :courses="courses"/>
         </div>
-        <div class="todo-grid">
+        <div class="todo-grid" v-if="currentView !== CalendarComponent">
             <TodoGridComponent :currentCourse="currentCourse" :courses="courses"/>
+        </div>
+        <div class="scheduler-container" v-if="currentView === CalendarComponent">
+            <SchedulerComponent />
         </div>
     </div>
 </template>
@@ -32,6 +35,7 @@ import SideBarComponent from '@/components/SideBarComponent.vue'
 import CalendarComponent from '@/components/CalendarComponent.vue'
 import CourseTabsComponent from '@/components/CourseTabsComponent.vue'
 import TodoGridComponent from '@/components/TodoGridComponent.vue'
+import SchedulerComponent from '@/components/SchedulerComponent.vue'
 import api from '../services/api.js'
 
 const isLoading = ref(false)
@@ -40,7 +44,8 @@ const currentCourse = ref(0)
 const courses = ref([])
 
 const sidebarViewsLeft = [
-    { icon: 'iconoir:profile-circle', height: 30, width: 30, tooltip: 'Profile', view: ProfileComponent },
+    { icon: 'ix:maintenance-octagon', height: 30, width: 30, tooltip: 'Maintenance', view: ProfileComponent },
+    // { icon: 'iconoir:profile-circle', height: 30, width: 30, tooltip: 'Profile', view: ProfileComponent },
     { icon: 'ep:calendar', height: 30, width: 30, tooltip: 'Calendar', view: CalendarComponent },
     { icon: 'uiw:dot-chart', height: 30, width: 30, tooltip: 'View Progress', /*view: TodoGridComponent,*/ },
 ]
@@ -92,6 +97,10 @@ onMounted(() => {
     height: 45vh;
     width: 100%;
 }
+.current-view-container-calendar {
+    height: 65vh;
+    margin-bottom: 0.5rem;
+}
 .course-tabs {
     display: flex;
     overflow: hidden;
@@ -109,5 +118,13 @@ onMounted(() => {
     width: 100%;
     height: 45vh;
     margin-top: 0.5rem;
+}
+.scheduler-container {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 30vh;
+    margin-top: 0.5rem;
+    border-top: 2px solid $primary-text-light;
 }
 </style>
