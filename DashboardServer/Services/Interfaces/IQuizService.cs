@@ -6,6 +6,6 @@ namespace DashboardServer.Services.Interfaces
     {
         public Task<Quiz> Create(string userId, Quiz quiz);
         public Task<Quiz> Update(string userId, int quizId, Quiz quiz);
-        public Task Delete(int quizId);
+        public Task Delete(string userId, int quizId);
     }
 }

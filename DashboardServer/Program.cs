@@ -1,6 +1,7 @@
 using System.Text;
 using AutoMapper;
 using DashboardServer.Data;
+using DashboardServer.Filters;
 using DashboardServer.Models;
 using DashboardServer.Repositories;
 using DashboardServer.Repositories.Interfaces;
@@ -25,6 +26,9 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddControllers();
 builder.Services.AddHttpClient();
+
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+builder.Services.AddProblemDetails();
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
@@ -83,6 +87,8 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
     app.UseCors("AllowVueDev");
 }
+
+app.UseExceptionHandler();
 app.UseHttpsRedirection();
 
 app.UseAuthentication();

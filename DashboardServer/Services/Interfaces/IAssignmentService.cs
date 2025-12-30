@@ -6,6 +6,6 @@ namespace DashboardServer.Services.Interfaces
     {
         public Task<Assignment> Create(string userId, Assignment assignment);
         public Task<Assignment> Update(string userId, int assignmentId, Assignment assignment);
-        public Task Delete(int assignmentId);
+        public Task Delete(string userId, int assignmentId);
     }
 }

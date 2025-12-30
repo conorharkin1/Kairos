@@ -35,18 +35,21 @@ namespace DashboardServer.Repositories
             existingAssignment.Description = assignment.Description;
             existingAssignment.HtmlUrl = assignment.HtmlUrl;
 
-            _dbContext.Assignments.Update(existingAssignment);
             await _dbContext.SaveChangesAsync();
             return existingAssignment;
         }
 
-        public async Task Delete(int assignmentId)
+        public async Task Delete(string userId, int assignmentId)
         {
             var assignment = await _dbContext.Assignments.FindAsync(assignmentId);
-            if (assignment != null)
+            if (assignment != null && assignment.UserId == userId)
             {
                 _dbContext.Assignments.Remove(assignment);
                 await _dbContext.SaveChangesAsync();
+            }
+            else
+            {
+                throw new KeyNotFoundException("Assignment not found");
             }
         }
     }

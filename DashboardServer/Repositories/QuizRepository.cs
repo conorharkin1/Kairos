@@ -35,18 +35,21 @@ namespace DashboardServer.Repositories
             existingQuiz.LockDate = quiz.LockDate;
             existingQuiz.HtmlUrl = quiz.HtmlUrl;
 
-            _dbContext.Quizzes.Update(existingQuiz);
             await _dbContext.SaveChangesAsync();
             return existingQuiz;
         }
 
-        public async Task Delete(int quizId)
+        public async Task Delete(string userId, int quizId)
         {
             var quiz = await _dbContext.Quizzes.FindAsync(quizId);
-            if (quiz != null)
+            if (quiz != null && quiz.UserId == userId)
             {
                 _dbContext.Quizzes.Remove(quiz);
                 await _dbContext.SaveChangesAsync();
+            }
+            else
+            {
+                throw new KeyNotFoundException("Quiz not found");
             }
         }
     }

@@ -28,36 +28,17 @@ namespace DashboardServer.Controllers
         [HttpPost]
         public async Task<IActionResult> CreateQuiz([FromBody] QuizDTO quizDto)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            string? userId = _userManager.GetUserId(HttpContext.User);
-            if (userId == null)
-            {
-                return Unauthorized("User not found");
-            }
+            string userId = _userManager.GetUserId(HttpContext.User)!;
 
             var quiz = _mapper.Map<Quiz>(quizDto);
             var createdQuiz = await _quizService.Create(userId, quiz);
             return Ok(_mapper.Map<QuizDTO>(createdQuiz));
-            
         }
 
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateQuiz(int id, [FromBody] QuizDTO quizDto)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            string? userId = _userManager.GetUserId(HttpContext.User);
-            if (userId == null)
-            {
-                return Unauthorized("User not found");
-            }
+            string userId = _userManager.GetUserId(HttpContext.User)!;
 
             var quiz = _mapper.Map<Quiz>(quizDto);
             var updatedQuiz = await _quizService.Update(userId, id, quiz);
@@ -67,7 +48,9 @@ namespace DashboardServer.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteQuiz(int id)
         {
-            await _quizService.Delete(id);
+            string userId = _userManager.GetUserId(HttpContext.User)!;
+
+            await _quizService.Delete(userId, id);
             return NoContent();
         }
     }
