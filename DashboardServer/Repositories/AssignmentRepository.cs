@@ -14,6 +14,13 @@ namespace DashboardServer.Repositories
             _dbContext = dbContext;
         }
 
+        public async Task<List<Assignment>> GetAll(string userId)
+        {
+            return await _dbContext.Assignments
+                .Where(a => a.UserId == userId)
+                .ToListAsync();
+        }
+
         public async Task<Assignment> Create(string userId, Assignment assignment)
         {
             assignment.UserId = userId;

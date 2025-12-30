@@ -12,6 +12,11 @@ namespace DashboardServer.Services
             _assignmentRepository = assignmentRepository;
         }
 
+        public async Task<List<Assignment>> GetAll(string userId)
+        {
+            return await _assignmentRepository.GetAll(userId);
+        }
+
         public async Task<Assignment> Create(string userId, Assignment assignment)
         {
             return await _assignmentRepository.Create(userId, assignment);
