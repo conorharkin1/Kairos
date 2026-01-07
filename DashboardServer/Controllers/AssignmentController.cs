@@ -25,6 +25,19 @@ namespace DashboardServer.Controllers
             _assignmentService = assignmentService;
         }
 
+        [HttpGet("all")]
+        public async Task<IActionResult> GetAll()
+        {
+            string? userId = _userManager.GetUserId(HttpContext.User);
+            if (userId == null)
+            {
+                return Unauthorized("User not found");
+            }
+
+            var assignments = await _assignmentService.GetAll(userId);
+            return Ok(_mapper.Map<List<AssignmentDTO>>(assignments));
+        }
+
         [HttpPost]
         public async Task<IActionResult> CreateAssignment([FromBody] AssignmentDTO assignmentDto)
         {

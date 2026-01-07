@@ -7,63 +7,69 @@
         </div>
         <div class="card-icon">
             <div v-if="type === 'Assignment'"><Icon icon="material-symbols-light:assignment-outline-rounded" width="32" height="32" /></div>
+            <div v-else-if="type === 'Quiz'"><Icon icon="material-symbols-light:quiz-outline-rounded" width="32" height="32" /></div>
         </div>
         <div class="card-title">
-            <h3 v-if="!isEditing">{{ title }}</h3>
-            <input v-else v-model="updatedData.title" class="input-field" placeholder="Title..."/>
+            <h3 v-if="!isEditing">{{ model.name }}</h3>
+            <input v-else v-model="updatedModel.name" class="input-field" placeholder="Name..."/>
         </div>
         <div class="card-due-date" v-if="type === 'Assignment'">
             <h2 v-if="!isEditing">Due on: {{ formattedDueDate }}</h2>
-            <input v-else ref="dueDateInput" class="input-field" v-model="updatedData.dueDate" type="text" placeholder="Due date..." />
+            <input v-else ref="dueDateInput" class="input-field" type="text" placeholder="Due date..." />
         </div>
         <div class="card-due-date" v-else-if="type === 'Quiz'">
             <h2 v-if="!isEditing">Due on: {{ formattedDueDate }}</h2>
-            <input v-else ref="dueDateInput" class="input-field" v-model="updatedData.dueDate" type="text" placeholder="Due date..." />
+            <input v-else ref="dueDateInput" class="input-field" type="text" placeholder="Due date..." />
             <h2 v-if="!isEditing">Locked on: {{ formattedLockDate }}</h2>
-            <input v-else ref="lockDateInput" class="input-field" v-model="updatedData.lockDate" type="text" placeholder="Lock date..." />
+            <input v-else ref="lockDateInput" class="input-field" type="text" placeholder="Lock date..." />
         </div>
         <div class="card-body">
-            <a v-if="!isEditing" :href="htmlUrl" target="_blank">Go to {{ type }}</a>
-            <input v-else v-model="updatedData.htmlUrl" class="input-field" placeholder="URL..."/>
+            <a v-if="!isEditing && model.htmlUrl" :href="model.htmlUrl" target="_blank">Go to {{ type }}</a>
+            <h2 v-else-if="!isEditing">No URL available</h2>
+            <input v-else v-model="updatedModel.htmlUrl" class="input-field" placeholder="URL..."/>
         </div>
-        <div class="card-footer" v-if="!isEditing">
-            <button class="btn-primary btn-grey card-btn">Favourite</button>
-            <button class="btn-primary btn-grey card-btn">Mark as Complete</button>
+        <div class="card-footer-checkboxes" v-if="!isEditing">
+            <span v-if="model.isFavourite">Favourited: ✓</span>
+            <span v-else>Not favourited</span>
+            <span v-if="model.isComplete">Complete: ✓</span>
+            <span v-else>Incomplete</span>
         </div>
-        <div class="card-footer footer-editing" v-else>
-            <button class="btn-primary btn-good" @click="emit('save', updatedData)">Save</button>
+        <div class="card-footer-checkboxes" v-else>
+            <span>Is favourited?</span>
+            <input type="checkbox" v-model="updatedModel.isFavourite">
+            <span>Is complete?</span>
+            <input type="checkbox" v-model="updatedModel.isComplete">
+        </div>
+        <div class="card-footer" v-if="isEditing">
+            <button class="btn-primary btn-good" @click="emit('save', updatedModel)">Save</button>
         </div>
     </div>
 </template>
 
 <script setup>
-import { ref, computed, watch, nextTick } from 'vue'
+import { ref, computed, watch, nextTick} from 'vue';
 import { convertToUTC, convertToAppTimezone } from "@/utils/dayjsUtils";
 
+const emit = defineEmits(['save', 'delete'])
+
 const isEditing = ref(false)
-const updatedData = ref({})
+const updatedModel = ref({})
 
 const dueDateInput = ref(null);
 const lockDateInput = ref(null);
 let dueDateFp = null;
 let lockDateFp = null;
 
-const props = defineProps({
-    type: String,
-    title: String,
-    dueDate: String,
-    lockDate: String,
-    description: String,
-    htmlUrl: String,
+const { model, type } = defineProps({
+    model: Object,
+    type: String
 })
 
-const emit = defineEmits(['save', 'delete'])
-
 const formattedDueDate = computed(() =>
-    props.dueDate ? convertToAppTimezone(props.dueDate).format('DD/MM/YYYY HH:mm') : 'No due date'
+    model.dueDate ? convertToAppTimezone(model.dueDate).format('DD/MM/YYYY HH:mm') : 'No due date'
 )
 const formattedLockDate = computed(() =>
-    props.lockDate ? convertToAppTimezone(props.lockDate).format('DD/MM/YYYY HH:mm') : 'No lock date'
+    model.lockDate ? convertToAppTimezone(model.lockDate).format('DD/MM/YYYY HH:mm') : 'No lock date'
 )
 
 function toggleEditMode() {
@@ -73,18 +79,35 @@ function toggleEditMode() {
 watch(isEditing, async (editing) => {
     if (!editing) {
         dueDateFp?.destroy();
+        lockDateFp?.destroy();
         return;
     }
 
+    updatedModel.value = { ...model };
+
     await nextTick();
-    dueDateFp = flatpickr(dueDateInput.value, {
-        enableTime: true,
-        dateFormat: "Y-m-d H:i",
-    });
-    lockDateFp = flatpickr(lockDateInput.value, {
-        enableTime: true,
-        dateFormat: "Y-m-d H:i",
-    });
+
+    if (dueDateInput.value){
+        dueDateFp = flatpickr(dueDateInput.value, {
+            enableTime: true,
+            dateFormat: "Y-m-d H:i",
+            defaultDate: updatedModel.value.dueDate || null,
+            onChange: (selectedDates, dateStr) => {
+                updatedModel.value.dueDate = dateStr
+            }
+        });
+    }
+    
+    if (lockDateInput.value && type === 'Quiz'){
+        lockDateFp = flatpickr(lockDateInput.value, {
+            enableTime: true,
+            dateFormat: "Y-m-d H:i",
+            defaultDate: updatedModel.value.lockDate || null,
+            onChange: (selectedDates, dateStr) => {
+                updatedModel.value.lockDate = dateStr
+            }
+        });
+    }
 });
 
 </script>
@@ -166,6 +189,13 @@ watch(isEditing, async (editing) => {
     text-decoration: underline;
 }
 .card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 0.5rem;
+}
+
+.card-footer-checkboxes {
     display: flex;
     justify-content: space-between;
     align-items: center;

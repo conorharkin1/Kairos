@@ -121,6 +121,12 @@ namespace DashboardServer.Migrations
                     b.Property<string>("HtmlUrl")
                         .HasColumnType("text");
 
+                    b.Property<bool>("IsComplete")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsFavourite")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("Name")
                         .HasColumnType("text");
 
@@ -180,6 +186,12 @@ namespace DashboardServer.Migrations
 
                     b.Property<string>("HtmlUrl")
                         .HasColumnType("text");
+
+                    b.Property<bool>("IsComplete")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsFavourite")
+                        .HasColumnType("boolean");
 
                     b.Property<DateTime?>("LockDate")
                         .HasColumnType("timestamp with time zone");
