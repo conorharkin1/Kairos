@@ -39,7 +39,7 @@ import SchedulerComponent from '@/components/SchedulerComponent.vue'
 import api from '../services/api.js'
 
 const isLoading = ref(false)
-const currentView = shallowRef(ProfileComponent)
+const currentView = shallowRef(CalendarComponent)
 const currentCourse = ref(0)
 const courses = ref([])
 
