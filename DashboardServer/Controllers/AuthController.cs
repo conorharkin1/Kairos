@@ -23,9 +23,6 @@ namespace DashboardServer.Controllers
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterDTO dto)
         {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
-
             var user = await _authService.RegisterAsync(dto);
 
             if (user == null)
@@ -37,34 +34,21 @@ namespace DashboardServer.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginDTO dto)
         {
-            try
-            {
-                var user = await _authService.LoginAsync(dto);
-                return Ok(user);
-            }
-            catch (UnauthorizedAccessException)
-            {
-                return Unauthorized("Invalid email or password.");
-            }
+            var user = await _authService.LoginAsync(dto);
+            return Ok(user);
         }
 
         [HttpDelete("delete")]
         [Authorize]
         public async Task<IActionResult> DeleteAccount()
         {
-            try
-            {
-                var user = await _userManager.GetUserAsync(User);
-                user = user ?? throw new Exception("User not found");
-                var userId = user.Id;
+            var user = await _userManager.GetUserAsync(User);
 
-                await _authService.DeleteAccountAsync(userId);
-                return Ok(new { message = "Account deleted successfully" });
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { error = ex.Message });
-            }
+            if (user == null)
+                return NotFound("User not found");
+
+            await _authService.DeleteAccountAsync(user.Id);
+            return Ok(new { message = "Account deleted successfully" });
         }
 
     }

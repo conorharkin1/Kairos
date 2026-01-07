@@ -8,6 +8,7 @@ using DashboardServer.Models;
 using DashboardServer.Services.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
+using DashboardServer.Exceptions;
 
 namespace DashboardServer.Services
 {
@@ -26,6 +27,22 @@ namespace DashboardServer.Services
 
         public async Task<AuthResultDTO> RegisterAsync(RegisterDTO dto)
         {
+            if (string.IsNullOrWhiteSpace(dto.Email))
+            {
+                throw new BadRequestException("Email is required");
+            }
+
+            if (string.IsNullOrWhiteSpace(dto.Password))
+            {
+                throw new BadRequestException("Password is required");
+            }
+
+            var existingUser = await _userManager.FindByEmailAsync(dto.Email);
+            if (existingUser != null)
+            {
+                throw new BadRequestException("A user with this email already exists");
+            }
+
             var user = _mapper.Map<ApplicationUser>(dto);
             user.UserName = dto.Email;
 
@@ -47,10 +64,20 @@ namespace DashboardServer.Services
 
         public async Task<AuthResultDTO> LoginAsync(LoginDTO dto)
         {
+            if (string.IsNullOrWhiteSpace(dto.Email))
+            {
+                throw new BadRequestException("Email is required");
+            }
+
+            if (string.IsNullOrWhiteSpace(dto.Password))
+            {
+                throw new BadRequestException("Password is required");
+            }
+
             var user = await _userManager.FindByEmailAsync(dto.Email);
             if (user == null || !await _userManager.CheckPasswordAsync(user, dto.Password))
             {
-                throw new UnauthorizedAccessException();
+                throw new UnauthorizedException("Invalid email or password");
             }
 
             var token = GenerateJwtToken(user);
@@ -89,10 +116,15 @@ namespace DashboardServer.Services
 
         public async Task DeleteAccountAsync(string userId)
         {
+            if (string.IsNullOrWhiteSpace(userId))
+            {
+                throw new UnauthorizedException("User is not authorized");
+            }
+
             var user = await _userManager.FindByIdAsync(userId);
             if (user == null)
             {
-                throw new Exception("User not found");
+                throw new NotFoundException("User not found");
             }
 
             var result = await _userManager.DeleteAsync(user);

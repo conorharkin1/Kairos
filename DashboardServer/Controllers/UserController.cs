@@ -29,52 +29,29 @@ namespace DashboardServer.Controllers
         public async Task<IActionResult> GetCurrentUser()
         {
             var user = await _userManager.GetUserAsync(User);
-            
-            if (user != null)
-            {
-                return Ok(_mapper.Map<UserDTO>(user)); 
-            }
 
-            return StatusCode(404, "User not found");
+            return Ok(_mapper.Map<UserDTO>(user));
         }
 
         [HttpPost("key")]
         public async Task<IActionResult> SetApiKey([FromBody] string apiKey)
         {
-            try
-            {
-                var userId = _userManager.GetUserId(HttpContext.User);
-                userId = userId ?? throw new Exception("User not found");
-                // I'm creating a new guid here based on the userId to use as a key for encryption - not suitable for production but for demo it'll be fine
-                Guid encryptionKey = Guid.Parse(userId);
+            var userId = _userManager.GetUserId(HttpContext.User)!;
 
-                await _userService.SetApiKey(apiKey, encryptionKey, userId);
-                
-                return Ok();
-            }
-            catch(Exception ex)
-            {
-                return StatusCode(500, $"An error occurred while setting the API key: {ex}");
-            }
+            // I'm creating a new guid here based on the userId to use as a key for encryption - not suitable for production but for demo it'll be fine
+            Guid encryptionKey = Guid.Parse(userId);
+
+            await _userService.SetApiKey(apiKey, encryptionKey, userId);
+            
+            return Ok();
         }
 
         [HttpPost("refresh/canvas")]
         public async Task<IActionResult> RefreshCanvasData()
         {
-            var userId = _userManager.GetUserId(HttpContext.User);
-            if (userId == null)
-            {
-                return Unauthorized("User not found");
-            }
+            var userId = _userManager.GetUserId(HttpContext.User)!;
 
-            try
-            {
-                await _canvasApiService.UpdateDataFromCanvasAsync(userId);
-            }
-            catch(BadHttpRequestException ex)
-            {
-                return BadRequest(ex.Message);
-            }
+            await _canvasApiService.UpdateDataFromCanvasAsync(userId);
             return Ok();
         }
     }

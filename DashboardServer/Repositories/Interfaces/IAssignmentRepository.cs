@@ -6,6 +6,6 @@ namespace DashboardServer.Repositories.Interfaces
     {
         Task<Assignment> Create(string userId, Assignment assignment);
         Task<Assignment> Update(string userId, int assignmentId, Assignment assignment);
-        Task Delete(int assignmentId);
+        Task Delete(string userId, int assignmentId);
     }
 }

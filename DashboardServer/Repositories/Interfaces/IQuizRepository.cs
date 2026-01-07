@@ -6,6 +6,6 @@ namespace DashboardServer.Repositories.Interfaces
     {
         Task<Quiz> Create(string userId, Quiz quiz);
         Task<Quiz> Update(string userId, int quizId, Quiz quiz);
-        Task Delete(int quizId);
+        Task Delete(string userId, int quizId);
     }
 }

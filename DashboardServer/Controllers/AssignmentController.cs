@@ -28,36 +28,17 @@ namespace DashboardServer.Controllers
         [HttpPost]
         public async Task<IActionResult> CreateAssignment([FromBody] AssignmentDTO assignmentDto)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            string? userId = _userManager.GetUserId(HttpContext.User);
-            if (userId == null)
-            {
-                return Unauthorized("User not found");
-            }
+            string userId = _userManager.GetUserId(HttpContext.User)!;
 
             var assignment = _mapper.Map<Assignment>(assignmentDto);
             var createdAssignment = await _assignmentService.Create(userId, assignment);
             return Ok(_mapper.Map<AssignmentDTO>(createdAssignment));
-            
         }
 
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateAssignment(int id, [FromBody] AssignmentDTO assignmentDto)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            string? userId = _userManager.GetUserId(HttpContext.User);
-            if (userId == null)
-            {
-                return Unauthorized("User not found");
-            }
+            string userId = _userManager.GetUserId(HttpContext.User)!;
 
             var assignment = _mapper.Map<Assignment>(assignmentDto);
             var updatedAssignment = await _assignmentService.Update(userId, id, assignment);
@@ -67,7 +48,9 @@ namespace DashboardServer.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteAssignment(int id)
         {
-            await _assignmentService.Delete(id);
+            string userId = _userManager.GetUserId(HttpContext.User)!;
+            
+            await _assignmentService.Delete(userId, id);
             return NoContent();
         }
     }

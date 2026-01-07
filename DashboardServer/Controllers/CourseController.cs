@@ -33,11 +33,7 @@ namespace DashboardServer.Controllers
         [HttpGet("")]
         public async Task<IActionResult> GetAllCourses()
         {
-            string? userId = _userManager.GetUserId(HttpContext.User);
-            if (userId == null)
-            {
-                return Unauthorized("User not found");
-            }
+            string userId = _userManager.GetUserId(HttpContext.User)!;
 
             var courses = await _courseService.GetCoursesAsync(userId);
             var courseDtos = _mapper.Map<List<CourseDTO>>(courses);
@@ -48,11 +44,7 @@ namespace DashboardServer.Controllers
         [HttpGet("{courseId}/assignments")]
         public async Task<IActionResult> GetCourseAssignments(int courseId)
         {
-            string? userId = _userManager.GetUserId(HttpContext.User);
-            if (userId == null)
-            {
-                return Unauthorized("User not found");
-            }
+            string userId = _userManager.GetUserId(HttpContext.User)!;
 
             var assignments = await _courseService.GetCourseAssignmentsAsync(userId, courseId);
             var assignmentDtos = _mapper.Map<List<AssignmentDTO>>(assignments);
@@ -63,11 +55,7 @@ namespace DashboardServer.Controllers
         [HttpGet("{courseId}/quizzes")]
         public async Task<IActionResult> GetCourseQuizzes(int courseId)
         {
-            string? userId = _userManager.GetUserId(HttpContext.User);
-            if (userId == null)
-            {
-                return Unauthorized("User not found");
-            }
+            string userId = _userManager.GetUserId(HttpContext.User)!;
 
             var quizzes = await _courseService.GetCourseQuizzesAsync(userId, courseId);
             var quizDtos = _mapper.Map<List<QuizDTO>>(quizzes);
