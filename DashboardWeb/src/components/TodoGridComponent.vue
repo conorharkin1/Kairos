@@ -3,15 +3,13 @@
     <div v-else>
         <div class="header">
             <div class="filter">
-                <select>
-                    <option value="all">All Tasks</option>
-                    <option value="due-today">Due Today</option>
-                    <option value="overdue">Overdue</option>
-                    <option value="completed">Completed</option>
-                </select>
+                <v-select v-model="selectedFilter" :options="filterOptions" label="Filter By" />
+            </div>
+            <div class="filter">
+                <v-select v-model="selectedSort" :options="sortOptions" label="Sort By" />
             </div>
             <div class="search-bar">
-                <input type="text" placeholder="Search ..." />
+                <input v-model="searchTerm" type="text" placeholder="Search ..." />
             </div>
             <button class="btn-primary btn-good" v-if="!creatingViewVisible" @click="toggleCreateView">Add New</button>
             <button class="btn-primary btn-danger" v-if="creatingViewVisible" @click="toggleCreateView">Cancel</button>
@@ -51,8 +49,8 @@
                 </div>
             </div>
         </div>
-        <div v-else-if="assignments.length > 0" class="dashboard-card-grid">
-            <DashboardCard v-for="(assignment, index) in assignments" :key="index" 
+        <div v-else-if="assignments.length > 0 || quizzes.length > 0" class="dashboard-card-grid">
+            <DashboardCard v-for="(assignment, index) in assignments" :key="index"
                 type="Assignment"
                 :model="assignment"
                 @save="(updatedModel) => updateAssignment(assignment.id, updatedModel)"
@@ -107,6 +105,13 @@ let dueDateFp = null;
 let lockDateFp = null;
 const selectedDescription = ref('')
 const selectedUrl = ref('')
+
+// Sorting / filtering
+const filterOptions = ['All', 'Favourited', 'Completed', 'Quizzes', 'Assignments']
+const selectedFilter = ref(filterOptions[0])
+const sortOptions = ['Due Date Ascending', 'Due Date Descending']
+const selectedSort = ref(sortOptions[0])
+const searchTerm = ref(null)
 
 const getAssignmentsForCourse = async () => {
     isLoading.value = true
@@ -347,6 +352,51 @@ watch(selectedType, async () => {
     }
 });
 
+watch(searchTerm, (newTerm) => {
+    if (!newTerm || newTerm.trim() === '') {
+        getAssignmentsForCourse();
+        getQuizzesForCourse();
+        return;
+    }
+    quizzes.value = quizzes.value.filter(quiz => 
+        quiz.name.toLowerCase().includes(newTerm.toLowerCase())
+    );
+    assignments.value = assignments.value.filter(assignment => 
+        assignment.name.toLowerCase().includes(newTerm.toLowerCase())
+    );
+});
+
+watch(selectedFilter, async (newFilter) => {
+    // Reset to original data before filtering
+    await getAssignmentsForCourse();
+    await getQuizzesForCourse();
+
+    if (newFilter === 'Favourited') {
+        assignments.value = assignments.value.filter(assignment => assignment.isFavourite);
+        quizzes.value = quizzes.value.filter(quiz => quiz.isFavourite);
+    } else if (newFilter === 'Completed') {
+        assignments.value = assignments.value.filter(assignment => assignment.isComplete);
+        quizzes.value = quizzes.value.filter(quiz => quiz.isComplete);
+    } else if (newFilter === 'Quizzes') {
+        assignments.value = [];
+    } else if (newFilter === 'Assignments') {
+        quizzes.value = [];
+    }
+});
+
+watch(selectedSort, (newSort) => {
+    if (newSort === 'Due Date Ascending') {
+        assignments.value.sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
+        quizzes.value.sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
+    } else if (newSort === 'Due Date Descending') {
+        assignments.value.sort((a, b) => new Date(b.dueDate) - new Date(a.dueDate));
+        quizzes.value.sort((a, b) => new Date(b.dueDate) - new Date(a.dueDate));
+    } else {
+        assignments.value.sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
+        quizzes.value.sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
+    }
+});
+
 </script>
 
 <style scoped lang="scss">
@@ -360,11 +410,8 @@ watch(selectedType, async () => {
     padding-left: 1rem;
 }
 
-.filter select {
-    background-color: $primary-dark-background;
-    color: $primary-text-light;
-    padding: 0.5rem;
-    font-size: 1rem;
+.filter {
+    min-width: 6rem;
 }
 
 .search-bar input {

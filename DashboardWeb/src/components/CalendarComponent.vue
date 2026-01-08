@@ -70,7 +70,6 @@ const buildCalendarEventsAssignments = (assignments) => {
 
         const {start, end} = getFormattedDatesForCalendar(as.dueDate);
         const classes = getCustomClassesForAssignment(as, end);
-        console.log('Assignment Classes:', classes);
 
         formattedEvents.push({
             start: start,
