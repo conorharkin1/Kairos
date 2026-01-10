@@ -14,17 +14,17 @@ namespace DashboardServer.Repositories
             _dbContext = dbContext;
         }
 
-        public async Task<List<Course>> GetCoursesAsync(string userId)
+        public async Task<List<Course>> GetCoursesAsync()
         {
             return await _dbContext.Courses.ToListAsync();
         }
 
-        public async Task<List<Assignment>> GetCourseAssignmentsAsync(string userId, int courseId)
+        public async Task<List<Assignment>> GetCourseAssignmentsAsync(int courseId)
         {
             return await _dbContext.Assignments.Where(a => a.CourseId == courseId).ToListAsync();
         }
 
-        public async Task<List<Quiz>> GetCourseQuizzesAsync(string userId, int courseId)
+        public async Task<List<Quiz>> GetCourseQuizzesAsync(int courseId)
         {
             return await _dbContext.Quizzes.Where(q => q.CourseId == courseId).ToListAsync();
         }

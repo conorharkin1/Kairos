@@ -15,7 +15,12 @@ namespace DashboardServer.Services
 
         public async Task<List<Assignment>> GetAll(string userId)
         {
-            return await _assignmentRepository.GetAll(userId);
+            if (string.IsNullOrWhiteSpace(userId))
+            {
+                throw new UnauthorizedException("User is not authorized");
+            }
+
+            return await _assignmentRepository.GetAll();
         }
 
         public async Task<Assignment> Create(string userId, Assignment assignment)

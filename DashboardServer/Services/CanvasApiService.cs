@@ -2,6 +2,7 @@ using System.Net.Http.Headers;
 using AutoMapper;
 using DashboardServer.Data;
 using DashboardServer.DTOs;
+using DashboardServer.Exceptions;
 using DashboardServer.Models;
 using DashboardServer.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -48,7 +49,7 @@ namespace DashboardServer.Services
             }
         }
 
-        public async Task<List<CanvasQuizDTO>> GetCourseQuizzesFromCanvasAsync(string userId, int courseId)
+        private async Task<List<CanvasQuizDTO>> GetCourseQuizzesFromCanvasAsync(string userId, int courseId)
         {
             await AddAuthHeaderAsync(userId);
             try
@@ -188,7 +189,7 @@ namespace DashboardServer.Services
             var user = await _dbContext.Users.FindAsync(userId);
             if ((DateTime.UtcNow - user!.LastUpdatedData) < TimeSpan.FromMinutes(10))
             {
-                throw new BadHttpRequestException("Your data was updated less than 10 minutes ago, please wait before refreshing again.");
+                throw new BadRequestException("Your data was updated less than 10 minutes ago, please wait before refreshing again.");
             }
             await UpdateCoursesDataAsync(userId);
             await UpdateAssignmentsDataAsync(userId);

@@ -28,11 +28,7 @@ namespace DashboardServer.Controllers
         [HttpGet("all")]
         public async Task<IActionResult> GetAll()
         {
-            string? userId = _userManager.GetUserId(HttpContext.User);
-            if (userId == null)
-            {
-                return Unauthorized("User not found");
-            }
+            string userId = _userManager.GetUserId(HttpContext.User)!;
 
             var assignments = await _assignmentService.GetAll(userId);
             return Ok(_mapper.Map<List<AssignmentDTO>>(assignments));

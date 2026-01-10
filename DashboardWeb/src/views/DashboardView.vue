@@ -47,7 +47,7 @@ const sidebarViewsLeft = [
     { icon: 'ix:maintenance-octagon', height: 30, width: 30, tooltip: 'Maintenance', view: ProfileComponent },
     // { icon: 'iconoir:profile-circle', height: 30, width: 30, tooltip: 'Profile', view: ProfileComponent },
     { icon: 'ep:calendar', height: 30, width: 30, tooltip: 'Calendar', view: CalendarComponent },
-    { icon: 'uiw:dot-chart', height: 30, width: 30, tooltip: 'View Progress', /*view: TodoGridComponent,*/ },
+    { icon: 'uiw:dot-chart', height: 30, width: 30, tooltip: 'Constraints', /*view: TodoGridComponent,*/ },
 ]
 const sidebarViewsRight = [
     { icon: 'la:download', width: 30, height: 30, tooltip: 'Export Study Guide', /*view: TodoGridComponent,*/ },
