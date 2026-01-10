@@ -73,7 +73,7 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted, nextTick } from 'vue'
+import { ref, watch, onMounted, nextTick, computed } from 'vue'
 import DashboardCard from './DashboardCardComponent.vue'
 import api from '../services/api.js'
 import { useToast } from 'vue-toastification'
@@ -87,8 +87,8 @@ const props = defineProps({
     courses: Array,
 })
 
-const assignments = ref([])
-const quizzes = ref([])
+const rawAssignments = ref([])
+const rawQuizzes = ref([])
 const isLoading = ref(false)
 const creatingViewVisible = ref(false)
 
@@ -113,12 +113,46 @@ const sortOptions = ['Due Date Ascending', 'Due Date Descending']
 const selectedSort = ref(sortOptions[0])
 const searchTerm = ref(null)
 
+const sortAndFilter = (items, itemType) => {
+    let filtered = [...items]
+    
+    if (searchTerm.value && searchTerm.value.trim() !== '') {
+        const term = searchTerm.value.toLowerCase()
+        filtered = filtered.filter(item => item.name.toLowerCase().includes(term))
+    }
+    
+    if (selectedFilter.value === 'Favourited') {
+        filtered = filtered.filter(item => item.isFavourite)
+    } else if (selectedFilter.value === 'Completed') {
+        filtered = filtered.filter(item => item.isComplete)
+    } else if (selectedFilter.value === 'Quizzes' && itemType === 'assignment') {
+        return []
+    } else if (selectedFilter.value === 'Assignments' && itemType === 'quiz') {
+        return []
+    }
+    
+    // default is ascending
+    const sortFn = selectedSort.value === 'Due Date Descending'
+        ? (a, b) => new Date(b.dueDate) - new Date(a.dueDate)
+        : (a, b) => new Date(a.dueDate) - new Date(b.dueDate)
+    
+    return filtered.sort(sortFn)
+}
+
+const assignments = computed(() => 
+    sortAndFilter(rawAssignments.value, 'assignment')
+)
+
+const quizzes = computed(() => 
+    sortAndFilter(rawQuizzes.value, 'quiz')
+)
+
 const getAssignmentsForCourse = async () => {
     isLoading.value = true
 
     try {
         const response = await api.get(`course/${props.currentCourse}/assignments`)
-        assignments.value = response.data
+        rawAssignments.value = response.data
     } catch (error) {
         toast.error('Error fetching assignments')
     } finally {
@@ -131,7 +165,7 @@ const getQuizzesForCourse = async () => {
 
     try {
         const response = await api.get(`course/${props.currentCourse}/quizzes`)
-        quizzes.value = response.data
+        rawQuizzes.value = response.data
     } catch (error) {
         toast.error('Error fetching quizzes')
     } finally {
@@ -205,7 +239,7 @@ const createAssignment = async () => {
 const updateAssignment = async (id, updatedModel) => {
     isLoading.value = true
 
-    const assignment = assignments.value.find(a => a.id === id);
+    const assignment = rawAssignments.value.find(a => a.id === id);
     if (!assignment) 
         return
 
@@ -275,7 +309,7 @@ const createQuiz = async () => {
 const updateQuiz = async (id, updatedModel) => {
     isLoading.value = true;
 
-    const quiz = quizzes.value.find(q => q.id === id);
+    const quiz = rawQuizzes.value.find(q => q.id === id);
     if (!quiz) 
         return
 
@@ -349,51 +383,6 @@ watch(selectedType, async () => {
             enableTime: true,
             dateFormat: "Y-m-d H:i",
         });
-    }
-});
-
-watch(searchTerm, (newTerm) => {
-    if (!newTerm || newTerm.trim() === '') {
-        getAssignmentsForCourse();
-        getQuizzesForCourse();
-        return;
-    }
-    quizzes.value = quizzes.value.filter(quiz => 
-        quiz.name.toLowerCase().includes(newTerm.toLowerCase())
-    );
-    assignments.value = assignments.value.filter(assignment => 
-        assignment.name.toLowerCase().includes(newTerm.toLowerCase())
-    );
-});
-
-watch(selectedFilter, async (newFilter) => {
-    // Reset to original data before filtering
-    await getAssignmentsForCourse();
-    await getQuizzesForCourse();
-
-    if (newFilter === 'Favourited') {
-        assignments.value = assignments.value.filter(assignment => assignment.isFavourite);
-        quizzes.value = quizzes.value.filter(quiz => quiz.isFavourite);
-    } else if (newFilter === 'Completed') {
-        assignments.value = assignments.value.filter(assignment => assignment.isComplete);
-        quizzes.value = quizzes.value.filter(quiz => quiz.isComplete);
-    } else if (newFilter === 'Quizzes') {
-        assignments.value = [];
-    } else if (newFilter === 'Assignments') {
-        quizzes.value = [];
-    }
-});
-
-watch(selectedSort, (newSort) => {
-    if (newSort === 'Due Date Ascending') {
-        assignments.value.sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
-        quizzes.value.sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
-    } else if (newSort === 'Due Date Descending') {
-        assignments.value.sort((a, b) => new Date(b.dueDate) - new Date(a.dueDate));
-        quizzes.value.sort((a, b) => new Date(b.dueDate) - new Date(a.dueDate));
-    } else {
-        assignments.value.sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
-        quizzes.value.sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
     }
 });
 
