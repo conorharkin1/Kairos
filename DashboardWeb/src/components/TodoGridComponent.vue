@@ -11,6 +11,10 @@
             <div class="search-bar">
                 <input v-model="searchTerm" type="text" placeholder="Search ..." />
             </div>
+            <span class="include-completed-input">
+                <input type="checkbox" v-model="includeCompleted" />
+                Include Completed
+            </span>
             <button class="btn-primary btn-good" v-if="!creatingViewVisible" @click="toggleCreateView">Add New</button>
             <button class="btn-primary btn-danger" v-if="creatingViewVisible" @click="toggleCreateView">Cancel</button>
         </div>
@@ -41,8 +45,8 @@
                     <input v-model="selectedUrl" type="text" placeholder="E.g. https://example.com" />
 
                     <div class="checkbox-row">
-                        <span>Mark as favourite</span>
-                        <input type="checkbox" />
+                        <span>Mark as priority</span>
+                        <input type="checkbox" v-model="prioritised" />
                     </div>
 
                     <button class="btn-primary btn-good" @click="addNew">Save</button>
@@ -73,7 +77,7 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted, nextTick, computed } from 'vue'
+import { ref, watch, onMounted, onUnmounted, nextTick, computed } from 'vue'
 import DashboardCard from './DashboardCardComponent.vue'
 import api from '../services/api.js'
 import { useToast } from 'vue-toastification'
@@ -91,6 +95,7 @@ const rawAssignments = ref([])
 const rawQuizzes = ref([])
 const isLoading = ref(false)
 const creatingViewVisible = ref(false)
+const includeCompleted = ref(false)
 
 // Create view inputs
 const types = ['Assignment', 'Quiz', 'Todo Item']
@@ -105,9 +110,10 @@ let dueDateFp = null;
 let lockDateFp = null;
 const selectedDescription = ref('')
 const selectedUrl = ref('')
+const prioritised = ref(false)
 
 // Sorting / filtering
-const filterOptions = ['All', 'Favourited', 'Completed', 'Quizzes', 'Assignments']
+const filterOptions = ['All', 'Prioritised', 'Completed', 'Quizzes', 'Assignments']
 const selectedFilter = ref(filterOptions[0])
 const sortOptions = ['Due Date Ascending', 'Due Date Descending']
 const selectedSort = ref(sortOptions[0])
@@ -121,7 +127,7 @@ const sortAndFilter = (items, itemType) => {
         filtered = filtered.filter(item => item.name.toLowerCase().includes(term))
     }
     
-    if (selectedFilter.value === 'Favourited') {
+    if (selectedFilter.value === 'Prioritised') {
         filtered = filtered.filter(item => item.isPriority)
     } else if (selectedFilter.value === 'Completed') {
         filtered = filtered.filter(item => item.isComplete)
@@ -151,7 +157,11 @@ const getAssignmentsForCourse = async () => {
     isLoading.value = true
 
     try {
-        const response = await api.get(`course/${props.currentCourse}/assignments`)
+        const response = await api.get(`course/${props.currentCourse}/assignments`, {
+            params: {
+                includeCompleted: includeCompleted.value
+            }
+        })
         rawAssignments.value = response.data
     } catch (error) {
         toast.error('Error fetching assignments')
@@ -164,7 +174,11 @@ const getQuizzesForCourse = async () => {
     isLoading.value = true
 
     try {
-        const response = await api.get(`course/${props.currentCourse}/quizzes`)
+        const response = await api.get(`course/${props.currentCourse}/quizzes`, {
+            params: {
+                includeCompleted: includeCompleted.value
+            }
+        })
         rawQuizzes.value = response.data
     } catch (error) {
         toast.error('Error fetching quizzes')
@@ -212,7 +226,6 @@ const addNew = async () => {
             isLoading.value = false
             break
     }
-    
 }
 
 const createAssignment = async () => {
@@ -223,6 +236,7 @@ const createAssignment = async () => {
             dueDate: convertToUTC(selectedDueDate.value),
             description: selectedDescription.value,
             htmlUrl: selectedUrl.value,
+            isPriority: prioritised.value,
         }
         await api.post('assignment', payload);
         
@@ -293,6 +307,7 @@ const createQuiz = async () => {
             dueDate: convertToUTC(selectedDueDate.value),
             lockDate: convertToUTC(selectedLockDate.value),
             htmlUrl: selectedUrl.value,
+            isPriority: prioritised.value,
         }
         await api.post('quiz', payload);
         
@@ -354,7 +369,24 @@ const toggleCreateView = () => {
     creatingViewVisible.value = !creatingViewVisible.value
 }
 
+onMounted(() => {
+    if (props.currentCourse) {
+        getAssignmentsForCourse();
+        getQuizzesForCourse();
+    }
+});
+
+onUnmounted(() => {
+    dueDateFp?.destroy();
+    lockDateFp?.destroy();
+})
+
 watch(() => props.currentCourse, () => {
+    getAssignmentsForCourse();
+    getQuizzesForCourse();
+});
+
+watch(includeCompleted, () => {
     getAssignmentsForCourse();
     getQuizzesForCourse();
 });
@@ -507,5 +539,9 @@ watch(selectedType, async () => {
 
 .v-select {
     border: 2px solid $primary-text-light;
+}
+
+.include-completed-input {
+    color: $primary-text-light;
 }
 </style>
