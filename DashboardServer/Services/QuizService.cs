@@ -20,22 +20,17 @@ namespace DashboardServer.Services
                 throw new BadRequestException("Quiz name cannot be empty");
             }
 
-            if (quiz.DueDate != null && quiz.DueDate < DateTime.UtcNow)
-            {
-                throw new BadRequestException("Due date cannot be in the past");
-            }
-
-            if (quiz.LockDate != null && quiz.LockDate < DateTime.UtcNow)
-            {
-                throw new BadRequestException("Lock date cannot be in the past");
-            }
-
-            if (quiz.DueDate != null && quiz.LockDate != null && quiz.LockDate < quiz.DueDate)
-            {
-                throw new BadRequestException("Lock date cannot be before due date");
-            }
-
             return await _quizRepository.Create(userId, quiz);
+        }
+
+        public async Task CreateQuizzesAsync(string userId, List<Quiz> quizzes)
+        {
+            if (string.IsNullOrWhiteSpace(userId))
+            {
+                throw new UnauthorizedException("User is not authorized");
+            }
+
+            await _quizRepository.CreateQuizzesAsync(userId, quizzes);
         }
 
         public async Task<Quiz> Update(string userId, int quizId, Quiz quiz)
@@ -48,21 +43,6 @@ namespace DashboardServer.Services
             if (string.IsNullOrWhiteSpace(quiz.Name))
             {
                 throw new BadRequestException("Quiz name cannot be empty");
-            }
-
-            if (quiz.DueDate != null && quiz.DueDate < DateTime.UtcNow)
-            {
-                throw new BadRequestException("Due date cannot be in the past");
-            }
-
-            if (quiz.LockDate != null && quiz.LockDate < DateTime.UtcNow)
-            {
-                throw new BadRequestException("Lock date cannot be in the past");
-            }
-
-            if (quiz.DueDate != null && quiz.LockDate != null && quiz.LockDate < quiz.DueDate)
-            {
-                throw new BadRequestException("Lock date cannot be before due date");
             }
 
             return await _quizRepository.Update(userId, quizId, quiz);

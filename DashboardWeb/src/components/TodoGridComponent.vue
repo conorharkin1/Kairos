@@ -3,16 +3,18 @@
     <div v-else>
         <div class="header">
             <div class="filter">
-                <select>
-                    <option value="all">All Tasks</option>
-                    <option value="due-today">Due Today</option>
-                    <option value="overdue">Overdue</option>
-                    <option value="completed">Completed</option>
-                </select>
+                <v-select v-model="selectedFilter" :options="filterOptions" label="Filter By" />
+            </div>
+            <div class="filter">
+                <v-select v-model="selectedSort" :options="sortOptions" label="Sort By" />
             </div>
             <div class="search-bar">
-                <input type="text" placeholder="Search ..." />
+                <input v-model="searchTerm" type="text" placeholder="Search ..." />
             </div>
+            <span class="include-completed-input">
+                <input type="checkbox" v-model="includeCompleted" />
+                Include Completed
+            </span>
             <button class="btn-primary btn-good" v-if="!creatingViewVisible" @click="toggleCreateView">Add New</button>
             <button class="btn-primary btn-danger" v-if="creatingViewVisible" @click="toggleCreateView">Cancel</button>
         </div>
@@ -43,16 +45,16 @@
                     <input v-model="selectedUrl" type="text" placeholder="E.g. https://example.com" />
 
                     <div class="checkbox-row">
-                        <span>Mark as favourite</span>
-                        <input type="checkbox" />
+                        <span>Mark as priority</span>
+                        <input type="checkbox" v-model="prioritised" />
                     </div>
 
                     <button class="btn-primary btn-good" @click="addNew">Save</button>
                 </div>
             </div>
         </div>
-        <div v-else-if="assignments.length > 0" class="dashboard-card-grid">
-            <DashboardCard v-for="(assignment, index) in assignments" :key="index" 
+        <div v-else-if="assignments.length > 0 || quizzes.length > 0" class="dashboard-card-grid">
+            <DashboardCard v-for="(assignment, index) in assignments" :key="index"
                 type="Assignment"
                 :model="assignment"
                 @save="(updatedModel) => updateAssignment(assignment.id, updatedModel)"
@@ -75,7 +77,7 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted, nextTick } from 'vue'
+import { ref, watch, onMounted, onUnmounted, nextTick, computed } from 'vue'
 import DashboardCard from './DashboardCardComponent.vue'
 import api from '../services/api.js'
 import { useToast } from 'vue-toastification'
@@ -89,10 +91,11 @@ const props = defineProps({
     courses: Array,
 })
 
-const assignments = ref([])
-const quizzes = ref([])
+const rawAssignments = ref([])
+const rawQuizzes = ref([])
 const isLoading = ref(false)
 const creatingViewVisible = ref(false)
+const includeCompleted = ref(false)
 
 // Create view inputs
 const types = ['Assignment', 'Quiz', 'Todo Item']
@@ -107,13 +110,59 @@ let dueDateFp = null;
 let lockDateFp = null;
 const selectedDescription = ref('')
 const selectedUrl = ref('')
+const prioritised = ref(false)
+
+// Sorting / filtering
+const filterOptions = ['All', 'Prioritised', 'Completed', 'Quizzes', 'Assignments']
+const selectedFilter = ref(filterOptions[0])
+const sortOptions = ['Due Date Ascending', 'Due Date Descending']
+const selectedSort = ref(sortOptions[0])
+const searchTerm = ref(null)
+
+const sortAndFilter = (items, itemType) => {
+    let filtered = [...items]
+    
+    if (searchTerm.value && searchTerm.value.trim() !== '') {
+        const term = searchTerm.value.toLowerCase()
+        filtered = filtered.filter(item => item.name.toLowerCase().includes(term))
+    }
+    
+    if (selectedFilter.value === 'Prioritised') {
+        filtered = filtered.filter(item => item.isPriority)
+    } else if (selectedFilter.value === 'Completed') {
+        filtered = filtered.filter(item => item.isComplete)
+    } else if (selectedFilter.value === 'Quizzes' && itemType === 'assignment') {
+        return []
+    } else if (selectedFilter.value === 'Assignments' && itemType === 'quiz') {
+        return []
+    }
+    
+    // default is ascending
+    const sortFn = selectedSort.value === 'Due Date Descending'
+        ? (a, b) => new Date(b.dueDate) - new Date(a.dueDate)
+        : (a, b) => new Date(a.dueDate) - new Date(b.dueDate)
+    
+    return filtered.sort(sortFn)
+}
+
+const assignments = computed(() => 
+    sortAndFilter(rawAssignments.value, 'assignment')
+)
+
+const quizzes = computed(() => 
+    sortAndFilter(rawQuizzes.value, 'quiz')
+)
 
 const getAssignmentsForCourse = async () => {
     isLoading.value = true
 
     try {
-        const response = await api.get(`course/${props.currentCourse}/assignments`)
-        assignments.value = response.data
+        const response = await api.get(`course/${props.currentCourse}/assignments`, {
+            params: {
+                includeCompleted: includeCompleted.value
+            }
+        })
+        rawAssignments.value = response.data
     } catch (error) {
         toast.error('Error fetching assignments')
     } finally {
@@ -125,8 +174,12 @@ const getQuizzesForCourse = async () => {
     isLoading.value = true
 
     try {
-        const response = await api.get(`course/${props.currentCourse}/quizzes`)
-        quizzes.value = response.data
+        const response = await api.get(`course/${props.currentCourse}/quizzes`, {
+            params: {
+                includeCompleted: includeCompleted.value
+            }
+        })
+        rawQuizzes.value = response.data
     } catch (error) {
         toast.error('Error fetching quizzes')
     } finally {
@@ -173,7 +226,6 @@ const addNew = async () => {
             isLoading.value = false
             break
     }
-    
 }
 
 const createAssignment = async () => {
@@ -184,6 +236,7 @@ const createAssignment = async () => {
             dueDate: convertToUTC(selectedDueDate.value),
             description: selectedDescription.value,
             htmlUrl: selectedUrl.value,
+            isPriority: prioritised.value,
         }
         await api.post('assignment', payload);
         
@@ -200,7 +253,7 @@ const createAssignment = async () => {
 const updateAssignment = async (id, updatedModel) => {
     isLoading.value = true
 
-    const assignment = assignments.value.find(a => a.id === id);
+    const assignment = rawAssignments.value.find(a => a.id === id);
     if (!assignment) 
         return
 
@@ -220,7 +273,7 @@ const updateAssignment = async (id, updatedModel) => {
     assignment.dueDate = convertToUTC(updatedModel.dueDate),
     assignment.htmlUrl = updatedModel.htmlUrl;
     assignment.isComplete = updatedModel.isComplete;
-    assignment.isFavourite = updatedModel.isFavourite;
+    assignment.isPriority = updatedModel.isPriority;
 
     try {
         await api.put(`assignment/${id}`, assignment);
@@ -254,6 +307,7 @@ const createQuiz = async () => {
             dueDate: convertToUTC(selectedDueDate.value),
             lockDate: convertToUTC(selectedLockDate.value),
             htmlUrl: selectedUrl.value,
+            isPriority: prioritised.value,
         }
         await api.post('quiz', payload);
         
@@ -270,7 +324,7 @@ const createQuiz = async () => {
 const updateQuiz = async (id, updatedModel) => {
     isLoading.value = true;
 
-    const quiz = quizzes.value.find(q => q.id === id);
+    const quiz = rawQuizzes.value.find(q => q.id === id);
     if (!quiz) 
         return
 
@@ -285,7 +339,7 @@ const updateQuiz = async (id, updatedModel) => {
     quiz.lockDate = convertToUTC(updatedModel.lockDate),
     quiz.htmlUrl = updatedModel.htmlUrl;
     quiz.isComplete = updatedModel.isComplete;
-    quiz.isFavourite = updatedModel.isFavourite;
+    quiz.isPriority = updatedModel.isPriority;
 
     try {
         await api.put(`quiz/${id}`, quiz);
@@ -315,7 +369,24 @@ const toggleCreateView = () => {
     creatingViewVisible.value = !creatingViewVisible.value
 }
 
+onMounted(() => {
+    if (props.currentCourse) {
+        getAssignmentsForCourse();
+        getQuizzesForCourse();
+    }
+});
+
+onUnmounted(() => {
+    dueDateFp?.destroy();
+    lockDateFp?.destroy();
+})
+
 watch(() => props.currentCourse, () => {
+    getAssignmentsForCourse();
+    getQuizzesForCourse();
+});
+
+watch(includeCompleted, () => {
     getAssignmentsForCourse();
     getQuizzesForCourse();
 });
@@ -360,11 +431,8 @@ watch(selectedType, async () => {
     padding-left: 1rem;
 }
 
-.filter select {
-    background-color: $primary-dark-background;
-    color: $primary-text-light;
-    padding: 0.5rem;
-    font-size: 1rem;
+.filter {
+    min-width: 6rem;
 }
 
 .search-bar input {
@@ -471,5 +539,9 @@ watch(selectedType, async () => {
 
 .v-select {
     border: 2px solid $primary-text-light;
+}
+
+.include-completed-input {
+    color: $primary-text-light;
 }
 </style>

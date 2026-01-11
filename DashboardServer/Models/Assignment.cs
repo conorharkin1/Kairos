@@ -12,6 +12,6 @@ namespace DashboardServer.Models
         public DateTime? DueDate { get; set; }
         public string? HtmlUrl { get; set; }
         public bool IsComplete { get; set; }
-        public bool IsFavourite { get; set; }
+        public bool IsPriority { get; set; }
     }
 }

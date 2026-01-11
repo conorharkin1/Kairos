@@ -15,7 +15,12 @@ namespace DashboardServer.Services
 
         public async Task<List<Assignment>> GetAll(string userId)
         {
-            return await _assignmentRepository.GetAll(userId);
+            if (string.IsNullOrWhiteSpace(userId))
+            {
+                throw new UnauthorizedException("User is not authorized");
+            }
+
+            return await _assignmentRepository.GetAll();
         }
 
         public async Task<Assignment> Create(string userId, Assignment assignment)
@@ -25,12 +30,17 @@ namespace DashboardServer.Services
                 throw new BadRequestException("Assignment name cannot be empty");
             }
 
-            if (assignment.DueDate != null && assignment.DueDate < DateTime.UtcNow)
+            return await _assignmentRepository.Create(userId, assignment);
+        }
+
+        public async Task CreateAssignmentsAsync(string userId, List<Assignment> assignments)
+        {
+            if (string.IsNullOrWhiteSpace(userId))
             {
-                throw new BadRequestException("Due date cannot be in the past");
+                throw new UnauthorizedException("User is not authorized");
             }
 
-            return await _assignmentRepository.Create(userId, assignment);
+            await _assignmentRepository.CreateAssignmentsAsync(userId, assignments);
         }
 
         public async Task<Assignment> Update(string userId, int assignmentId, Assignment assignment)
@@ -43,11 +53,6 @@ namespace DashboardServer.Services
             if (string.IsNullOrWhiteSpace(assignment.Name))
             {
                 throw new BadRequestException("Assignment name cannot be empty");
-            }
-
-            if (assignment.DueDate != null && assignment.DueDate < DateTime.UtcNow)
-            {
-                throw new BadRequestException("Due date cannot be in the past");
             }
 
             return await _assignmentRepository.Update(userId, assignmentId, assignment);

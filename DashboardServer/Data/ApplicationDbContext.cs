@@ -26,8 +26,13 @@ namespace DashboardServer.Data
         {
             base.OnModelCreating(builder);
 
+            // Global Query Filters
+            builder.Entity<Course>().HasQueryFilter(c => c.UserId == CurrentUserId);
+            builder.Entity<Assignment>().HasQueryFilter(a => a.UserId == CurrentUserId);
+            builder.Entity<Quiz>().HasQueryFilter(q => q.UserId == CurrentUserId);
+
+            // Relationships
             builder.Entity<Course>()
-                .HasQueryFilter(c => c.UserId == CurrentUserId)
                 .HasMany(c => c.Assignments)
                     .WithOne(a => a.Course)
                     .HasForeignKey(a => a.CourseId)
@@ -38,9 +43,6 @@ namespace DashboardServer.Data
                     .WithOne(q => q.Course)
                     .HasForeignKey(q => q.CourseId)
                     .OnDelete(DeleteBehavior.Cascade);
-
-            builder.Entity<Assignment>().HasQueryFilter(a => a.UserId == CurrentUserId);
-            builder.Entity<Quiz>().HasQueryFilter(q => q.UserId == CurrentUserId);
         }
     }
 }

@@ -124,7 +124,7 @@ namespace DashboardServer.Migrations
                     b.Property<bool>("IsComplete")
                         .HasColumnType("boolean");
 
-                    b.Property<bool>("IsFavourite")
+                    b.Property<bool>("IsPriority")
                         .HasColumnType("boolean");
 
                     b.Property<string>("Name")
@@ -190,7 +190,7 @@ namespace DashboardServer.Migrations
                     b.Property<bool>("IsComplete")
                         .HasColumnType("boolean");
 
-                    b.Property<bool>("IsFavourite")
+                    b.Property<bool>("IsPriority")
                         .HasColumnType("boolean");
 
                     b.Property<DateTime?>("LockDate")

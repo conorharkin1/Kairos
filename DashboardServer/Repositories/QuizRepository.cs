@@ -22,6 +22,17 @@ namespace DashboardServer.Repositories
             return createdQuiz.Entity;
         }
 
+        public async Task CreateQuizzesAsync(string userId, List<Quiz> quizzes)
+        {
+            foreach (var quiz in quizzes)
+            {
+                quiz.UserId = userId;
+            }
+
+            await _dbContext.Quizzes.AddRangeAsync(quizzes);
+            await _dbContext.SaveChangesAsync();
+        }
+
         public async Task<Quiz> Update(string userId, int quizId, Quiz quiz)
         {
             var existingQuiz = await _dbContext.Quizzes.FirstOrDefaultAsync(q => q.Id == quizId && q.UserId == userId);
@@ -35,7 +46,7 @@ namespace DashboardServer.Repositories
             existingQuiz.LockDate = quiz.LockDate;
             existingQuiz.HtmlUrl = quiz.HtmlUrl;
             existingQuiz.IsComplete = quiz.IsComplete;
-            existingQuiz.IsFavourite = quiz.IsFavourite;
+            existingQuiz.IsPriority = quiz.IsPriority;
 
             await _dbContext.SaveChangesAsync();
             return existingQuiz;
