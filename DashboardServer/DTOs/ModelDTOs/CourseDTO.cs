@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace DashboardServer.DTOs.ResponseDTOs
+namespace DashboardServer.DTOs.ModelDTOs
 {
     public class CourseDTO
     {

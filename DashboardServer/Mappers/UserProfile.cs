@@ -1,5 +1,5 @@
 using AutoMapper;
-using DashboardServer.DTOs;
+using DashboardServer.DTOs.AuthDTOs;
 using DashboardServer.Models;
 
 namespace DashboardServer.Mappers

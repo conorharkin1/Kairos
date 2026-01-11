@@ -16,10 +16,10 @@
                 :currentView="currentView"
             />
         </div>
-        <div class="course-tabs" v-if="currentView !== CalendarComponent">
+        <div class="course-tabs" v-if="currentView !== CalendarComponent && currentView !== ConstraintsComponent">
             <CourseTabsComponent @change-course="changeCourse" :currentCourse="currentCourse" :courses="courses"/>
         </div>
-        <div class="todo-grid" v-if="currentView !== CalendarComponent">
+        <div class="todo-grid" v-if="currentView !== CalendarComponent && currentView !== ConstraintsComponent">
             <TodoGridComponent :currentCourse="currentCourse" :courses="courses"/>
         </div>
         <div class="scheduler-container" v-if="currentView === CalendarComponent">
@@ -36,6 +36,7 @@ import CalendarComponent from '@/components/CalendarComponent.vue'
 import CourseTabsComponent from '@/components/CourseTabsComponent.vue'
 import TodoGridComponent from '@/components/TodoGridComponent.vue'
 import SchedulerComponent from '@/components/SchedulerComponent.vue'
+import ConstraintsComponent from '@/components/ConstraintsComponent.vue'
 import api from '../services/api.js'
 
 const isLoading = ref(false)
@@ -45,13 +46,12 @@ const courses = ref([])
 
 const sidebarViewsLeft = [
     { icon: 'ix:maintenance-octagon', height: 30, width: 30, tooltip: 'Maintenance', view: ProfileComponent },
-    // { icon: 'iconoir:profile-circle', height: 30, width: 30, tooltip: 'Profile', view: ProfileComponent },
     { icon: 'ep:calendar', height: 30, width: 30, tooltip: 'Calendar', view: CalendarComponent },
-    { icon: 'uiw:dot-chart', height: 30, width: 30, tooltip: 'Constraints', /*view: TodoGridComponent,*/ },
+    { icon: 'uiw:dot-chart', height: 30, width: 30, tooltip: 'Constraints', view: ConstraintsComponent },
 ]
 const sidebarViewsRight = [
-    { icon: 'la:download', width: 30, height: 30, tooltip: 'Export Study Guide', /*view: TodoGridComponent,*/ },
-    { icon: 'icon-park-outline:redo', width: 30, height: 30, tooltip: 'Redo Study Guide', /*view: TodoGridComponent,*/ },
+    { icon: 'la:download', width: 30, height: 30, tooltip: 'Coming Soon', /*view: TodoGridComponent,*/ },
+    { icon: 'icon-park-outline:redo', width: 30, height: 30, tooltip: 'Coming Soon', /*view: TodoGridComponent,*/ },
 ]
 
 const fetchCourses = async () => {

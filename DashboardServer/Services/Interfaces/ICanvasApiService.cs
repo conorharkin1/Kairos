@@ -1,4 +1,4 @@
-using DashboardServer.DTOs;
+using DashboardServer.DTOs.CanvasDTOs;
 
 namespace DashboardServer.Services.Interfaces
 {

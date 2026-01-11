@@ -1,5 +1,5 @@
 using AutoMapper;
-using DashboardServer.DTOs;
+using DashboardServer.DTOs.AuthDTOs;
 using DashboardServer.Models;
 using DashboardServer.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;

@@ -1,7 +1,6 @@
 using System.Net.Http.Headers;
 using AutoMapper;
-using DashboardServer.DTOs;
-using DashboardServer.DTOs.ResponseDTOs;
+using DashboardServer.DTOs.ModelDTOs;
 using Microsoft.AspNetCore.Mvc;
 using CourseModel = DashboardServer.Models.Course;
 using AssignmentModel = DashboardServer.Models.Assignment;

@@ -1,6 +1,6 @@
 using AutoMapper;
-using DashboardServer.DTOs;
-using DashboardServer.DTOs.ResponseDTOs;
+using DashboardServer.DTOs.CanvasDTOs;
+using DashboardServer.DTOs.ModelDTOs;
 using DashboardServer.Models;
 
 namespace DashboardServer.Mappers
