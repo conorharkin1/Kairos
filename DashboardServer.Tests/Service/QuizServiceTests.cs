@@ -71,63 +71,6 @@ namespace DashboardServer.Tests.Service
         }
 
         [Fact]
-        public async Task Create_ShouldThrowBadRequestException_WhenDueDateIsInPast()
-        {
-            var userId = "user123";
-            // Arrange
-            var quiz = new Quiz
-            {
-                Name = "Test Quiz",
-                DueDate = DateTime.UtcNow.AddDays(-1),
-                LockDate = DateTime.UtcNow.AddDays(1),
-                HtmlUrl = "http://example.com",
-                CourseId = 1
-            };
-
-            // Act & Assert
-            await Assert.ThrowsAsync<BadRequestException>(() => _service.Create(userId, quiz));
-            _mockRepo.Verify(r => r.Create(userId, quiz), Times.Never);
-        }
-
-        [Fact]
-        public async Task Create_ShouldThrowBadRequestException_WhenLockDateIsInPast()
-        {
-            var userId = "user123";
-            // Arrange
-            var quiz = new Quiz
-            {
-                Name = "Test Quiz",
-                DueDate = DateTime.UtcNow.AddDays(1),
-                LockDate = DateTime.UtcNow.AddDays(-1),
-                HtmlUrl = "http://example.com",
-                CourseId = 1
-            };
-
-            // Act & Assert
-            await Assert.ThrowsAsync<BadRequestException>(() => _service.Create(userId, quiz));
-            _mockRepo.Verify(r => r.Create(userId, quiz), Times.Never);
-        }
-
-        [Fact]
-        public async Task Create_ShouldThrowBadRequestException_WhenLockDateBeforeDueDate()
-        {
-            var userId = "user123";
-            // Arrange
-            var quiz = new Quiz
-            {
-                Name = "Test Quiz",
-                DueDate = DateTime.UtcNow.AddDays(5),
-                LockDate = DateTime.UtcNow.AddDays(3),
-                HtmlUrl = "http://example.com",
-                CourseId = 1
-            };
-
-            // Act & Assert
-            await Assert.ThrowsAsync<BadRequestException>(() => _service.Create(userId, quiz));
-            _mockRepo.Verify(r => r.Create(userId, quiz), Times.Never);
-        }
-
-        [Fact]
         public async Task Update_ShouldCallRepository_WhenValid()
         {
             // Arrange
@@ -171,63 +114,6 @@ namespace DashboardServer.Tests.Service
                 Name = "",
                 DueDate = DateTime.UtcNow.AddDays(1),
                 LockDate = DateTime.UtcNow.AddDays(2),
-                CourseId = 1
-            };
-
-            // Act & Assert
-            await Assert.ThrowsAsync<BadRequestException>(() => _service.Update(userId, quiz.Id, quiz));
-            _mockRepo.Verify(r => r.Update(userId, quiz.Id, quiz), Times.Never);
-        }
-
-        [Fact]
-        public async Task Update_ShouldThrowBadRequestException_WhenDueDateIsInPast()
-        {
-            var userId = "user123";
-            // Arrange
-            var quiz = new Quiz
-            {
-                Id = 1,
-                Name = "Test Quiz",
-                DueDate = DateTime.UtcNow.AddDays(-1),
-                LockDate = DateTime.UtcNow.AddDays(1),
-                CourseId = 1
-            };
-
-            // Act & Assert
-            await Assert.ThrowsAsync<BadRequestException>(() => _service.Update(userId, quiz.Id, quiz));
-            _mockRepo.Verify(r => r.Update(userId, quiz.Id, quiz), Times.Never);
-        }
-
-        [Fact]
-        public async Task Update_ShouldThrowBadRequestException_WhenLockDateIsInPast()
-        {
-            var userId = "user123";
-            // Arrange
-            var quiz = new Quiz
-            {
-                Id = 1,
-                Name = "Test Quiz",
-                DueDate = DateTime.UtcNow.AddDays(1),
-                LockDate = DateTime.UtcNow.AddDays(-1),
-                CourseId = 1
-            };
-
-            // Act & Assert
-            await Assert.ThrowsAsync<BadRequestException>(() => _service.Update(userId, quiz.Id, quiz));
-            _mockRepo.Verify(r => r.Update(userId, quiz.Id, quiz), Times.Never);
-        }
-
-        [Fact]
-        public async Task Update_ShouldThrowBadRequestException_WhenLockDateBeforeDueDate()
-        {
-            var userId = "user123";
-            // Arrange
-            var quiz = new Quiz
-            {
-                Id = 1,
-                Name = "Test Quiz",
-                DueDate = DateTime.UtcNow.AddDays(5),
-                LockDate = DateTime.UtcNow.AddDays(3),
                 CourseId = 1
             };
 

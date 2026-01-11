@@ -16,15 +16,21 @@ namespace DashboardServer.Services
         private readonly IUserService _userService;
         private readonly ApplicationDbContext _dbContext;
         private readonly IMapper _mapper;
+        private readonly IAssignmentService _assignmentService;
+        private readonly IQuizService _quizService;
+        private readonly ICourseService _courseService;
         private const string CANVAS_BASE_URL = "https://canvas.qub.ac.uk/";
 
-        public CanvasApiService(HttpClient httpClient, IEncryptService encryptService, IUserService userService, ApplicationDbContext dbContext, IMapper mapper)
+        public CanvasApiService(HttpClient httpClient, IEncryptService encryptService, IUserService userService, ApplicationDbContext dbContext, IMapper mapper, IAssignmentService assignmentService, IQuizService quizService, ICourseService courseService)
         {
             _encryptService = encryptService;
             _httpClient = httpClient;
             _userService = userService;
             _dbContext = dbContext;
             _mapper = mapper;
+            _assignmentService = assignmentService;
+            _quizService = quizService;
+            _courseService = courseService;
             _httpClient.BaseAddress = new Uri(CANVAS_BASE_URL);
         }
 
@@ -87,14 +93,13 @@ namespace DashboardServer.Services
         {
             var existingCanvasCourses = await _dbContext.Courses.Where(c => c.ExternalCourseId.HasValue).ToDictionaryAsync(c => c.ExternalCourseId!.Value, c => c);
             var incomingCanvasCourses = _mapper.Map<List<Course>>(await GetFavoriteCoursesFromCanvasAsync(userId));
+            var coursesToAdd = new List<Course>();
             
             foreach (var course in incomingCanvasCourses)
             {
                 if (!existingCanvasCourses.TryGetValue(course.ExternalCourseId!.Value, out var existingCourse))
                 {
-                    // Insert new
-                    course.UserId = userId;
-                    await _dbContext.Courses.AddAsync(course);
+                    coursesToAdd.Add(course);
                 }
                 else
                 {
@@ -102,7 +107,7 @@ namespace DashboardServer.Services
                 }
             }
 
-            await _dbContext.SaveChangesAsync();
+            await _courseService.CreateCoursesAsync(userId, coursesToAdd);
         }
 
         /// <summary>
@@ -118,6 +123,8 @@ namespace DashboardServer.Services
             var existingAssignments = await _dbContext.Assignments.Where(a => a.ExternalAssignmentId.HasValue).ToListAsync();
             var existingAssignmentsLookup = existingAssignments.ToDictionary(a => a.ExternalAssignmentId!.Value, a => a);
 
+            var assignmentsToAdd = new List<Assignment>();
+
             foreach(var existingCourse in existingCourseIds)
             {
                 var incomingAssignments = _mapper.Map<List<Assignment>>(await GetCourseAssignmentsFromCanvasAsync(userId, existingCourse.ExternalCourseId!.Value));
@@ -131,9 +138,8 @@ namespace DashboardServer.Services
 
                     if (!existingAssignmentsLookup.TryGetValue(assignment.ExternalAssignmentId!.Value, out var existingAssignment))
                     {
-                        assignment.UserId = userId;
                         assignment.CourseId = existingCourse.Id;
-                        await _dbContext.Assignments.AddAsync(assignment);
+                        assignmentsToAdd.Add(assignment);
                     }
                     else
                     {
@@ -142,6 +148,7 @@ namespace DashboardServer.Services
                 }
             }
 
+            await _assignmentService.CreateAssignmentsAsync(userId, assignmentsToAdd);
             await _dbContext.SaveChangesAsync();
         }
         /// <summary>
@@ -157,6 +164,8 @@ namespace DashboardServer.Services
             var existingQuizzes = await _dbContext.Quizzes.Where(q => q.ExternalQuizId.HasValue).ToListAsync();
             var existingQuizzesLookup = existingQuizzes.ToDictionary(q => q.ExternalQuizId!.Value, q => q);
 
+            var quizzesToAdd = new List<Quiz>();
+
             foreach(var existingCourse in existingCourseIds)
             {
                 var incomingQuizzes = _mapper.Map<List<Quiz>>(await GetCourseQuizzesFromCanvasAsync(userId, existingCourse.ExternalCourseId!.Value));
@@ -170,9 +179,8 @@ namespace DashboardServer.Services
 
                     if (!existingQuizzesLookup.TryGetValue(quiz.ExternalQuizId!.Value, out var existingQuiz))
                     {
-                        quiz.UserId = userId;
                         quiz.CourseId = existingCourse.Id;
-                        await _dbContext.Quizzes.AddAsync(quiz);
+                        quizzesToAdd.Add(quiz);
                     }
                     else
                     {
@@ -181,6 +189,8 @@ namespace DashboardServer.Services
                     }
                 }
             }
+
+            await _quizService.CreateQuizzesAsync(userId, quizzesToAdd);
             await _dbContext.SaveChangesAsync();
         }
 

@@ -51,7 +51,7 @@ namespace DashboardServer.Tests.Repository
             await _dbContext.SaveChangesAsync();
 
             // Act
-            var result = await _repository.GetCoursesAsync(userId);
+            var result = await _repository.GetCoursesAsync();
 
             // Assert
             Assert.NotNull(result);
@@ -59,16 +59,14 @@ namespace DashboardServer.Tests.Repository
             Assert.Contains(result, c => c.Name == "Course 1");
             Assert.Contains(result, c => c.Name == "Course 2");
             Assert.Contains(result, c => c.Name == "Course 3");
+            Assert.All(result, c => Assert.Equal(userId, c.UserId));
         }
 
         [Fact]
         public async Task GetCoursesAsync_ReturnsEmptyList_WhenNoCoursesExist()
         {
-            // Arrange
-            var userId = "123";
-
             // Act
-            var result = await _repository.GetCoursesAsync(userId);
+            var result = await _repository.GetCoursesAsync();
 
             // Assert
             Assert.NotNull(result);
@@ -99,7 +97,7 @@ namespace DashboardServer.Tests.Repository
             await _dbContext.SaveChangesAsync();
 
             // Act
-            var result = await _repository.GetCourseAssignmentsAsync(userId, courseId);
+            var result = await _repository.GetCourseAssignmentsAsync(courseId, true);
 
             // Assert
             Assert.NotNull(result);
@@ -113,11 +111,10 @@ namespace DashboardServer.Tests.Repository
         public async Task GetCourseAssignmentsAsync_ReturnsEmptyList_WhenNoAssignmentsExist()
         {
             // Arrange
-            var userId = "123";
             var courseId = 1;
 
             // Act
-            var result = await _repository.GetCourseAssignmentsAsync(userId, courseId);
+            var result = await _repository.GetCourseAssignmentsAsync(courseId, true);
 
             // Assert
             Assert.NotNull(result);
@@ -148,7 +145,7 @@ namespace DashboardServer.Tests.Repository
             await _dbContext.SaveChangesAsync();
 
             // Act
-            var result = await _repository.GetCourseQuizzesAsync(userId, courseId);
+            var result = await _repository.GetCourseQuizzesAsync(courseId, true);
 
             // Assert
             Assert.NotNull(result);
@@ -156,17 +153,17 @@ namespace DashboardServer.Tests.Repository
             Assert.All(result, q => Assert.Equal(courseId, q.CourseId));
             Assert.Contains(result, q => q.Name == "Quiz 1");
             Assert.Contains(result, q => q.Name == "Quiz 2");
+            Assert.All(result, q => Assert.Equal(userId, q.UserId));
         }
 
         [Fact]
         public async Task GetCourseQuizzesAsync_ReturnsEmptyList_WhenNoQuizzesExist()
         {
             // Arrange
-            var userId = "123";
             var courseId = 1;
 
             // Act
-            var result = await _repository.GetCourseQuizzesAsync(userId, courseId);
+            var result = await _repository.GetCourseQuizzesAsync(courseId, true);
 
             // Assert
             Assert.NotNull(result);

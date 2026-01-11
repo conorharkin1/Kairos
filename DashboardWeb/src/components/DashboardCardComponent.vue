@@ -29,14 +29,14 @@
             <input v-else v-model="updatedModel.htmlUrl" class="input-field" placeholder="URL..."/>
         </div>
         <div class="card-footer-checkboxes" v-if="!isEditing">
-            <span v-if="model.isFavourite">Favourited: ✓</span>
+            <span v-if="model.isPriority">Favourited: ✓</span>
             <span v-else>Not favourited</span>
             <span v-if="model.isComplete">Complete: ✓</span>
             <span v-else>Incomplete</span>
         </div>
         <div class="card-footer-checkboxes" v-else>
             <span>Is favourited?</span>
-            <input type="checkbox" v-model="updatedModel.isFavourite">
+            <input type="checkbox" v-model="updatedModel.isPriority">
             <span>Is complete?</span>
             <input type="checkbox" v-model="updatedModel.isComplete">
         </div>

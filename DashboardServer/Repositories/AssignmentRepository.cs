@@ -28,6 +28,17 @@ namespace DashboardServer.Repositories
             return createdAssignment.Entity;
         }
 
+        public async Task CreateAssignmentsAsync(string userId, List<Assignment> assignments)
+        {
+            foreach (var assignment in assignments)
+            {
+                assignment.UserId = userId;
+            }
+
+            await _dbContext.Assignments.AddRangeAsync(assignments);
+            await _dbContext.SaveChangesAsync();
+        }
+
         public async Task<Assignment> Update(string userId, int assignmentId, Assignment assignment)
         {
             var existingAssignment = await _dbContext.Assignments.FirstOrDefaultAsync(a => a.Id == assignmentId && a.UserId == userId);
@@ -41,7 +52,7 @@ namespace DashboardServer.Repositories
             existingAssignment.Description = assignment.Description;
             existingAssignment.HtmlUrl = assignment.HtmlUrl;
             existingAssignment.IsComplete = assignment.IsComplete;
-            existingAssignment.IsFavourite = assignment.IsFavourite;
+            existingAssignment.IsPriority = assignment.IsPriority;
 
             await _dbContext.SaveChangesAsync();
             return existingAssignment;

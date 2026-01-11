@@ -42,22 +42,22 @@ namespace DashboardServer.Controllers
         }
 
         [HttpGet("{courseId}/assignments")]
-        public async Task<IActionResult> GetCourseAssignments(int courseId)
+        public async Task<IActionResult> GetCourseAssignments(int courseId, bool includeCompleted = false)
         {
             string userId = _userManager.GetUserId(HttpContext.User)!;
 
-            var assignments = await _courseService.GetCourseAssignmentsAsync(userId, courseId);
+            var assignments = await _courseService.GetCourseAssignmentsAsync(userId, courseId, includeCompleted);
             var assignmentDtos = _mapper.Map<List<AssignmentDTO>>(assignments);
 
             return Ok(assignmentDtos);
         }
 
         [HttpGet("{courseId}/quizzes")]
-        public async Task<IActionResult> GetCourseQuizzes(int courseId)
+        public async Task<IActionResult> GetCourseQuizzes(int courseId, bool includeCompleted = false)
         {
             string userId = _userManager.GetUserId(HttpContext.User)!;
 
-            var quizzes = await _courseService.GetCourseQuizzesAsync(userId, courseId);
+            var quizzes = await _courseService.GetCourseQuizzesAsync(userId, courseId, includeCompleted);
             var quizDtos = _mapper.Map<List<QuizDTO>>(quizzes);
 
             return Ok(quizDtos);

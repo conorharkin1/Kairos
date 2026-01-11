@@ -122,7 +122,7 @@ const sortAndFilter = (items, itemType) => {
     }
     
     if (selectedFilter.value === 'Favourited') {
-        filtered = filtered.filter(item => item.isFavourite)
+        filtered = filtered.filter(item => item.isPriority)
     } else if (selectedFilter.value === 'Completed') {
         filtered = filtered.filter(item => item.isComplete)
     } else if (selectedFilter.value === 'Quizzes' && itemType === 'assignment') {
@@ -259,7 +259,7 @@ const updateAssignment = async (id, updatedModel) => {
     assignment.dueDate = convertToUTC(updatedModel.dueDate),
     assignment.htmlUrl = updatedModel.htmlUrl;
     assignment.isComplete = updatedModel.isComplete;
-    assignment.isFavourite = updatedModel.isFavourite;
+    assignment.isPriority = updatedModel.isPriority;
 
     try {
         await api.put(`assignment/${id}`, assignment);
@@ -324,7 +324,7 @@ const updateQuiz = async (id, updatedModel) => {
     quiz.lockDate = convertToUTC(updatedModel.lockDate),
     quiz.htmlUrl = updatedModel.htmlUrl;
     quiz.isComplete = updatedModel.isComplete;
-    quiz.isFavourite = updatedModel.isFavourite;
+    quiz.isPriority = updatedModel.isPriority;
 
     try {
         await api.put(`quiz/${id}`, quiz);

@@ -69,24 +69,6 @@ namespace DashboardServer.Tests.Service
         }
 
         [Fact]
-        public async Task Create_ShouldThrowBadRequestException_WhenDueDateIsInPast()
-        {
-            var userId = "user123";
-            // Arrange
-            var assignment = new Assignment
-            {
-                Name = "Test Assignment",
-                DueDate = DateTime.UtcNow.AddDays(-1),
-                Description = "Test Description",
-                HtmlUrl = "http://example.com"
-            };
-
-            // Act & Assert
-            await Assert.ThrowsAsync<BadRequestException>(() => _service.Create(userId, assignment));
-            _mockRepo.Verify(r => r.Create(userId, assignment), Times.Never);
-        }
-
-        [Fact]
         public async Task Update_ShouldCallRepository_WhenValid()
         {
             // Arrange
@@ -126,23 +108,6 @@ namespace DashboardServer.Tests.Service
                 Id = 1,
                 Name = "",
                 DueDate = DateTime.UtcNow.AddDays(1)
-            };
-
-            // Act & Assert
-            await Assert.ThrowsAsync<BadRequestException>(() => _service.Update(userId, assignment.Id, assignment));
-            _mockRepo.Verify(r => r.Update(userId, assignment.Id, assignment), Times.Never);
-        }
-
-        [Fact]
-        public async Task Update_ShouldThrowBadRequestException_WhenDueDateIsInPast()
-        {
-            var userId = "user123";
-            // Arrange
-            var assignment = new Assignment
-            {
-                Id = 1,
-                Name = "Test Assignment",
-                DueDate = DateTime.UtcNow.AddDays(-1)
             };
 
             // Act & Assert

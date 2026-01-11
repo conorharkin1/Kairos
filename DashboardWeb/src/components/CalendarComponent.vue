@@ -110,8 +110,8 @@ const getCustomClassesForAssignment = (assignment) => {
         return classes;
     }
 
-    if (assignment.isFavourite) {
-        classes.push('favourite');
+    if (assignment.isPriority) {
+        classes.push('priority');
     }
 
     if (diffInHours < 0) {
@@ -174,7 +174,7 @@ onMounted(async () => {
 ::v-deep(.vuecal__event.upcoming) {
   --vuecal-primary-color: #{$primary-blue-colour};
 }
-::v-deep(.vuecal__event.favourite) {
+::v-deep(.vuecal__event.priority) {
   --vuecal-event-border-color: #{$primary-yellow-colour};
 }
 </style>
