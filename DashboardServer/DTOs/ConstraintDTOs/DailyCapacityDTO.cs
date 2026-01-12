@@ -1,6 +1,6 @@
 namespace DashboardServer.DTOs.ConstraintDTOs
 {
-    public class DailyAvailabilityDTO
+    public class DailyCapacityDTO
     {
         public int DayIndex { get; set; }
         public int MaxHours { get; set; }

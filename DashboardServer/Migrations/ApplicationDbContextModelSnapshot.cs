@@ -141,6 +141,75 @@ namespace DashboardServer.Migrations
                     b.ToTable("Assignments");
                 });
 
+            modelBuilder.Entity("DashboardServer.Models.Constraints.CourseWeight", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CourseId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("Weight")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("CourseWeights");
+                });
+
+            modelBuilder.Entity("DashboardServer.Models.Constraints.DailyCapacity", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("DayIndex")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("MaxHours")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("DailyCapacities");
+                });
+
+            modelBuilder.Entity("DashboardServer.Models.Constraints.SchedulerRules", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("MaxSessionLength")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("MinSessionLength")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("SchedulerRules");
+                });
+
             modelBuilder.Entity("DashboardServer.Models.Course", b =>
                 {
                     b.Property<int>("Id")

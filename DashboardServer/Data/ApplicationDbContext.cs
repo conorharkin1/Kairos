@@ -22,7 +22,7 @@ namespace DashboardServer.Data
         public DbSet<Course> Courses { get; set; }
         public DbSet<Assignment> Assignments { get; set; }
         public DbSet<Quiz> Quizzes { get; set; }
-        public DbSet<DailyAvailability> DailyAvailabilities { get; set; }
+        public DbSet<DailyCapacity> DailyCapacities { get; set; }
         public DbSet<CourseWeight> CourseWeights { get; set; }
         public DbSet<SchedulerRules> SchedulerRules { get; set; }
 
@@ -34,7 +34,7 @@ namespace DashboardServer.Data
             builder.Entity<Course>().HasQueryFilter(c => c.UserId == CurrentUserId);
             builder.Entity<Assignment>().HasQueryFilter(a => a.UserId == CurrentUserId);
             builder.Entity<Quiz>().HasQueryFilter(q => q.UserId == CurrentUserId);
-            builder.Entity<DailyAvailability>().HasQueryFilter(d => d.UserId == CurrentUserId);
+            builder.Entity<DailyCapacity>().HasQueryFilter(d => d.UserId == CurrentUserId);
             builder.Entity<CourseWeight>().HasQueryFilter(cw => cw.UserId == CurrentUserId);
             builder.Entity<SchedulerRules>().HasQueryFilter(sr => sr.UserId == CurrentUserId);
 

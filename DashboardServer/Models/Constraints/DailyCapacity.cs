@@ -1,6 +1,6 @@
 namespace DashboardServer.Models.Constraints
 {
-    public class DailyAvailability : BaseEntity
+    public class DailyCapacity : BaseEntity
     {
         /// <summary>
         /// 0 = Sunday 6 = Saturday

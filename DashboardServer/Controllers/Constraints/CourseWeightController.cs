@@ -1,6 +1,15 @@
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+
 namespace DashboardServer.Controllers.Constraints
 {
-    public class CourseWeightController
+    [ApiController]
+    [Route("api/constaint/weight")]
+    [Authorize]
+    public class CourseWeightController: ControllerBase
     {
+        public CourseWeightController()
+        {
+        }
     }
 }
