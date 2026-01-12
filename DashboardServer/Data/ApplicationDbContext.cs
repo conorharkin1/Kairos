@@ -50,6 +50,15 @@ namespace DashboardServer.Data
                     .WithOne(q => q.Course)
                     .HasForeignKey(q => q.CourseId)
                     .OnDelete(DeleteBehavior.Cascade);
+            
+            builder.Entity<DailyCapacity>()
+                .HasIndex(dc => new { dc.UserId, dc.DayIndex })
+                .IsUnique();
+
+            builder.Entity<CourseWeight>()
+                .HasIndex(cw => new { cw.UserId, cw.CourseId })
+                .IsUnique();
+                
         }
     }
 }
