@@ -26,7 +26,7 @@ namespace DashboardServer.Services
             {
                 return CreateDefaultDailyCapacities();
             }
-
+            constraints = constraints.OrderBy(c => c.DayIndex).ToList();
             return constraints;
         }
 

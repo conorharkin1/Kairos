@@ -3,27 +3,45 @@
     <div v-else class="global-constraints-container">
         <div class="daily-capacity-container">
             <h2>Daily Work Capacity</h2>
-            <div v-for="constraint in dailyCapacities" :key="constraint.dayIndex">
-                <label>{{ dayName(constraint.dayIndex)}} - {{ constraint.maxHours }} hours</label>
-                <Slider :min="0" :max="12" :step="1" v-model="constraint.maxHours" @hasUnsavedChanges="unsavedChanges = true" />
+            <label class="info">How many hours can you work each day</label>
+            <div class="sliders">
+                <div class="slider" v-for="constraint in dailyCapacities" :key="constraint.dayIndex">
+                    <label>{{ dayName(constraint.dayIndex)}}</label>
+                    <br>
+                    <label>{{ constraint.maxHours }} hours</label>
+                    <Slider :min="0" :max="12" :step="1" v-model="constraint.maxHours" @hasUnsavedChanges="unsavedChanges = true" />
+                </div>
             </div>
         </div>
         <div class="course-weight-container">
             <h2>Course Weights</h2>
-            <div v-for="weight in courseWeights" :key="weight.courseId">
-                <label>{{ getCourseNameById(weight.courseId) }}</label>
-                <br>
-                <label>{{ weight.weight }}%</label>
-                <Slider :min="0" :max="100" :step="10" v-model="weight.weight" @hasUnsavedChanges="unsavedChanges = true" />
+            <label class="info">Give a higher percentage to courses you want to prioritise</label>
+            <div class="sliders">
+                <div class="slider" v-for="weight in courseWeights" :key="weight.courseId">
+                    <label>{{ getCourseNameById(weight.courseId) }}</label>
+                    <br>
+                    <label>{{ weight.weight }}%</label>
+                    <Slider :min="0" :max="100" :step="10" v-model="weight.weight" @hasUnsavedChanges="unsavedChanges = true" />
+                </div>
             </div>
         </div>
         <div class="scheduler-rules-container">
             <h2>Scheduler Rules</h2>
-            <label>Minimum Session Length - {{ schedulerRules.minSessionLength }} minutes</label>
-            <Slider :min="30" :max="240" :step="30" v-model="schedulerRules.minSessionLength" @hasUnsavedChanges="unsavedChanges = true" />
-
-            <label>Maximum Session Length - {{ schedulerRules.maxSessionLength }} minutes</label>
-            <Slider :min="30" :max="240" :step="30" v-model="schedulerRules.maxSessionLength" @hasUnsavedChanges="unsavedChanges = true" />
+            <label class="info">The session length controls how much time you will work in consecutive chunks</label>
+            <div class="sliders">
+                <div class="slider">
+                    <label>Minimum Session Length</label>
+                    <br>
+                    <label>{{ schedulerRules.minSessionLength }} minutes</label>
+                    <Slider :min="30" :max="240" :step="30" v-model="schedulerRules.minSessionLength" @hasUnsavedChanges="unsavedChanges = true" />
+                </div>
+                <div class="slider">
+                    <label>Maximum Session Length</label>
+                    <br>
+                    <label>{{ schedulerRules.maxSessionLength }} minutes</label>
+                    <Slider :min="30" :max="240" :step="30" v-model="schedulerRules.maxSessionLength" @hasUnsavedChanges="unsavedChanges = true" />
+                </div>
+            </div>
         </div>
         <div v-if="unsavedChanges" class="save-btn-container">
             <button class="btn btn-primary btn-good" @click="saveConstraints">Save Constraints</button>
@@ -153,7 +171,7 @@ onMounted(async () => {
 })
 
 </script>
-
+ 
 <style scoped lang="scss">
 .global-constraints-container {
     display: flex;
@@ -161,11 +179,44 @@ onMounted(async () => {
     width: 100%;
     height: 100%;
     color: $primary-text-light;
+    padding: 1rem;
+    gap: 3rem;
 }
-.global-sliders {
+.daily-capacity-container,
+.course-weight-container,
+.scheduler-rules-container {
+    padding: 1rem;
+    border: 2px solid $primary-text-light;
+    border-radius: 20px;
+    box-shadow: 5px 5px 5px $primary-text-grey;
+}
+
+.sliders {
+    display: flex;
+    flex-direction: row;
+    gap: 1rem;
+    padding: 1rem;
+    overflow-x: auto;
+}
+
+.slider {
     display: flex;
     flex-direction: column;
-    width: 100%;
-    height: 100%;
+    flex-grow: 1;
+    align-items: center;
+
+    .slider-component {
+        width: 100%;
+    }
+}
+
+.info {
+    color: $primary-text-grey;
+}
+
+.save-btn-container {
+    margin-top: 2rem;
+    display: flex;
+    justify-content: center;
 }
 </style>
