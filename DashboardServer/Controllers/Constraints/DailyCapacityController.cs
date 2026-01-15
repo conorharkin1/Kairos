@@ -1,8 +1,10 @@
 using AutoMapper;
 using DashboardServer.DTOs.ConstraintDTOs;
+using DashboardServer.Exceptions;
 using DashboardServer.Models.Constraints;
 using DashboardServer.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 
 namespace DashboardServer.Controllers.Constraints
@@ -13,31 +15,29 @@ namespace DashboardServer.Controllers.Constraints
     public class DailyCapacityController: ControllerBase
     {
         private readonly IMapper _mapper;
-        private readonly IGenericConstraintService<DailyCapacity> _service;
+        private readonly IDailyCapacityService _service;
         
-        public DailyCapacityController(IMapper mapper, IGenericConstraintService<DailyCapacity> service)
+        public DailyCapacityController(IMapper mapper, IDailyCapacityService service)
         {
             _mapper = mapper;
             _service = service;
         }
 
         [HttpGet]
-        public async Task<List<DailyCapacityDTO>> GetDailyCapacitiesAsync()
+        public async Task<ActionResult<List<DailyCapacityDTO>>> GetDailyCapacities()
         {
-            var capacities = await _service.GetListConstraintsAsync();
-            capacities = capacities.OrderBy(c => c.DayIndex).ToList();
-            
-            return _mapper.Map<List<DailyCapacityDTO>>(capacities);
+            var capacities = await _service.GetDailyCapacitiesAsync();
+            return Ok(_mapper.Map<List<DailyCapacityDTO>>(capacities));
         }
 
         [HttpPut]
-        public async Task<List<DailyCapacityDTO>> UpdateDailyCapacitiesAsync([FromBody] List<DailyCapacityDTO> dtos)
+        public async Task<ActionResult<List<DailyCapacityDTO>>> UpdateDailyCapacitiesAsync([FromBody] List<DailyCapacityDTO> dtos)
         {
-            var model = _mapper.Map<List<DailyCapacity>>(dtos);
-            var updatedConstraints = await _service.UpdateListConstraintsAsync(model);
+            var models = _mapper.Map<List<DailyCapacity>>(dtos);
 
-            updatedConstraints = updatedConstraints.OrderBy(c => c.DayIndex).ToList();
-            return _mapper.Map<List<DailyCapacityDTO>>(updatedConstraints);
+            var updated = await _service.UpdateDailyCapacitiesAsync(models);
+
+            return Ok(_mapper.Map<List<DailyCapacityDTO>>(updated));
         }
     }
 }

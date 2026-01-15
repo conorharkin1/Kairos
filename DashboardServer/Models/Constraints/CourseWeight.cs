@@ -7,5 +7,6 @@ namespace DashboardServer.Models.Constraints
         /// Weight of the course as a percentage
         /// </summary>
         public int Weight { get; set; }
+        public string? CourseName { get; set; }
     }
 }

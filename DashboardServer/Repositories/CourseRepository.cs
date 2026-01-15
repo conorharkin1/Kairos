@@ -38,6 +38,11 @@ namespace DashboardServer.Repositories
             return await _dbContext.Courses.ToListAsync();
         }
 
+        public async Task<List<int>> GetCourseIdsAsync()
+        {
+            return await _dbContext.Courses.Select(c => c.Id).ToListAsync();
+        }
+
         public async Task<List<Assignment>> GetCourseAssignmentsAsync(int courseId, bool includeCompleted)
         {
             if (includeCompleted)

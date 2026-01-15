@@ -15,9 +15,9 @@ namespace DashboardServer.Controllers.Constraints
     public class SchedulerRulesController: ControllerBase
     {
         private readonly IMapper _mapper;
-        private readonly IGenericConstraintService<SchedulerRules> _service;
+        private readonly ISchedulerRulesService _service;
         
-        public SchedulerRulesController(IMapper mapper, IGenericConstraintService<SchedulerRules> service)
+        public SchedulerRulesController(IMapper mapper, ISchedulerRulesService service)
         {
             _mapper = mapper;
             _service = service;
@@ -26,15 +26,15 @@ namespace DashboardServer.Controllers.Constraints
         [HttpGet]
         public async Task<SchedulerRulesDTO> GetSchedulerRulesAsync()
         {
-            var rules = await _service.GetConstraintsAsync();
+            var rules = await _service.GetRulesAsync();
             return _mapper.Map<SchedulerRulesDTO>(rules);
         }
 
-        [HttpPost]
+        [HttpPut]
         public async Task<SchedulerRulesDTO> UpdateSchedulerRulesAsync([FromBody] SchedulerRulesDTO rulesDto)
         {
             var rules = _mapper.Map<SchedulerRules>(rulesDto);
-            var updatedRules = await _service.UpdateConstraintsAsync(rules);
+            var updatedRules = await _service.UpdateRulesAsync(rules);
             return _mapper.Map<SchedulerRulesDTO>(updatedRules);
         }
     }

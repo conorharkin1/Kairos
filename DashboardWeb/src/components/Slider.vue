@@ -29,7 +29,7 @@ const props = defineProps({
     }
 });
 
-const emit = defineEmits(['update:modelValue']);
+const emit = defineEmits(['update:modelValue', 'hasUnsavedChanges']);
 
 const localValue = ref(props.modelValue);
 
@@ -42,6 +42,7 @@ watch(
 
 const handleInput = () => {
     emit('update:modelValue', localValue.value)
+    emit('hasUnsavedChanges', true)
 };
 </script>
 

@@ -1,17 +1,32 @@
 <template>
     <div v-if="isLoading" class="loading-container loader"></div>
     <div v-else class="global-constraints-container">
-        <div class="global-sliders">
-            <div class="daily-capacity-container" v-for="constraint in dailyCapacities" :key="constraint.dayIndex">
-                <label>{{ dayName(constraint.dayIndex) }}</label>
-                <Slider :min="0" :max="12" :step="1" v-model="constraint.maxHours" />
-                <span>{{ constraint.maxHours }} hrs</span>
+        <div class="daily-capacity-container">
+            <h2>Daily Work Capacity</h2>
+            <div v-for="constraint in dailyCapacities" :key="constraint.dayIndex">
+                <label>{{ dayName(constraint.dayIndex)}} - {{ constraint.maxHours }} hours</label>
+                <Slider :min="0" :max="12" :step="1" v-model="constraint.maxHours" @hasUnsavedChanges="unsavedChanges = true" />
             </div>
-            <h2>Daily Work Capacity sliders</h2>
-            <h2>Course Priority sliders</h2>
-            <h2>Min session length (recommended 30 minutes)</h2>
-            <h2>Max session length (recommended 3 hours)</h2>
-            <button @click="saveDailyCapacities">Testing</button>
+        </div>
+        <div class="course-weight-container">
+            <h2>Course Weights</h2>
+            <div v-for="weight in courseWeights" :key="weight.courseId">
+                <label>{{ getCourseNameById(weight.courseId) }}</label>
+                <br>
+                <label>{{ weight.weight }}%</label>
+                <Slider :min="0" :max="100" :step="10" v-model="weight.weight" @hasUnsavedChanges="unsavedChanges = true" />
+            </div>
+        </div>
+        <div class="scheduler-rules-container">
+            <h2>Scheduler Rules</h2>
+            <label>Minimum Session Length - {{ schedulerRules.minSessionLength }} minutes</label>
+            <Slider :min="30" :max="240" :step="30" v-model="schedulerRules.minSessionLength" @hasUnsavedChanges="unsavedChanges = true" />
+
+            <label>Maximum Session Length - {{ schedulerRules.maxSessionLength }} minutes</label>
+            <Slider :min="30" :max="240" :step="30" v-model="schedulerRules.maxSessionLength" @hasUnsavedChanges="unsavedChanges = true" />
+        </div>
+        <div v-if="unsavedChanges" class="save-btn-container">
+            <button class="btn btn-primary btn-good" @click="saveConstraints">Save Constraints</button>
         </div>
     </div>
 </template>
@@ -24,70 +39,117 @@ import { useToast } from 'vue-toastification'
 const toast = useToast()
 
 const isLoading = ref(false)
-const courses = ref([]);
+const unsavedChanges = ref(false)
+
+const courses = ref([])
 const dailyCapacities = ref([])
+const courseWeights = ref([])
+const schedulerRules = ref({
+    minSessionLength: 30,
+    maxSessionLength: 180
+})
+
+const getCourseNameById = (id) => {
+    const course = courses.value.find(c => c.id === id);
+    return course.name;
+}
 
 const dayName = (index) =>
   ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][index]
 
-const saveDailyCapacities = async () => {
-    isLoading.value = true
-    try {
-        await api.put('constraint/capacity', dailyCapacities.value);
-        toast.success('Daily capacities saved successfully');
-    } catch (error) {
-        toast.error('Error saving daily capacities');
-    } finally {
-        isLoading.value = false
-    }
-}
-const updateDailyCapacity = (dayIndex, newMaxHours) => {
-    var constraint = dailyCapacities.value[dayIndex]
-    constraint.maxHours = newMaxHours;
-}
-
 const fetchCourses = async () => {
-    isLoading.value = true
-    
     try {
         const response = await api.get('course')
         courses.value = response.data;
     } catch (error) {
         toast.error('Error fetching courses');
-    } finally {
-        isLoading.value = false
     }
 }
 
 const fetchDailyCapacities = async () => {
-    isLoading.value = true;
-
     try {
         const response = await api.get('constraint/capacity')
-        response.data.length > 0 ? dailyCapacities.value = response.data : handleNoDailyCapacities();
-        console.log('fetched daily capacities', dailyCapacities.value);
+        dailyCapacities.value = response.data;
+        console.log(dailyCapacities.value);
     } catch (error) {
+        if (error.response.status === 400) {
+            toast.error(error.response.data.detail);
+        }
         toast.error('Error fetching daily capacities');
-    } finally {
-        isLoading.value = false;
     }
 }
 
-const handleNoDailyCapacities = () => {
-    dailyCapacities.value = [
-        { dayIndex: 0, maxHours: 0 },
-        { dayIndex: 1, maxHours: 0 },
-        { dayIndex: 2, maxHours: 0 },
-        { dayIndex: 3, maxHours: 0 },
-        { dayIndex: 4, maxHours: 0 },
-        { dayIndex: 5, maxHours: 0 },
-        { dayIndex: 6, maxHours: 0 },
-    ]
+const fetchCourseWeights = async () => {
+    try {
+        const response = await api.get('constraint/weight')
+        courseWeights.value = response.data;
+        console.log(courseWeights.value);
+    } catch (error) {
+        if (error.response.status === 400) {
+            toast.error(error.response.data.detail);
+        }
+        toast.error('Error fetching course weights');
+    }
+}
+
+const fetchSchedulerRules = async () => {
+    try {
+        const response = await api.get('constraint/rules')
+        schedulerRules.value = response.data;
+        console.log(schedulerRules.value);
+    } catch (error) {
+        if (error.response.status === 400) {
+            toast.error(error.response.data.detail);
+        }
+        toast.error('Error fetching scheduler rules');
+    }
+}
+
+const saveConstraints = async () => {
+    isLoading.value = true;
+    await Promise.all([
+        saveDailyCapacities(),
+        saveCourseWeights(),
+        saveSchedulerRules()
+    ]);
+    unsavedChanges.value = false;
+    isLoading.value = false;
+    toast.success('Constraints saved successfully');
+}
+
+const saveDailyCapacities = async () => {
+    try {
+        await api.put('constraint/capacity', dailyCapacities.value);
+    } catch (error) {
+        toast.error('Error saving daily capacities');
+    }
+}
+
+const saveCourseWeights = async () => {
+    try {
+        await api.put('constraint/weight', courseWeights.value);
+    } catch (error) {
+        toast.error('Error saving course weights');
+    }
+}
+
+const saveSchedulerRules = async () => {
+    try {
+        await api.put('constraint/rules', schedulerRules.value);
+    } catch (error) {
+        toast.error('Error saving scheduler rules');
+    }
 }
 
 onMounted(async () => {
-    await fetchCourses();
-    await fetchDailyCapacities();
+    isLoading.value = true
+    await Promise.all([
+        fetchCourses(),
+        fetchDailyCapacities(),
+        fetchCourseWeights(),
+        fetchSchedulerRules()
+    ])
+    isLoading.value = false
 })
 
 </script>
@@ -95,9 +157,10 @@ onMounted(async () => {
 <style scoped lang="scss">
 .global-constraints-container {
     display: flex;
-    flex-direction: row;
+    flex-direction: column;
     width: 100%;
     height: 100%;
+    color: $primary-text-light;
 }
 .global-sliders {
     display: flex;

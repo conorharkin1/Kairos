@@ -13,31 +13,29 @@ namespace DashboardServer.Controllers.Constraints
     public class CourseWeightController: ControllerBase
     {
         private readonly IMapper _mapper;
-        private readonly IGenericConstraintService<CourseWeight> _service;
+        private readonly ICourseWeightService _service;
         
-        public CourseWeightController(IMapper mapper, IGenericConstraintService<CourseWeight> service)
+        public CourseWeightController(IMapper mapper, ICourseWeightService service)
         {
             _mapper = mapper;
             _service = service;
         }
 
         [HttpGet]
-        public async Task<List<CourseWeightDTO>> GetCourseWeightsAsync()
+        public async Task<ActionResult<List<CourseWeightDTO>>> GetCourseWeightsAsync()
         {
-            var weights = await _service.GetListConstraintsAsync();
-            return _mapper.Map<List<CourseWeightDTO>>(weights);
+            var weights = await _service.GetCourseWeightsAsync();
+            return Ok(_mapper.Map<List<CourseWeightDTO>>(weights));
         }
 
-        [HttpPut("{courseId}")]
-        public async Task<CourseWeightDTO> UpdateCourseWeightAsync(int courseId, [FromBody] CourseWeightDTO dto)
+        [HttpPut]
+        public async Task<ActionResult<List<CourseWeightDTO>>> UpdateCourseWeightsAsync([FromBody] List<CourseWeightDTO> dtos)
         {
-            if (dto.CourseId != courseId)
-            {
-                throw new ArgumentException("Course ID in URL does not match course ID in body.");
-            }
-            var model = _mapper.Map<CourseWeight>(dto);
-            var updatedModel = await _service.UpdateConstraintsAsync(model);
-            return _mapper.Map<CourseWeightDTO>(updatedModel);
+            var models = _mapper.Map<List<CourseWeight>>(dtos);
+
+            var updated = await _service.UpdateCourseWeightsAsync(models);
+            
+            return Ok(_mapper.Map<List<CourseWeightDTO>>(updated));
         }
     }
 }

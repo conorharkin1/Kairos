@@ -64,7 +64,9 @@ builder.Services.AddScoped<ICanvasApiService, CanvasApiService>();
 builder.Services.AddScoped<ICourseService, CourseService>();
 builder.Services.AddScoped<IAssignmentService, AssignmentService>();
 builder.Services.AddScoped<IQuizService, QuizService>();
-builder.Services.AddScoped(typeof(IGenericConstraintService<>), typeof(GenericConstraintService<>));
+builder.Services.AddScoped<ICourseWeightService, CourseWeightService>();
+builder.Services.AddScoped<IDailyCapacityService, DailyCapacityService>();
+builder.Services.AddScoped<ISchedulerRulesService, SchedulerRulesService>();
 
 // Adding this to attempt injecting the DbContext with HttpContext so I can access the current user and create a global query filter.
 builder.Services.AddHttpContextAccessor();
@@ -74,7 +76,9 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<ICourseRepository, CourseRepository>();
 builder.Services.AddScoped<IAssignmentRepository, AssignmentRepository>();
 builder.Services.AddScoped<IQuizRepository, QuizRepository>();
-builder.Services.AddScoped(typeof(IGenericConstraintRepository<>), typeof(GenericConstraintRepository<>));
+builder.Services.AddScoped<ICourseWeightRepository, CourseWeightRepository>();
+builder.Services.AddScoped<IDailyCapacityRepository, DailyCapacityRepository>();
+builder.Services.AddScoped<ISchedulerRulesRepository, SchedulerRulesRepository>();
 
 builder.Services.AddAutoMapper(cfg =>
 {
