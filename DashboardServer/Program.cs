@@ -7,6 +7,8 @@ using DashboardServer.Repositories;
 using DashboardServer.Repositories.Interfaces;
 using DashboardServer.Services;
 using DashboardServer.Services.Interfaces;
+using Hangfire;
+using Hangfire.PostgreSql;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -56,6 +58,11 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 builder.Services.AddAuthorization();
 
+builder.Services.AddHangfire(config =>
+    config.UsePostgreSqlStorage(c =>
+        c.UseNpgsqlConnection(builder.Configuration.GetConnectionString("HangfireConnection"))));
+
+builder.Services.AddHangfireServer();
 
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IEncryptService, EncryptService>();
@@ -67,6 +74,7 @@ builder.Services.AddScoped<IQuizService, QuizService>();
 builder.Services.AddScoped<ICourseWeightService, CourseWeightService>();
 builder.Services.AddScoped<IDailyCapacityService, DailyCapacityService>();
 builder.Services.AddScoped<ISchedulerRulesService, SchedulerRulesService>();
+builder.Services.AddScoped<ISchedulerService, SchedulerService>();
 
 // Adding this to attempt injecting the DbContext with HttpContext so I can access the current user and create a global query filter.
 builder.Services.AddHttpContextAccessor();
@@ -103,6 +111,8 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.UseStaticFiles();
+
+app.UseHangfireDashboard();
 
 // Exposes the /login /register endpoints implicitly
 app.MapIdentityApi<IdentityUser>();

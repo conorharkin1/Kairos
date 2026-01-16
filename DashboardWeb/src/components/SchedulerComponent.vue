@@ -1,18 +1,27 @@
 <template>
-    <div class="scheduler-landing-container" v-if="landingContainerVisible">
-        <Icon icon="teenyicons:loader-solid" width="100" height="100" class="spinning" />
-        <button @click="landingContainerVisible = false" class="btn-primary btn-good">Create a schedule</button>
-    </div>
-    <div class="scheduler-options" v-else>
-        <h1>Scheduler Component Loaded</h1>
+    <div class="scheduler-landing-container">
+        <Icon icon="teenyicons:loader-solid" width="100" height="100" class="spinning" :class="{ 'constant-spinning': runningScheduler }"/>
+        <button v-if="!runningScheduler" @click="runScheduler" class="btn-primary btn-good">Create a schedule</button>
     </div>
 </template>
 
 <script setup>
 import { ref } from 'vue'
+import api from '@/services/api.js'
 
-const isLoading = ref(false)
-const landingContainerVisible = ref(true)
+const runningScheduler = ref(false)
+
+const runScheduler = async () => {
+    runningScheduler.value = true
+    
+    try {
+        await api.post('/scheduler')
+    } catch (error) {
+        console.error('Error running scheduler:', error)
+    } finally {
+        runningScheduler.value = false
+    }
+}
 </script>
 
 <style scoped lang="scss">
@@ -27,14 +36,6 @@ const landingContainerVisible = ref(true)
     padding: 0.5rem;
 }
 
-.scheduler-options {
-    display: flex;
-    flex-direction: column;
-    flex: 1;
-    align-items: center;
-    color: $primary-text-light;
-}
-
 
 
 .spinning {
@@ -43,6 +44,10 @@ const landingContainerVisible = ref(true)
 }
 
 .spinning:hover {
+    animation: spinning 5s linear infinite;
+}
+
+.constant-spinning {
     animation: spinning 5s linear infinite;
 }
 
