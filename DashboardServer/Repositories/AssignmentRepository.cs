@@ -20,6 +20,11 @@ namespace DashboardServer.Repositories
                 .ToListAsync();
         }
 
+        public async Task<List<Assignment>> GetAllCurrent(string userId)
+        {
+            return await _dbContext.Assignments.Where(a => a.DueDate >= DateTime.UtcNow && a.UserId == userId).ToListAsync();
+        }
+
         public async Task<Assignment> Create(string userId, Assignment assignment)
         {
             assignment.UserId = userId;
