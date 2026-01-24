@@ -22,7 +22,7 @@ namespace DashboardServer.Repositories
 
         public async Task<List<Assignment>> GetAllCurrent(string userId)
         {
-            return await _dbContext.Assignments.Where(a => a.DueDate >= DateTime.UtcNow && a.UserId == userId).ToListAsync();
+            return await _dbContext.Assignments.IgnoreQueryFilters().Where(a => a.DueDate >= DateTime.UtcNow && a.UserId == userId).ToListAsync();
         }
 
         public async Task<Assignment> Create(string userId, Assignment assignment)

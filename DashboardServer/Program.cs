@@ -87,6 +87,7 @@ builder.Services.AddScoped<IQuizRepository, QuizRepository>();
 builder.Services.AddScoped<ICourseWeightRepository, CourseWeightRepository>();
 builder.Services.AddScoped<IDailyCapacityRepository, DailyCapacityRepository>();
 builder.Services.AddScoped<ISchedulerRulesRepository, SchedulerRulesRepository>();
+builder.Services.AddScoped<ISchedulerRepository, SchedulerRepository>();
 
 builder.Services.AddAutoMapper(cfg =>
 {

@@ -43,6 +43,11 @@ namespace DashboardServer.Repositories
             return await _dbContext.Courses.Select(c => c.Id).ToListAsync();
         }
 
+        public async Task<List<int>> GetCourseIdsForSchedulerAsync(string userId)
+        {
+            return await _dbContext.Courses.IgnoreQueryFilters().Where(c => c.UserId == userId).Select(c => c.Id).ToListAsync();
+        }
+
         public async Task<List<Assignment>> GetCourseAssignmentsAsync(int courseId, bool includeCompleted)
         {
             if (includeCompleted)

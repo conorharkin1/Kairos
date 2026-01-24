@@ -22,7 +22,7 @@ namespace DashboardServer.Repositories
         {
             // Data
             var assignments = await _assignmentRepository.GetAllCurrent(userId);
-            var courseIds = await _courseRepository.GetCourseIdsAsync();
+            var courseIds = await _courseRepository.GetCourseIdsForSchedulerAsync(userId);
 
             // Constraints
             var rules = await _dbContext.SchedulerRules.IgnoreQueryFilters().Where(a => a.UserId == userId).FirstOrDefaultAsync();
