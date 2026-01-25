@@ -38,10 +38,10 @@ namespace DashboardServer.Services
             Dictionary<int, double> courseHoursDict = CalculateHoursPerCourse(totalAvailableHours, data.CourseWeights);
             
             // Step 3: Calculate an urgency score for each assignment based on its proximity to deadline
-            (double totalUrgency,  Dictionary<int, double> assignmentUrgencyDict) = CalculateUrgency(data.Assignments);
+            (Dictionary<int, double> courseTotalUrgency,  Dictionary<int, double> assignmentUrgencyDict) = CalculateUrgency(data.Assignments);
             
             // Step 4: Calculate the hours each assignment gets allocated based on it's urgency and the hours the course has available
-            Dictionary<int, double> hoursPerAssignment = CalculateHoursPerAssignment(data.Assignments, courseHoursDict, totalUrgency, assignmentUrgencyDict);
+            Dictionary<int, double> hoursPerAssignment = CalculateHoursPerAssignment(data.Assignments, courseHoursDict, courseTotalUrgency, assignmentUrgencyDict);
 
             // Step 5: Convert those hoursPerAssignment into blocks based on scheduler rules constraint. Each block contains a priority and assignmentId
             int minBlockLength = data.Rules.MinSessionLength;
@@ -90,22 +90,27 @@ namespace DashboardServer.Services
             return results;
         }
 
-        private static (double, Dictionary<int, double>) CalculateUrgency(List<Assignment> assignments)
+        private static (Dictionary<int, double>, Dictionary<int, double>) CalculateUrgency(List<Assignment> assignments)
         {
-            double totalUrgency = 0;
-            Dictionary<int, double> assignmentUrgencies = new Dictionary<int, double>();
+            Dictionary<int, double> courseTotalUrgency = new Dictionary<int, double>();
+            Dictionary<int, double> assignmentUrgency = new Dictionary<int, double>();
 
             foreach(var assignment in assignments)
             {
                 if (assignment.DueDate == null)
                     continue;
                 double urgency = CalculateAssignmentUrgency((DateTime)assignment.DueDate);
-                totalUrgency += urgency;
 
-                assignmentUrgencies.Add(assignment.Id, urgency);
+                if (!courseTotalUrgency.ContainsKey(assignment.CourseId))
+                {
+                    courseTotalUrgency[assignment.CourseId] = 0;
+                }
+                courseTotalUrgency[assignment.CourseId] += urgency;
+
+                assignmentUrgency.Add(assignment.Id, urgency);
             }
 
-            return (totalUrgency, assignmentUrgencies);
+            return (courseTotalUrgency, assignmentUrgency);
 
         }
         private static double CalculateAssignmentUrgency(DateTime dueDate)
@@ -115,21 +120,27 @@ namespace DashboardServer.Services
 
             if (daysOut <= 3)
             {
-                return 3;
-            } 
+                return 1;
+            } else if (daysOut <= 7)
+            {
+                return 3 / daysOut;
+            }
 
-            return 3 / daysOut;
+            return 2 / daysOut;
         }
 
-        private static Dictionary<int, double> CalculateHoursPerAssignment(List<Assignment> assignments, Dictionary<int, double> courseHoursDict, double totalUrgency, Dictionary<int, double> assignmentUrgencies)
+        private static Dictionary<int, double> CalculateHoursPerAssignment(List<Assignment> assignments, Dictionary<int, double> courseHoursDict, Dictionary<int, double> courseTotalUrgency, Dictionary<int, double> assignmentUrgencies)
         {
             Dictionary<int, double> assignmentHoursDict = new Dictionary<int, double>();
             foreach(var assignment in assignments)
             {
                 double courseHours = courseHoursDict[assignment.CourseId];
+                double courseUrgencyTotal = courseTotalUrgency[assignment.CourseId];
                 double urgency = assignmentUrgencies[assignment.Id];
 
-                double allocatedAssignmentHours = courseHours * (urgency / totalUrgency);
+                double allocatableHoursForAssignments = courseHours * 0.8;
+
+                double allocatedAssignmentHours = allocatableHoursForAssignments * (urgency / courseUrgencyTotal);
                 double roundedHours = Math.Floor(allocatedAssignmentHours / 0.5) * 0.5; // Rounds down to the nearest 0.5. Eg. 5.8 -> 5.5 
 
                 assignmentHoursDict.Add(assignment.Id, roundedHours);
