@@ -1,3 +1,6 @@
+using AutoMapper;
+using DashboardServer.DTOs.ModelDTOs;
+using DashboardServer.Exceptions;
 using DashboardServer.Models;
 using DashboardServer.Models.Constraints;
 using DashboardServer.Repositories.Interfaces;
@@ -10,11 +13,20 @@ namespace DashboardServer.Services
     {
         private readonly IUserResolverService _userResolverService;
         private readonly ISchedulerRepository _schedulerRepository;
-        public SchedulerService(IUserResolverService userResolverService, ISchedulerRepository schedulerRepository)
+        private readonly IMapper _mapper;
+        public SchedulerService(IUserResolverService userResolverService, ISchedulerRepository schedulerRepository, IMapper mapper)
         {
             _userResolverService = userResolverService;
             _schedulerRepository = schedulerRepository;
+            _mapper = mapper;
         }
+
+        public async Task<ScheduleDTO?> GetSchedule(string userId)
+        {
+            var schedule = await _schedulerRepository.GetSchedule(userId);
+            return _mapper.Map<ScheduleDTO>(schedule);
+        }
+
         public void RunScheduler()
         {
             string userId = _userResolverService.UserId!;
@@ -23,7 +35,7 @@ namespace DashboardServer.Services
 
         public async Task BackgroundRunScheduler(string userId)
         {
-            SchedulerData data = await _schedulerRepository.GetSchedulerData(userId);
+            SchedulerData data = await _schedulerRepository.GetDataForScheduler(userId);
 
             if (data.Assignments.Count == 0)
                 return;
@@ -45,17 +57,19 @@ namespace DashboardServer.Services
 
             // Step 5: Convert those hoursPerAssignment into blocks based on scheduler rules constraint. Each block contains a priority and assignmentId
             int minBlockLength = data.Rules.MinSessionLength;
-            List<ScheduleBlock> blocks = ConstructScheduleBlocks(courseHoursDict, hoursPerAssignment, minBlockLength, data.Assignments, totalAvailableHours);
+            List<ScheduleBlock> blocks = ConstructScheduleBlocks(courseHoursDict, hoursPerAssignment, minBlockLength, data.Assignments, userId);
 
-            // Step 6: Calculate the priority of each block. Priority = (assignmentUrgency * 0.7) + (courseWeight * 0.3) where 0.7 and 0.3 are the behavioural constraints. (increase 0.7 to prioritise deadlines, increase 0.3 to prioritise courseweights)
-            //CalculateBlockPriority(data.Assignments, blocks, assignmentUrgencies, data.CourseWeights);
+            //Step 6: Calculate the priority of each block. Priority = (assignmentUrgency * 0.8) + (courseWeight * 0.2) where 0.8 and 0.2 are the behavioural constraints. (increase 0.8 to prioritise deadlines, increase 0.2 to prioritise courseweights)
+            CalculateBlockPriority(data.Assignments, blocks, assignmentUrgencyDict, data.CourseWeights);
             
-            // Step 7: Sort the blocks by highest priority. Add them to a queue.
-            //var sortedBlocks = blocks.OrderByDescending(b => b.Priority).ToList();
-            //Queue<ScheduleBlock> blockQueue = new Queue<ScheduleBlock>(sortedBlocks);
+            //Step 7: Sort the blocks by highest priority. Add them to a queue.
+            Queue<ScheduleBlock> blockQueue = new Queue<ScheduleBlock>(blocks.OrderByDescending(b => b.Priority));
+            
+            //Step 8: Build the schedule matrix from the block queue and daily capacities constraint
+            ScheduleBlock?[,] schedule = BuildScheduleMatrix(data.DailyCapacities, blockQueue);
 
-            // Step 8: Starting on the day after the current day, figure out the available blocks based on the daily cap and push from the queue the required blocks.
-            //DateTime currentDate = DateTime.UtcNow.Date.AddDays(1);
+            //Step 9: Save the schedule to the database
+            await _schedulerRepository.SaveSchedule(userId, schedule);
         }
 
         private static int CalculateTotalHours(List<DailyCapacity> constraints)
@@ -92,7 +106,9 @@ namespace DashboardServer.Services
 
         private static (Dictionary<int, double>, Dictionary<int, double>) CalculateUrgency(List<Assignment> assignments)
         {
+            // courseId, TotalUrgencyOfAssignmentsOnCourse
             Dictionary<int, double> courseTotalUrgency = new Dictionary<int, double>();
+            // assignmentId, Urgency
             Dictionary<int, double> assignmentUrgency = new Dictionary<int, double>();
 
             foreach(var assignment in assignments)
@@ -115,13 +131,18 @@ namespace DashboardServer.Services
         }
         private static double CalculateAssignmentUrgency(DateTime dueDate)
         {
-            TimeSpan diff = dueDate - DateTime.UtcNow;
-            double daysOut = diff.TotalDays;
+            // max urgency is 1, further away due date -> lower urgency
+            double daysOut = (dueDate - DateTime.UtcNow).TotalDays;
 
-            if (daysOut <= 3)
+            if (daysOut <= 1)
             {
                 return 1;
-            } else if (daysOut <= 7)
+            } 
+            else if (daysOut <= 3)
+            {
+                return 0.9;
+            } 
+            else if (daysOut <= 7)
             {
                 return 3 / daysOut;
             }
@@ -138,6 +159,7 @@ namespace DashboardServer.Services
                 double courseUrgencyTotal = courseTotalUrgency[assignment.CourseId];
                 double urgency = assignmentUrgencies[assignment.Id];
 
+                // cap the allocatable assignment time to 80% of the courses time, this ensure some time is reserved for studying blocks
                 double allocatableHoursForAssignments = courseHours * 0.8;
 
                 double allocatedAssignmentHours = allocatableHoursForAssignments * (urgency / courseUrgencyTotal);
@@ -149,7 +171,7 @@ namespace DashboardServer.Services
             return assignmentHoursDict;
         }
 
-        private static List<ScheduleBlock> ConstructScheduleBlocks(double hoursToAllocate, int minBlockLength, int courseId, int assignmentId)
+        private static List<ScheduleBlock> CreateBlocks(double hoursToAllocate, int minBlockLength, int courseId, int assignmentId, string userId)
         {
             List<ScheduleBlock> blocks = new List<ScheduleBlock>();
             var minutesToAllocate = hoursToAllocate * 60;
@@ -158,38 +180,41 @@ namespace DashboardServer.Services
             for(int i = 0; i < numBlocksToCreate; i++)
             {
                 blocks.Add(new ScheduleBlock {
+                    UserId = userId,
                     AssignmentId = assignmentId,
                     CourseId = courseId,
                     Priority = 0,
-                    BlockType = assignmentId != -1 ? BlockType.Assignment : BlockType.Study
+                    BlockType = assignmentId != -1 ? Models.BlockType.Assignment : Models.BlockType.Study
                 });
             }
 
             return blocks;
         }
 
-        private static List<ScheduleBlock> ConstructScheduleBlocks(Dictionary<int, double> courseHoursDict, Dictionary<int, double> hoursPerAssignment, int minBlockLength, List<Assignment> assignments, int maxAvailableHours)
+        private static List<ScheduleBlock> ConstructScheduleBlocks(Dictionary<int, double> courseHoursDict, Dictionary<int, double> hoursPerAssignment, int minBlockLength, List<Assignment> assignments, string userId)
         {
+            // loop through coursesHours pairs, construct assignment schedule blocks for the assignments and track the remainder of course time
+            // create study schedule blocks from the remaining time. 
             List<ScheduleBlock> blocks = new List<ScheduleBlock>();
 
             foreach(KeyValuePair<int, double> entry in courseHoursDict)
             {
-                int courseId = entry.Key;
+                if (entry.Value == 0) { continue; }
+                
                 double courseHoursRemainingToAlloc = entry.Value;
-
-                if (courseHoursRemainingToAlloc == 0) { continue; }
+                int courseId = entry.Key;
 
                 foreach(var assignment in assignments)
                 {
                     if(assignment.CourseId == courseId)
                     {
                         double allocatedAssignmentHours = hoursPerAssignment[assignment.Id];
-                        blocks.AddRange(ConstructScheduleBlocks(allocatedAssignmentHours, minBlockLength, courseId, assignment.Id));
+                        blocks.AddRange(CreateBlocks(allocatedAssignmentHours, minBlockLength, courseId, assignment.Id, userId));
                         courseHoursRemainingToAlloc -= allocatedAssignmentHours;
                     }
                 }
 
-                blocks.AddRange(ConstructScheduleBlocks(courseHoursRemainingToAlloc, minBlockLength, courseId, -1));
+                blocks.AddRange(CreateBlocks(courseHoursRemainingToAlloc, minBlockLength, courseId, -1, userId));
             }
 
             return blocks;
@@ -197,19 +222,59 @@ namespace DashboardServer.Services
 
         private static void CalculateBlockPriority(List<Assignment> assignments, List<ScheduleBlock> blocks, Dictionary<int, double> assignmentUrgencies, List<CourseWeight> courseWeights)
         {
-            // Formula -> Priority = (assignmentUrgency * 0.7) + (courseWeight * 0.3)
+            // Formula -> Priority = (assignmentUrgency * 0.8) + (courseWeight * 0.2)
             foreach (var assignment in assignments)
             {
                 double urgency = assignmentUrgencies[assignment.Id];
                 double courseWeight = courseWeights.First(cw => cw.CourseId == assignment.CourseId).Weight;
 
-                double priority = (urgency * 0.7) + (courseWeight * 0.3);
+                double priority = (urgency * 0.8) + (courseWeight * 0.2);
 
                 foreach(var block in blocks.Where(b => b.AssignmentId == assignment.Id))
                 {
                     block.Priority = priority;
                 }
             }
+        }
+    
+        private static ScheduleBlock[,] BuildScheduleMatrix(List<DailyCapacity> dailyCapacities, Queue<ScheduleBlock> blockQueue)
+        {
+            ScheduleBlock[,] schedule = new ScheduleBlock[24, 7];
+            
+            int columns = schedule.GetLength(1); // days
+            int rows = schedule.GetLength(0); // timeslots
+
+            DateTime startDate = DateTime.UtcNow.Date.AddDays(1);
+            int startDayIndex = (int)startDate.DayOfWeek;
+
+            for (int i = 0; i < columns; i++ )
+            {
+                int dayIndex = (startDayIndex + i) % 7;
+                int maxAllocatableHours = dailyCapacities.First(dc => dc.DayIndex == dayIndex).MaxHours;
+                
+                if (maxAllocatableHours == 0)
+                    continue;
+                
+                int numFreeSlots  = maxAllocatableHours * 2;
+
+                for (int slot = 0; slot < rows; slot++)
+                {
+                    if (numFreeSlots == 0)
+                        break;
+                    if (blockQueue.Count == 0)
+                        break;
+                    
+                    var block = blockQueue.Dequeue();
+                    DateTime startTime = startDate.AddDays(i).AddHours(9).AddMinutes(slot * 30); // starts at 9am and then adds minutes to find correct slot
+                    block.StartTime = startTime;
+                    block.EndTime = startTime.AddMinutes(30);
+
+                    schedule[slot, dayIndex] = block;
+                    numFreeSlots --;
+                }
+            }
+
+            return schedule;
         }
     }
 }

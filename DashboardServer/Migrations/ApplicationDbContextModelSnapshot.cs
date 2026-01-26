@@ -161,6 +161,9 @@ namespace DashboardServer.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("UserId", "CourseId")
+                        .IsUnique();
+
                     b.ToTable("CourseWeights");
                 });
 
@@ -183,6 +186,9 @@ namespace DashboardServer.Migrations
                         .HasColumnType("text");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("UserId", "DayIndex")
+                        .IsUnique();
 
                     b.ToTable("DailyCapacities");
                 });
@@ -277,6 +283,66 @@ namespace DashboardServer.Migrations
                     b.HasIndex("CourseId");
 
                     b.ToTable("Quizzes");
+                });
+
+            modelBuilder.Entity("DashboardServer.Models.Schedule", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Schedules");
+                });
+
+            modelBuilder.Entity("DashboardServer.Models.ScheduleBlock", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AssignmentId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("BlockType")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("CourseId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("EndTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<double>("Priority")
+                        .HasColumnType("double precision");
+
+                    b.Property<int>("ScheduleId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("StartTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ScheduleId");
+
+                    b.ToTable("ScheduleBlocks");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
@@ -433,6 +499,17 @@ namespace DashboardServer.Migrations
                     b.Navigation("Course");
                 });
 
+            modelBuilder.Entity("DashboardServer.Models.ScheduleBlock", b =>
+                {
+                    b.HasOne("DashboardServer.Models.Schedule", "Schedule")
+                        .WithMany("Blocks")
+                        .HasForeignKey("ScheduleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Schedule");
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
@@ -489,6 +566,11 @@ namespace DashboardServer.Migrations
                     b.Navigation("Assignments");
 
                     b.Navigation("Quizzes");
+                });
+
+            modelBuilder.Entity("DashboardServer.Models.Schedule", b =>
+                {
+                    b.Navigation("Blocks");
                 });
 #pragma warning restore 612, 618
         }

@@ -22,9 +22,11 @@ namespace DashboardServer.Data
         public DbSet<Course> Courses { get; set; }
         public DbSet<Assignment> Assignments { get; set; }
         public DbSet<Quiz> Quizzes { get; set; }
+        public DbSet<Schedule> Schedules { get; set; }
         public DbSet<DailyCapacity> DailyCapacities { get; set; }
         public DbSet<CourseWeight> CourseWeights { get; set; }
         public DbSet<SchedulerRules> SchedulerRules { get; set; }
+        public DbSet<ScheduleBlock> ScheduleBlocks { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -37,6 +39,8 @@ namespace DashboardServer.Data
             builder.Entity<DailyCapacity>().HasQueryFilter(d => d.UserId == CurrentUserId);
             builder.Entity<CourseWeight>().HasQueryFilter(cw => cw.UserId == CurrentUserId);
             builder.Entity<SchedulerRules>().HasQueryFilter(sr => sr.UserId == CurrentUserId);
+            builder.Entity<ScheduleBlock>().HasQueryFilter(sb => sb.UserId == CurrentUserId);
+            builder.Entity<Schedule>().HasQueryFilter(s => s.UserId == CurrentUserId);
 
             // Relationships
             builder.Entity<Course>()
@@ -50,6 +54,12 @@ namespace DashboardServer.Data
                     .WithOne(q => q.Course)
                     .HasForeignKey(q => q.CourseId)
                     .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<Schedule>()
+                .HasMany(s => s.Blocks)
+                    .WithOne(b => b.Schedule)
+                    .HasForeignKey(b => b.ScheduleId)
+                    .OnDelete(DeleteBehavior.Cascade);
             
             builder.Entity<DailyCapacity>()
                 .HasIndex(dc => new { dc.UserId, dc.DayIndex })
@@ -58,7 +68,6 @@ namespace DashboardServer.Data
             builder.Entity<CourseWeight>()
                 .HasIndex(cw => new { cw.UserId, cw.CourseId })
                 .IsUnique();
-                
         }
     }
 }
