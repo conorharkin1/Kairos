@@ -316,6 +316,9 @@ namespace DashboardServer.Migrations
                     b.Property<int>("AssignmentId")
                         .HasColumnType("integer");
 
+                    b.Property<string>("AssignmentName")
+                        .HasColumnType("text");
+
                     b.Property<int>("BlockType")
                         .HasColumnType("integer");
 

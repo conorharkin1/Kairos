@@ -22,7 +22,7 @@ namespace DashboardServer.Repositories
         {
             // Data
             var assignments = await _assignmentRepository.GetAllCurrent(userId);
-            var courseIds = await _courseRepository.GetCourseIdsForSchedulerAsync(userId);
+            var courses = await _courseRepository.GetCoursesAsync(userId);
 
             // Constraints
             var rules = await _dbContext.SchedulerRules.IgnoreQueryFilters().Where(a => a.UserId == userId).FirstOrDefaultAsync();
@@ -31,7 +31,7 @@ namespace DashboardServer.Repositories
 
             return new SchedulerData {
                 Assignments = assignments,
-                CourseIds = courseIds,
+                Courses = courses,
                 Rules = rules,
                 DailyCapacities = capacities,
                 CourseWeights = weights

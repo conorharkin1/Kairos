@@ -4,6 +4,7 @@ namespace DashboardServer.DTOs.ModelDTOs
     {
         public int ScheduleId { get; set; }
         public  int AssignmentId { get; set; }
+        public string? AssignmentName { get; set; }
         public int CourseId { get; set; }
         public BlockType BlockType { get; set; }
         public DateTime StartTime { get; set; }

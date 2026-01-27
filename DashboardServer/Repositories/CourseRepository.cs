@@ -38,12 +38,17 @@ namespace DashboardServer.Repositories
             return await _dbContext.Courses.ToListAsync();
         }
 
+        public async Task<List<Course>> GetCoursesAsync(string userId)
+        {
+            return await _dbContext.Courses.IgnoreQueryFilters().Where(c => c.UserId == userId).ToListAsync();
+        }
+
         public async Task<List<int>> GetCourseIdsAsync()
         {
             return await _dbContext.Courses.Select(c => c.Id).ToListAsync();
         }
 
-        public async Task<List<int>> GetCourseIdsForSchedulerAsync(string userId)
+        public async Task<List<int>> GetCourseIdsAsync(string userId)
         {
             return await _dbContext.Courses.IgnoreQueryFilters().Where(c => c.UserId == userId).Select(c => c.Id).ToListAsync();
         }

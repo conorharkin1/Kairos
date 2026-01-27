@@ -53,6 +53,7 @@ const fetchSchedule = async () => {
 
 const constructEventsFromSchedule = (schedule) => {
     const newEvents = [];
+    console.log(schedule);
 
     schedule.blocks.forEach(block => {
         if (block) {
@@ -61,7 +62,7 @@ const constructEventsFromSchedule = (schedule) => {
             newEvents.push({
                 start: start,
                 end: end,
-                title: String(block.assignmentId),
+                title: String(block.assignmentName),
                 class: 'vuecal-schedule-block',
             });
         }
