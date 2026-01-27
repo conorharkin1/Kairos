@@ -1,6 +1,6 @@
 using Microsoft.VisualBasic;
 
-namespace DashboardServer.DTOs
+namespace DashboardServer.DTOs.CanvasDTOs
 {
     public class CanvasAssignmentDTO
     {

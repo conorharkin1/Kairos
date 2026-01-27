@@ -14,5 +14,5 @@ export const convertToAppTimezone = (date) => {
 
 export const convertToUTC = (dateStr, format = "YYYY-MM-DD HH:mm") => {
     if (!dateStr) return null;
-    return dayjs.tz(dateStr, format, APP_TIMEZONE).utc().toISOString();
+    return dayjs(dateStr).tz(APP_TIMEZONE, true);
 };

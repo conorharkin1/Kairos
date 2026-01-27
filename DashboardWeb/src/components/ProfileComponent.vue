@@ -109,7 +109,7 @@ const updateDataFromCanvas = async () => {
         toast.warning('Please refresh the page for changes to take effect.')
     } catch (error) {
         if (error.response?.data) {
-            toast.error(`${error.response.data}`);
+            toast.error(`${error.response.data.detail}`);
         } else {
             toast.error('Error updating data from Canvas');
         }

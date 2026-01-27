@@ -5,6 +5,7 @@ namespace DashboardServer.Repositories.Interfaces
     public interface IAssignmentRepository
     {
         Task<List<Assignment>> GetAll();
+        Task<List<Assignment>> GetAllCurrent(string userId);
         Task<Assignment> Create(string userId, Assignment assignment);
         Task CreateAssignmentsAsync(string userId, List<Assignment> assignments);
         Task<Assignment> Update(string userId, int assignmentId, Assignment assignment);

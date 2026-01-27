@@ -17,35 +17,14 @@ const vueCalConfig = {
     time: true,
     viewsBar: false,
     weekNumbers: false,
-    timeFrom: 7 * 60,
-    timeTo: 23 * 60,
+    timeFrom: 8 * 60,
+    timeTo: 21 * 60,
     snapToInterval: 15,
     allDayEvents: true,
+    timeStep: 30
 }
 
-const events = ref([
-    {
-        start: '2025-11-12 09:00',
-        end: '2025-11-12 15:00',
-        title: 'CSC3032 Project Work',
-        content: 'Working on the dashboard project',
-        class: 'custom-work-class',
-    },
-    {
-        start: '2025-11-13 10:00',
-        end: '2025-11-13 11:30',
-        title: 'CSC3065 Quiz',
-        content: 'Preparing for the quiz',
-        class: 'custom-quiz-class',
-    },
-    {
-        start: '2025-11-14 07:00',
-        end: '2025-11-14 15:00',
-        title: 'CSC3045 Study Time',
-        content: 'Studying for the exam',
-        class: 'custom-study-class',
-    },
-])
+const events = ref([]);
 
 const fetchAssignments = async () => {
     try {
@@ -58,25 +37,49 @@ const fetchAssignments = async () => {
     }
 }
 
+const fetchSchedule = async () => {
+    try {
+        const response = await api.get('scheduler/schedule')
+        console.log(response.data);
+        if (!response.data)
+            return toast.info("Have you tried creating a schedule?")
+        constructEventsFromSchedule(response.data);
+    } catch (error) {
+        toast.error('Error fetching schedule');
+    } finally {
+
+    }
+}
+
+const constructEventsFromSchedule = (schedule) => {
+    const newEvents = [];
+    console.log(schedule);
+
+    schedule.blocks.forEach(block => {
+        if (block) {
+            const start = convertToAppTimezone(block.startTime).toDate();
+            const end = convertToAppTimezone(block.endTime).toDate();
+            newEvents.push({
+                start: start,
+                end: end,
+                title: String(block.assignmentName),
+                class: 'vuecal-schedule-block',
+            });
+        }
+    });
+    events.value.push(...newEvents);
+}
+
 const buildCalendarEventsAssignments = (assignments) => {
-    const formattedEvents = [];
     const allDayEvents = [];
 
     assignments.forEach(as => {
-        // Skip assignments without due dates
         if (!as.dueDate) {
             return;
         }
 
         const {start, end} = getFormattedDatesForCalendar(as.dueDate);
-        const classes = getCustomClassesForAssignment(as, end);
-
-        formattedEvents.push({
-            start: start,
-            end: end,
-            title: as.name,
-            class: classes.join(' '),
-        });
+        const classes = getCustomClassesForAssignment(as);
 
         allDayEvents.push({
             allDay: true,
@@ -87,7 +90,6 @@ const buildCalendarEventsAssignments = (assignments) => {
         });
 
     });
-    events.value.push(...formattedEvents);
     events.value.push(...allDayEvents);
 }
 
@@ -96,7 +98,7 @@ const getFormattedDatesForCalendar = (date) => {
     const start = new Date(end);
     start.setHours(start.getHours() - 2);
 
-    return { start, end };
+    return { start: start, end: end };
 }
 
 const getCustomClassesForAssignment = (assignment) => {
@@ -127,6 +129,7 @@ const getCustomClassesForAssignment = (assignment) => {
 
 onMounted(async () => {
     await fetchAssignments()
+    await fetchSchedule()
 })
 
 </script>

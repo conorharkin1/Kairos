@@ -1,5 +1,4 @@
-using DashboardServer.DTOs.ResponseDTOs;
-using DashboardServer.DTOs;
+using DashboardServer.DTOs.AuthDTOs;
 
 namespace DashboardServer.Services.Interfaces
 {

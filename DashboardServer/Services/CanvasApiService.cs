@@ -1,7 +1,7 @@
 using System.Net.Http.Headers;
 using AutoMapper;
 using DashboardServer.Data;
-using DashboardServer.DTOs;
+using DashboardServer.DTOs.CanvasDTOs;
 using DashboardServer.Exceptions;
 using DashboardServer.Models;
 using DashboardServer.Services.Interfaces;

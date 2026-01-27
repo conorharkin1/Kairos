@@ -247,6 +247,7 @@ const createAssignment = async () => {
 
     } catch (error) {
         toast.error('Error creating assignment')
+        console.error(error);
     }
 }
 

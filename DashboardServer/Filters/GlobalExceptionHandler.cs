@@ -38,6 +38,7 @@ namespace DashboardServer.Filters
         {
             return exception switch
             {
+                ValidationException => (StatusCodes.Status400BadRequest, "Validation Error"),
                 UnauthorizedException => (StatusCodes.Status401Unauthorized, "Unauthorized"),
                 BadRequestException => (StatusCodes.Status400BadRequest, "Bad Request"),
                 NotFoundException => (StatusCodes.Status404NotFound, "Not Found"),
