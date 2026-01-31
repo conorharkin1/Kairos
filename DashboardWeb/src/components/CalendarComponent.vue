@@ -62,7 +62,7 @@ const constructEventsFromSchedule = (schedule) => {
             newEvents.push({
                 start: start,
                 end: end,
-                title: String(block.assignmentName),
+                title: `${block.assignmentName} - ${block.courseId}`,
                 class: 'vuecal-schedule-block',
             });
         }
