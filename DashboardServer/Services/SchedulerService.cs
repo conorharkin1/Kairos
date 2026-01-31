@@ -63,6 +63,9 @@ namespace DashboardServer.Services
             //Step 6: Calculate the priority of each block. Priority = (assignmentUrgency * 0.8) + (courseWeight * 0.2) where 0.8 and 0.2 are the behavioural constraints. (increase 0.8 to prioritise deadlines, increase 0.2 to prioritise courseweights)
             blocks = await CalculateBlockPriority(data.Assignments, blocks, assignmentUrgencyDict, data.CourseWeights);
 
+            // initialise unavailable blocks.
+            // int[,] scheduleMatrix = await ConstructScheduleMatrix(maxBlockLength, userId);
+
             blocks = await SortAndInsertBreaks(blocks, maxBlockLength, userId);
 
             //Step 7: Sort the blocks by highest priority. Add them to a queue.
@@ -253,9 +256,75 @@ namespace DashboardServer.Services
             return blocks;
         }
 
+        // private static async Task<int[,]> ConstructScheduleMatrix(int maxBlockLength, string userId)
+        // {
+        //     int[,] initialMatrix = new int[24, 7];
+        //     int columns = initialMatrix.GetLength(1); // days
+        //     int rows = initialMatrix.GetLength(0); // timeslots
+            
+        //     // iterating through days of week
+        //     for (int i = 0; i < columns; i++)
+        //     {
+        //         var maxBlocksInRow = maxBlockLength / 30;
+        //         var currentBlocksInRow = 0;
+
+        //         // iterating through times of day
+        //         for (int slot = 0; slot < rows; slot++)
+        //         {
+        //             if (currentBlocksInRow == maxBlocksInRow)
+        //             {
+        //                 initialMatrix[slot, i] = -1;
+        //                 currentBlocksInRow = 0;
+        //             }
+        //             else
+        //             {
+        //                 initialMatrix[slot, i] = 1;
+        //                 currentBlocksInRow++;
+        //             }
+        //             Console.Write($"{initialMatrix[slot, i],3} ");
+        //         }
+        //         Console.WriteLine();
+        //     }
+
+        //     return initialMatrix;
+
+        // }
+
+        private static async Task<List<ScheduleBlock>> SortAndInsertBreaks(List<ScheduleBlock> blocks, int maxBlockLength, string userId)
+        {
+            var results = new List<ScheduleBlock>();
+            var maxBlocksInRow = maxBlockLength / 30;
+            int currentBlocksInRow = 0;
+            
+
+            blocks = blocks.OrderByDescending(b => b.Priority).ToList();
+
+            foreach (var block in blocks)
+            {
+                if (currentBlocksInRow == maxBlocksInRow)
+                {   
+                    results.Add(new ScheduleBlock()
+                    {
+                        UserId = userId,
+                        Priority = block.Priority,
+                        AssignmentId = block.AssignmentId,
+                        AssignmentName = "BREAK",
+                        CourseId = block.CourseId,
+                        BlockType = Models.BlockType.Break
+                    });
+                    currentBlocksInRow = 0;
+                }
+
+                results.Add(block);
+                currentBlocksInRow += 1;
+            }
+
+            return results;
+        }
+
         private static async Task<ScheduleBlock?[,]> BuildScheduleMatrix(List<DailyCapacity> dailyCapacities, Queue<ScheduleBlock> blockQueue)
         {
-            ScheduleBlock[,] schedule = new ScheduleBlock[24, 7];
+            ScheduleBlock?[,] schedule = new ScheduleBlock[24, 7];
 
             int columns = schedule.GetLength(1); // days
             int rows = schedule.GetLength(0); // timeslots
@@ -281,13 +350,25 @@ namespace DashboardServer.Services
                         break;
 
                     var block = blockQueue.Dequeue();
-                    DateTime startTime = startDate.AddDays(i).AddHours(9).AddMinutes(slot * 30); // starts at 9am and then adds minutes to find correct slot
+                    DateTime startTime = startDate.AddDays(i).AddHours(9).AddMinutes(slot * 30);
+                    
+                    if (startTime == startDate.AddDays(i).AddHours(9) && block.BlockType == Models.BlockType.Break)
+                    {
+                        var nextBlock = blockQueue.Dequeue();
+                        nextBlock.StartTime = startTime;
+                        nextBlock.EndTime = startTime.AddMinutes(30);
+                        schedule[slot, dayIndex] = nextBlock;
+                        numFreeSlots--;
+                        continue;
+                    }
+
                     if (block.BlockType == Models.BlockType.Break)
                     {
                         startTime.AddMinutes(30);
                         schedule[slot, dayIndex] = null;
                         continue;
                     }
+
                     block.StartTime = startTime;
                     block.EndTime = startTime.AddMinutes(30);
 
@@ -297,37 +378,6 @@ namespace DashboardServer.Services
             }
 
             return schedule;
-        }
-
-        private static async Task<List<ScheduleBlock>> SortAndInsertBreaks(List<ScheduleBlock> blocks, int maxBlockLength, string userId)
-        {
-            var results = new List<ScheduleBlock>();
-            var maxBlocksInRow = maxBlockLength / 30;
-            int currentBlocksInRow = 0;
-
-            blocks = blocks.OrderByDescending(b => b.Priority).ToList();
-
-            foreach (var block in blocks)
-            {
-                if (currentBlocksInRow == maxBlocksInRow)
-                {   
-                    results.Add(new ScheduleBlock()
-                    {
-                        UserId = userId,
-                        Priority = block.Priority,
-                        AssignmentId = block.AssignmentId,
-                        AssignmentName = "BREAK",
-                        CourseId = block.CourseId,
-                        BlockType = Models.BlockType.Break
-                    });
-                    currentBlocksInRow = 0;
-                }
-
-                results.Add(block);
-                currentBlocksInRow += 1;
-            }
-
-            return results;
         }
     }
 }
