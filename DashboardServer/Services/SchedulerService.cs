@@ -5,7 +5,6 @@ using DashboardServer.Models;
 using DashboardServer.Models.Constraints;
 using DashboardServer.Repositories.Interfaces;
 using DashboardServer.Services.Interfaces;
-using Hangfire;
 
 namespace DashboardServer.Services
 {
@@ -27,13 +26,13 @@ namespace DashboardServer.Services
             return _mapper.Map<ScheduleDTO>(schedule);
         }
 
-        public void RunScheduler()
+        public async Task RunScheduler()
         {
             string userId = _userResolverService.UserId!;
-            BackgroundJob.Enqueue(() => BackgroundRunScheduler(userId));
+            await ExecuteScheduler(userId);
         }
 
-        public async Task BackgroundRunScheduler(string userId)
+        private async Task ExecuteScheduler(string userId)
         {
             SchedulerData data = await _schedulerRepository.GetDataForScheduler(userId);
 
@@ -63,16 +62,14 @@ namespace DashboardServer.Services
             //Step 6: Calculate the priority of each block. Priority = (assignmentUrgency * 0.8) + (courseWeight * 0.2) where 0.8 and 0.2 are the behavioural constraints. (increase 0.8 to prioritise deadlines, increase 0.2 to prioritise courseweights)
             blocks = await CalculateBlockPriority(data.Assignments, blocks, assignmentUrgencyDict, data.CourseWeights);
 
-            // initialise unavailable blocks.
-            // int[,] scheduleMatrix = await ConstructScheduleMatrix(maxBlockLength, userId);
-
-            blocks = await SortAndInsertBreaks(blocks, maxBlockLength, userId);
+            // initialise the schedule matrix with avoid periods constraint and max block length constraint
+            int[,] initialMatrix = await ConstructInitialScheduleMatrix(maxBlockLength, data.AvoidPeriods ?? []);
 
             //Step 7: Sort the blocks by highest priority. Add them to a queue.
             Queue<ScheduleBlock> blockQueue = new Queue<ScheduleBlock>(blocks);
 
             //Step 8: Build the schedule matrix from the block queue and daily capacities constraint
-            ScheduleBlock?[,] schedule = await BuildScheduleMatrix(data.DailyCapacities, blockQueue);
+            ScheduleBlock?[,] schedule = await BuildSchedule(initialMatrix, data.DailyCapacities, blockQueue);
 
             //Step 9: Save the schedule to the database
             await _schedulerRepository.SaveSchedule(userId, schedule);
@@ -256,124 +253,98 @@ namespace DashboardServer.Services
             return blocks;
         }
 
-        // private static async Task<int[,]> ConstructScheduleMatrix(int maxBlockLength, string userId)
-        // {
-        //     int[,] initialMatrix = new int[24, 7];
-        //     int columns = initialMatrix.GetLength(1); // days
-        //     int rows = initialMatrix.GetLength(0); // timeslots
-            
-        //     // iterating through days of week
-        //     for (int i = 0; i < columns; i++)
-        //     {
-        //         var maxBlocksInRow = maxBlockLength / 30;
-        //         var currentBlocksInRow = 0;
-
-        //         // iterating through times of day
-        //         for (int slot = 0; slot < rows; slot++)
-        //         {
-        //             if (currentBlocksInRow == maxBlocksInRow)
-        //             {
-        //                 initialMatrix[slot, i] = -1;
-        //                 currentBlocksInRow = 0;
-        //             }
-        //             else
-        //             {
-        //                 initialMatrix[slot, i] = 1;
-        //                 currentBlocksInRow++;
-        //             }
-        //             Console.Write($"{initialMatrix[slot, i],3} ");
-        //         }
-        //         Console.WriteLine();
-        //     }
-
-        //     return initialMatrix;
-
-        // }
-
-        private static async Task<List<ScheduleBlock>> SortAndInsertBreaks(List<ScheduleBlock> blocks, int maxBlockLength, string userId)
+        private static async Task<int[,]> ConstructInitialScheduleMatrix(int maxBlockLength, List<AvoidPeriod> avoidPeriodConstraints)
         {
-            var results = new List<ScheduleBlock>();
-            var maxBlocksInRow = maxBlockLength / 30;
-            int currentBlocksInRow = 0;
+            int rows = 24;  // 9am to 9pm
+            int cols = 7;   // days of week
+            int[,] matrix = new int[rows, cols];
+
+            int maxBlocksInRow = maxBlockLength / 30;
+
+            var avoidDict = avoidPeriodConstraints.ToDictionary(ap => ap.DayIndex, ap => ap.AvoidTimeBlocks);
             
-
-            blocks = blocks.OrderByDescending(b => b.Priority).ToList();
-
-            foreach (var block in blocks)
+            // iterating through days of week
+            for (int day = 0; day < cols; day++)
             {
-                if (currentBlocksInRow == maxBlocksInRow)
-                {   
-                    results.Add(new ScheduleBlock()
+                int currentBlocksInRow = 0;
+
+                bool[] isBadSlot = new bool[rows];
+
+                if (avoidDict.TryGetValue(day, out var avoidTimeBlocks))
+                {
+                    foreach (var block in avoidTimeBlocks)
                     {
-                        UserId = userId,
-                        Priority = block.Priority,
-                        AssignmentId = block.AssignmentId,
-                        AssignmentName = "BREAK",
-                        CourseId = block.CourseId,
-                        BlockType = Models.BlockType.Break
-                    });
-                    currentBlocksInRow = 0;
+                        // eg. StartTime = 11am -> corresponds to slot at index 2 of matrix
+                        int startIndex = (block.StartTime.Hours - 9) * 2 + (block.StartTime.Minutes == 30 ? 1 : 0);
+                        int endIndex = (block.EndTime.Hours - 9) * 2 + (block.EndTime.Minutes == 30 ? 1 : 0);
+
+                        for (int i = startIndex; i < endIndex; i++)
+                            isBadSlot[i] = true;
+                    }
                 }
 
-                results.Add(block);
-                currentBlocksInRow += 1;
+                // iterating through times of day
+                for (int slot = 0; slot < rows; slot++)
+                {
+                    if (isBadSlot[slot] || currentBlocksInRow == maxBlocksInRow)
+                    {
+                        matrix[slot, day] = -1;
+                        currentBlocksInRow = 0;
+                    }
+                    else
+                    {
+                        matrix[slot, day] = 1;
+                        currentBlocksInRow++;
+                    }
+                }
             }
 
-            return results;
+            return matrix;
+
         }
 
-        private static async Task<ScheduleBlock?[,]> BuildScheduleMatrix(List<DailyCapacity> dailyCapacities, Queue<ScheduleBlock> blockQueue)
+        private static async Task<ScheduleBlock?[,]> BuildSchedule(int[,] initialMatrix, List<DailyCapacity> dailyCapacities, Queue<ScheduleBlock> blockQueue)
         {
-            ScheduleBlock?[,] schedule = new ScheduleBlock[24, 7];
-
-            int columns = schedule.GetLength(1); // days
-            int rows = schedule.GetLength(0); // timeslots
+            int rows = 24;  // 9am to 9pm
+            int cols = 7;   // days of week
+            ScheduleBlock?[,] schedule = new ScheduleBlock[rows, cols];
 
             DateTime startDate = DateTime.UtcNow.Date;
             int startDayIndex = (int)startDate.DayOfWeek;
 
-            for (int i = 0; i < columns; i++)
+            for (int day = 0; day < cols; day++)
             {
-                int dayIndex = (startDayIndex + i) % 7;
+                int dayIndex = (startDayIndex + day) % 7;
                 int maxAllocatableHours = dailyCapacities.First(dc => dc.DayIndex == dayIndex).MaxHours;
 
                 if (maxAllocatableHours == 0)
                     continue;
 
-                int numFreeSlots = maxAllocatableHours * 2;
+                int slotsToAllocate = maxAllocatableHours * 2; // each slot is 30 mins
 
                 for (int slot = 0; slot < rows; slot++)
                 {
-                    if (numFreeSlots == 0)
+                    if (slotsToAllocate == 0)
                         break;
                     if (blockQueue.Count == 0)
                         break;
 
-                    var block = blockQueue.Dequeue();
-                    DateTime startTime = startDate.AddDays(i).AddHours(9).AddMinutes(slot * 30);
-                    
-                    if (startTime == startDate.AddDays(i).AddHours(9) && block.BlockType == Models.BlockType.Break)
-                    {
-                        var nextBlock = blockQueue.Dequeue();
-                        nextBlock.StartTime = startTime;
-                        nextBlock.EndTime = startTime.AddMinutes(30);
-                        schedule[slot, dayIndex] = nextBlock;
-                        numFreeSlots--;
-                        continue;
-                    }
 
-                    if (block.BlockType == Models.BlockType.Break)
+                    // if bad slot
+                    if (initialMatrix[slot, dayIndex] == -1)
                     {
-                        startTime.AddMinutes(30);
                         schedule[slot, dayIndex] = null;
-                        continue;
                     }
+                    else
+                    {
+                        var block = blockQueue.Dequeue();
+                        DateTime startTime = startDate.AddDays(day).AddHours(9).AddMinutes(slot * 30);
+                        block.StartTime = startTime;
+                        block.EndTime = startTime.AddMinutes(30);
 
-                    block.StartTime = startTime;
-                    block.EndTime = startTime.AddMinutes(30);
-
-                    schedule[slot, dayIndex] = block;
-                    numFreeSlots--;
+                        schedule[slot, dayIndex] = block;
+                        slotsToAllocate--;
+                    }
                 }
             }
 

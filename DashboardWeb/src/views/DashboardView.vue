@@ -8,7 +8,7 @@
                 @change-view="changeView"
                 :currentView="currentView"
             />
-            <component :is="currentView" :courses="courses"/>
+            <component :is="currentView" :courses="courses" ref="currentViewRef"/>
             <SideBarComponent
                 :sidebarViewsRight="sidebarViewsRight"
                 side="right"
@@ -23,7 +23,7 @@
             <TodoGridComponent :currentCourse="currentCourse" :courses="courses"/>
         </div>
         <div class="scheduler-container" v-if="currentView === CalendarComponent">
-            <SchedulerComponent />
+            <SchedulerComponent @schedule-created="onScheduleCreated" />
         </div>
     </div>
 </template>
@@ -43,6 +43,13 @@ const isLoading = ref(false)
 const currentView = shallowRef(CalendarComponent)
 const currentCourse = ref(0)
 const courses = ref([])
+const currentViewRef = ref(null)
+
+const onScheduleCreated = () => {
+    if (currentViewRef.value?.refreshSchedule) {
+        currentViewRef.value.refreshSchedule()
+    }
+}
 
 const sidebarViewsLeft = [
     { icon: 'ix:maintenance-octagon', height: 30, width: 30, tooltip: 'Maintenance', view: ProfileComponent },

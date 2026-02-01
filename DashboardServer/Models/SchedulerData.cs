@@ -9,5 +9,6 @@ namespace DashboardServer.Models
         public List<CourseWeight>? CourseWeights { get; set; }
         public List<DailyCapacity>? DailyCapacities { get; set; }
         public SchedulerRules? Rules { get; set; }
+        public List<AvoidPeriod>? AvoidPeriods { get; set; }
     }
 }

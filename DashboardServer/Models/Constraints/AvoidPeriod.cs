@@ -14,7 +14,7 @@ namespace DashboardServer.Models.Constraints
     public class AvoidTimeBlock
     {
         public int Id { get; set; }
-        public TimeSpan? StartTime { get; set; }
-        public TimeSpan? EndTime { get; set; }
+        public TimeSpan StartTime { get; set; }
+        public TimeSpan EndTime { get; set; }
     }
 }

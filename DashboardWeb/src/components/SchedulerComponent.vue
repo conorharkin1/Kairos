@@ -8,16 +8,24 @@
 <script setup>
 import { ref } from 'vue'
 import api from '@/services/api.js'
+import { useToast } from 'vue-toastification'
+
+const toast = useToast()
+const emit = defineEmits(['schedule-created'])
 
 const runningScheduler = ref(false)
 
 const runScheduler = async () => {
     runningScheduler.value = true
+    toast.info('Generating schedule...')
     
     try {
         await api.post('/scheduler')
+        toast.success('Schedule created successfully!')
+        emit('schedule-created')
     } catch (error) {
         console.error('Error running scheduler:', error)
+        toast.error('Failed to create schedule')
     } finally {
         runningScheduler.value = false
     }

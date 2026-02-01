@@ -12,7 +12,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, defineProps } from 'vue'
+import { ref, onMounted, defineProps, defineExpose } from 'vue'
 import { VueCal } from 'vue-cal'
 import 'vue-cal/style'
 import api from '../services/api.js'
@@ -34,129 +34,91 @@ const vueCalConfig = {
     startWeekOnToday: true,
 }
 
+
 const props = defineProps({
     courses: Array,
 })
-
 const events = ref([]);
 
-const fetchAssignments = async () => {
+const refreshSchedule = async () => {
     try {
-        const response = await api.get('assignment/all')
-        buildCalendarEventsAssignments(response.data);
+        const [assignmentsRes, scheduleRes] = await Promise.all([
+            api.get('assignment/all'),
+            api.get('scheduler/schedule'),
+        ])
+        
+        events.value = [
+            ...buildAssignmentEvents(assignmentsRes.data),
+            ...(scheduleRes.data ? buildScheduleEvents(scheduleRes.data) : []),
+        ]
     } catch (error) {
-        toast.error('Error fetching assignments')
-    } finally {
-
+        console.error('Error refreshing calendar:', error)
+        toast.error('Failed to refresh calendar')
     }
 }
 
-const fetchSchedule = async () => {
-    try {
-        const response = await api.get('scheduler/schedule')
-        console.log(response.data);
-        if (!response.data)
-            return toast.info("Have you tried creating a schedule?")
-        constructEventsFromSchedule(response.data);
-    } catch (error) {
-        toast.error('Error fetching schedule');
-    } finally {
-
-    }
-}
-
-const constructEventsFromSchedule = (schedule) => {
-    const newEvents = [];
-
-    // Filter out null blocks and sort by assignment and start time
-    const validBlocks = schedule.blocks
-        .filter(block => block)
-        .sort((a, b) => {
-            // First sort by assignment name, then by start time
-            if (a.assignmentName !== b.assignmentName) {
-                return a.assignmentName.localeCompare(b.assignmentName);
+const buildAssignmentEvents = (assignments) => {
+    return assignments
+        .filter(a => a.dueDate)
+        .map(a => {
+            const { start, end } = getFormattedDatesForCalendar(a.dueDate)
+            return {
+                allDay: true,
+                start,
+                end,
+                title: a.name,
+                class: getCustomClassesForAssignment(a).join(' '),
             }
-            return new Date(a.startTime) - new Date(b.startTime);
-        });
-
-    // Merge consecutive blocks for the same assignment
-    const mergedBlocks = mergeConsecutiveBlocks(validBlocks);
-
-    mergedBlocks.forEach(block => {
-        const start = convertToAppTimezone(block.startTime).toDate();
-        const end = convertToAppTimezone(block.endTime).toDate();
-        const colorClass = getScheduleBlockColorClass(block.courseId);
-
-        newEvents.push({
-            start: start,
-            end: end,
-            title: `${block.assignmentName}`,
-            class: `vuecal-schedule-block ${colorClass}`,
-            color: '#000000',
-        });
-    });
-    events.value.push(...newEvents);
+        })
 }
+
+const buildScheduleEvents = (schedule) => {
+    const validBlocks = schedule.blocks
+        .filter(Boolean)
+        .sort((a, b) => {
+            if (a.assignmentName !== b.assignmentName)
+                return a.assignmentName.localeCompare(b.assignmentName)
+            return new Date(a.startTime) - new Date(b.startTime)
+        })
+
+    return mergeConsecutiveBlocks(validBlocks).map(block => ({
+        start: convertToAppTimezone(block.startTime).toDate(),
+        end: convertToAppTimezone(block.endTime).toDate(),
+        title: block.assignmentName,
+        class: `vuecal-schedule-block ${getScheduleBlockColorClass(block.courseId)}`,
+        color: '#000000',
+    }))
+}
+
+// Helpers
 
 const mergeConsecutiveBlocks = (blocks) => {
-    if (blocks.length === 0) return [];
+    if (!blocks.length) return []
 
-    const merged = [];
-    let currentMerged = { ...blocks[0] };
+    const merged = []
+    let current = { ...blocks[0] }
 
     for (let i = 1; i < blocks.length; i++) {
-        const block = blocks[i];
-        const currentEnd = new Date(currentMerged.endTime).getTime();
-        const blockStart = new Date(block.startTime).getTime();
+        const next = blocks[i]
 
-        // Check if this block is consecutive with the current merged block
-        // and belongs to the same assignment
-        if (block.assignmentName === currentMerged.assignmentName &&
-            block.courseId === currentMerged.courseId &&
-            blockStart === currentEnd) {
-            // Extend the current merged block
-            currentMerged.endTime = block.endTime;
+        if ( next.assignmentName === current.assignmentName 
+            && next.courseId === current.courseId 
+            && new Date(next.startTime).getTime() === new Date(current.endTime).getTime()
+        ) {
+            current.endTime = next.endTime
         } else {
-            // Push the current merged block and start a new one
-            merged.push(currentMerged);
-            currentMerged = { ...block };
+            merged.push(current)
+            current = { ...next }
         }
     }
-    // Don't forget the last merged block
-    merged.push(currentMerged);
 
-    return merged;
+    merged.push(current)
+    return merged
 }
 
 const getScheduleBlockColorClass = (courseId) => {
-    // Get course index from the courses prop for consistent coloring
     const courseIndex = props.courses.findIndex(c => c.id === courseId || c.courseId === courseId);
-    // Use modulo to cycle through available colors
-    const colorIndex = courseIndex % 6;
-    return `course-colour-${colorIndex}`;
-}
-
-const buildCalendarEventsAssignments = (assignments) => {
-    const allDayEvents = [];
-
-    assignments.forEach(as => {
-        if (!as.dueDate) {
-            return;
-        }
-
-        const { start, end } = getFormattedDatesForCalendar(as.dueDate);
-        const classes = getCustomClassesForAssignment(as);
-
-        allDayEvents.push({
-            allDay: true,
-            start: start,
-            end: end,
-            title: as.name,
-            class: classes.join(' '),
-        });
-
-    });
-    events.value.push(...allDayEvents);
+    return `course-colour-${courseIndex % 6}`;
 }
 
 const getFormattedDatesForCalendar = (date) => {
@@ -164,7 +126,7 @@ const getFormattedDatesForCalendar = (date) => {
     const start = new Date(end);
     start.setHours(start.getHours() - 2);
 
-    return { start: start, end: end };
+    return { start, end };
 }
 
 const getCustomClassesForAssignment = (assignment) => {
@@ -193,10 +155,8 @@ const getCustomClassesForAssignment = (assignment) => {
     return classes;
 }
 
-onMounted(async () => {
-    await fetchAssignments()
-    await fetchSchedule()
-})
+defineExpose({ refreshSchedule });
+onMounted(refreshSchedule);
 
 </script>
 

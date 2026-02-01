@@ -7,8 +7,6 @@ using DashboardServer.Repositories;
 using DashboardServer.Repositories.Interfaces;
 using DashboardServer.Services;
 using DashboardServer.Services.Interfaces;
-using Hangfire;
-using Hangfire.PostgreSql;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -57,12 +55,6 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 
 builder.Services.AddAuthorization();
-
-builder.Services.AddHangfire(config =>
-    config.UsePostgreSqlStorage(c =>
-        c.UseNpgsqlConnection(builder.Configuration.GetConnectionString("HangfireConnection"))));
-
-builder.Services.AddHangfireServer();
 
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IEncryptService, EncryptService>();
@@ -114,8 +106,6 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.UseStaticFiles();
-
-app.UseHangfireDashboard();
 
 // Exposes the /login /register endpoints implicitly
 app.MapIdentityApi<IdentityUser>();

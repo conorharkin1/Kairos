@@ -22,10 +22,10 @@ namespace DashboardServer.Controllers
         }
 
         [HttpPost]
-        public IActionResult RunScheduler()
+        public async Task<IActionResult> RunScheduler()
         {
-            _schedulerService.RunScheduler();
-            return Ok(new { message = "Scheduler started successfully." });
+            await _schedulerService.RunScheduler();
+            return Ok(new { message = "Schedule generated successfully." });
         }
 
         [HttpGet("schedule")]

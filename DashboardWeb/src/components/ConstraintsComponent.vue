@@ -65,7 +65,7 @@
                     </div>
                     <div v-for="avoidPeriod in constraint.avoidTimeBlocks" :key="avoidPeriod.id">
                         <div class="schedule-block">
-                            <label>{{ avoidPeriod.startTime }} - {{ avoidPeriod.endTime }}</label>
+                            <label>{{ formatTime(avoidPeriod.startTime) }} - {{ formatTime(avoidPeriod.endTime) }}</label>
                             <button @click="removeBlock(constraint, avoidPeriod); unsavedChanges = true">x</button>
                         </div>
                     </div>
@@ -115,6 +115,11 @@ const getCourseNameById = (id) => {
 
 const dayName = (index) =>
     ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][index]
+
+const formatTime = (time) => {
+    if (!time) return '';
+    return time.substring(0, 5);
+}
 
 const fetchCourses = async () => {
     try {
@@ -356,6 +361,7 @@ onMounted(async () => {
     color: $primary-text-dark;
     font-weight: 600;
     justify-content: space-evenly;
+    opacity: 0.8;
 }
 
 .disabled {
