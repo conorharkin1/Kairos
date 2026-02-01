@@ -8,7 +8,7 @@
                 @change-view="changeView"
                 :currentView="currentView"
             />
-            <component :is="currentView" />
+            <component :is="currentView" :courses="courses"/>
             <SideBarComponent
                 :sidebarViewsRight="sidebarViewsRight"
                 side="right"
@@ -94,8 +94,11 @@ onMounted(() => {
 .current-view-container {
     display: flex;
     flex-direction: row;
-    height: 45vh;
+    min-height: 45vh;
     width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+    box-sizing: border-box;
 }
 .current-view-container-calendar {
     height: 65vh;

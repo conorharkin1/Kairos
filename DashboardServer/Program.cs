@@ -75,6 +75,7 @@ builder.Services.AddScoped<ICourseWeightService, CourseWeightService>();
 builder.Services.AddScoped<IDailyCapacityService, DailyCapacityService>();
 builder.Services.AddScoped<ISchedulerRulesService, SchedulerRulesService>();
 builder.Services.AddScoped<ISchedulerService, SchedulerService>();
+builder.Services.AddScoped<IAvoidPeriodService, AvoidPeriodService>();
 
 // Adding this to attempt injecting the DbContext with HttpContext so I can access the current user and create a global query filter.
 builder.Services.AddHttpContextAccessor();
@@ -88,6 +89,7 @@ builder.Services.AddScoped<ICourseWeightRepository, CourseWeightRepository>();
 builder.Services.AddScoped<IDailyCapacityRepository, DailyCapacityRepository>();
 builder.Services.AddScoped<ISchedulerRulesRepository, SchedulerRulesRepository>();
 builder.Services.AddScoped<ISchedulerRepository, SchedulerRepository>();
+builder.Services.AddScoped<IAvoidPeriodRepository, AvoidPeriodRepository>();
 
 builder.Services.AddAutoMapper(cfg =>
 {
