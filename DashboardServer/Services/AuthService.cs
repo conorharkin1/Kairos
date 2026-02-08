@@ -44,12 +44,17 @@ namespace DashboardServer.Services
 
             var user = _mapper.Map<ApplicationUser>(dto);
             user.UserName = dto.Email;
+            user.FirstName = dto.FirstName;
+            user.LastName = dto.LastName;
 
             var result = await _userManager.CreateAsync(user, dto.Password);
 
             if (!result.Succeeded)
             {
-                throw new Exception("User registration failed");
+                foreach (var error in result.Errors)
+                {
+                    throw new BadRequestException(error.Description);
+                }
             }
 
             var token = GenerateJwtToken(user);

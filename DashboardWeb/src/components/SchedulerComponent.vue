@@ -8,6 +8,7 @@
 <script setup>
 import { ref } from 'vue'
 import api from '@/services/api.js'
+import DisplayErrorMessage from '@/services/error'
 
 const runningScheduler = ref(false)
 
@@ -17,7 +18,9 @@ const runScheduler = async () => {
     try {
         await api.post('/scheduler')
     } catch (error) {
-        console.error('Error running scheduler:', error)
+        if (!DisplayErrorMessage(error)) {
+            toast.error('An error occurred while running the scheduler. Please try again.')
+        }
     } finally {
         runningScheduler.value = false
     }
