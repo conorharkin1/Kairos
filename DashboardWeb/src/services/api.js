@@ -1,6 +1,5 @@
 import router from '@/router'
 import axios from 'axios'
-import { ref } from 'vue'
 
 const apiClient = axios.create({
     baseURL: import.meta.env.VITE_SERVER_BASE_URL || 'http://localhost:5500/api/',

@@ -1,5 +1,6 @@
 <template>
-    <VueCal v-bind="vueCalConfig" :events="events" />    
+    <div v-if="isLoading" class="loading-container loader"></div>
+    <VueCal v-bind="vueCalConfig" :events="events" />
 </template>
 
 <script setup>
@@ -11,6 +12,9 @@ import { useToast } from 'vue-toastification'
 const toast = useToast()
 import { convertToUTC, convertToAppTimezone } from "@/utils/dayjsUtils";
 import dayjs from 'dayjs'
+import DisplayErrorMessage from '@/services/error'
+
+const isLoading = ref(false)
 
 const vueCalConfig = {
     hideWeekends: false,
@@ -27,33 +31,40 @@ const vueCalConfig = {
 const events = ref([]);
 
 const fetchAssignments = async () => {
+    isLoading.value = true
     try {
         const response = await api.get('assignment/all')
-        buildCalendarEventsAssignments(response.data);
+        if (response.data) {
+            buildCalendarEventsAssignments(response.data);
+        }
     } catch (error) {
-        toast.error('Error fetching assignments')
+        if (!DisplayErrorMessage(error)) {
+            toast.error('An error occurred while fetching your assignments. Please try again.')
+        }
     } finally {
-
+        isLoading.value = false
     }
 }
 
 const fetchSchedule = async () => {
+    isLoading.value = true
     try {
         const response = await api.get('scheduler/schedule')
-        console.log(response.data);
-        if (!response.data)
-            return toast.info("Have you tried creating a schedule?")
-        constructEventsFromSchedule(response.data);
+        if (response.data) {
+            constructEventsFromSchedule(response.data);
+        }
     } catch (error) {
-        toast.error('Error fetching schedule');
+        console.error('Error fetching schedule:', error)
+        if (!DisplayErrorMessage(error)) {
+            toast.error('An error occurred while fetching your schedule. Please try again.')
+        }
     } finally {
-
+        isLoading.value = false
     }
 }
 
 const constructEventsFromSchedule = (schedule) => {
     const newEvents = [];
-    console.log(schedule);
 
     schedule.blocks.forEach(block => {
         if (block) {
@@ -128,8 +139,12 @@ const getCustomClassesForAssignment = (assignment) => {
 }
 
 onMounted(async () => {
-    await fetchAssignments()
     await fetchSchedule()
+    await fetchAssignments()
+
+    if (events.value.length === 0) {
+        toast.info("It seems you have no upcoming assignments or schedule, create some assignments to get started!")
+    }
 })
 
 </script>

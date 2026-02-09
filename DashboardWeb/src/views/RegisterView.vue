@@ -8,6 +8,12 @@
             <form @submit="registerUser">
                 <h1>Create a new account</h1>
                 <div class="input-box">
+                    <input type="text" v-model="firstname" required placeholder="Forename" />
+                </div>
+                <div class="input-box">
+                    <input type="text" v-model="lastname" required placeholder="Surname" />
+                </div>
+                <div class="input-box">
                     <input type="email" v-model="email" required placeholder="Email" />
                 </div>
                 <div class="input-box">
@@ -37,10 +43,15 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { register } from '@/services/authService'
+import DisplayErrorMessage from '@/services/error'
+import { useToast } from 'vue-toastification'
+const toast = useToast()
 
 const email = ref('')
 const password = ref('')
 const confirmPassword = ref('')
+const firstname = ref('')
+const lastname = ref('')
 const router = useRouter()
 const isLoading = ref(false)
 
@@ -49,18 +60,24 @@ const registerUser = async (event) => {
     event.preventDefault()
 
     if (password.value !== confirmPassword.value) {
-        alert('Passwords do not match!')
+        toast.error('Passwords do not match!')
+        isLoading.value = false
         return
     }
 
     try {
-        register({
+        await register({
             email: email.value,
             password: password.value,
+            firstname: firstname.value,
+            lastname: lastname.value,
         })
         router.push('/login')
     } catch (error) {
-        alert('Registration failed: ' + error.message)
+        console.log('Registration error:', error)
+        if (!DisplayErrorMessage(error)) {
+            toast.error('An error occurred while registering. Please try again.')
+        }
     } finally {
         isLoading.value = false
     }

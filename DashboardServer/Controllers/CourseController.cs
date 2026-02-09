@@ -61,5 +61,15 @@ namespace DashboardServer.Controllers
 
             return Ok(quizDtos);
         }
+
+        [HttpPost]
+        public async Task<IActionResult> Create([FromBody] CourseDTO courseDto)
+        {
+            string userId = _userManager.GetUserId(HttpContext.User)!;
+
+            var course = _mapper.Map<CourseModel>(courseDto);
+            var createdCourse = await _courseService.Create(userId, course);
+            return Ok(_mapper.Map<CourseDTO>(createdCourse));
+        }
     }
 }
