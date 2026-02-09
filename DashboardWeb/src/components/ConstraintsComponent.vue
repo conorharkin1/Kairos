@@ -171,10 +171,9 @@ const fetchAvoidPeriods = async () => {
         const response = await api.get('constraint/avoidperiod')
         avoidPeriods.value = response.data;
     } catch (error) {
-        if (error.response.status === 400) {
-            toast.error(error.response.data.detail);
+        if (!DisplayErrorMessage(error)) {
+            toast.error('An error occurred while fetching the avoid period constraints. Please try again.')
         }
-        toast.error('Error fetching avoid periods');
     }
 }
 

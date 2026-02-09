@@ -172,10 +172,10 @@ namespace DashboardServer.Migrations
                     b.Property<int?>("AvoidPeriodId")
                         .HasColumnType("integer");
 
-                    b.Property<TimeSpan?>("EndTime")
+                    b.Property<TimeSpan>("EndTime")
                         .HasColumnType("interval");
 
-                    b.Property<TimeSpan?>("StartTime")
+                    b.Property<TimeSpan>("StartTime")
                         .HasColumnType("interval");
 
                     b.HasKey("Id");

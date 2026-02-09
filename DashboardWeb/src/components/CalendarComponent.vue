@@ -1,5 +1,6 @@
 <template>
-    <div class="calendar-wrapper">
+    <div v-if="isLoading" class="loading-container loader"></div>
+    <div v-else class="calendar-wrapper">
         <VueCal v-bind="vueCalConfig" :events="events" />
         <div class="course-legend">
             <span class="legend-title">Courses</span>
@@ -12,7 +13,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, defineProps, defineExpose } from 'vue'
+import { ref, onMounted, defineExpose } from 'vue'
 import { VueCal } from 'vue-cal'
 import 'vue-cal/style'
 import api from '../services/api.js'
@@ -38,13 +39,27 @@ const vueCalConfig = {
 }
 
 
-const props = defineProps({
-    courses: Array,
-})
+const courses = ref([]);
 const events = ref([]);
+
+const fetchCourses = async () => {
+    isLoading.value = true
+    
+    try {
+        const response = await api.get('course')
+        courses.value = response.data;
+    } catch (error) {
+        if (!DisplayErrorMessage(error)) {
+            toast.error('An error occurred while fetching the courses. Please try again.')
+        }
+    } finally {
+        isLoading.value = false
+    }
+}
 
 const refreshSchedule = async () => {
     try {
+        isLoading.value = true
         const [assignmentsRes, scheduleRes] = await Promise.all([
             api.get('assignment/all'),
             api.get('scheduler/schedule'),
@@ -55,8 +70,9 @@ const refreshSchedule = async () => {
             ...(scheduleRes.data ? buildScheduleEvents(scheduleRes.data) : []),
         ]
     } catch (error) {
+        console.error('Error fetching schedule:', error)
         if (!DisplayErrorMessage(error)) {
-            toast.error('An error occurred while fetching your assignments. Please try again.')
+            toast.error('An error occurred while fetching the schedule. Please try again.')
         }
     } finally {
         isLoading.value = false
@@ -123,7 +139,7 @@ const mergeConsecutiveBlocks = (blocks) => {
 }
 
 const getScheduleBlockColorClass = (courseId) => {
-    const courseIndex = props.courses.findIndex(c => c.id === courseId || c.courseId === courseId);
+    const courseIndex = courses.value.findIndex(c => c.id === courseId || c.courseId === courseId);
     return `course-colour-${courseIndex % 6}`;
 }
 
@@ -162,7 +178,15 @@ const getCustomClassesForAssignment = (assignment) => {
 }
 
 defineExpose({ refreshSchedule });
-onMounted(refreshSchedule);
+
+onMounted(async () => {
+    isLoading.value = true
+    await Promise.all([
+        fetchCourses(),
+        refreshSchedule()
+    ]);
+    isLoading.value = false
+})
 
 </script>
 
