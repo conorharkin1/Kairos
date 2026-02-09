@@ -87,6 +87,7 @@ import { useToast } from 'vue-toastification'
 import flatPickr from 'vue-flatpickr-component';
 import 'flatpickr/dist/flatpickr.css';
 const toast = useToast()
+import DisplayErrorMessage from '@/services/error'
 
 const timeConfig = {
     enableTime: true,
@@ -126,7 +127,9 @@ const fetchCourses = async () => {
         const response = await api.get('course')
         courses.value = response.data;
     } catch (error) {
-        toast.error('Error fetching courses');
+        if (!DisplayErrorMessage(error)) {
+            toast.error('An error occurred while fetching your courses. Please try again.')
+        }
     }
 }
 
@@ -135,10 +138,9 @@ const fetchDailyCapacities = async () => {
         const response = await api.get('constraint/capacity')
         dailyCapacities.value = response.data;
     } catch (error) {
-        if (error.response.status === 400) {
-            toast.error(error.response.data.detail);
+        if (!DisplayErrorMessage(error)) {
+            toast.error('An error occurred while fetching your daily capacities. Please try again.')
         }
-        toast.error('Error fetching daily capacities');
     }
 }
 
@@ -147,10 +149,9 @@ const fetchCourseWeights = async () => {
         const response = await api.get('constraint/weight')
         courseWeights.value = response.data;
     } catch (error) {
-        if (error.response.status === 400) {
-            toast.error(error.response.data.detail);
+        if (!DisplayErrorMessage(error)) {
+            toast.error('An error occurred while fetching your course weights. Please try again.')
         }
-        toast.error('Error fetching course weights');
     }
 }
 
@@ -159,10 +160,9 @@ const fetchSchedulerRules = async () => {
         const response = await api.get('constraint/rules')
         schedulerRules.value = response.data;
     } catch (error) {
-        if (error.response.status === 400) {
-            toast.error(error.response.data.detail);
+        if (!DisplayErrorMessage(error)) {
+            toast.error('An error occurred while fetching your scheduler rules. Please try again.')
         }
-        toast.error('Error fetching scheduler rules');
     }
 }
 
@@ -195,7 +195,9 @@ const saveDailyCapacities = async () => {
     try {
         await api.put('constraint/capacity', dailyCapacities.value);
     } catch (error) {
-        toast.error('Error saving daily capacities');
+        if (!DisplayErrorMessage(error)) {
+            toast.error('An error occurred while saving your daily capacities. Please try again.')
+        }
     }
 }
 
@@ -203,7 +205,9 @@ const saveCourseWeights = async () => {
     try {
         await api.put('constraint/weight', courseWeights.value);
     } catch (error) {
-        toast.error('Error saving course weights');
+        if (!DisplayErrorMessage(error)) {
+            toast.error('An error occurred while saving your course weights. Please try again.')
+        }
     }
 }
 
@@ -211,7 +215,9 @@ const saveSchedulerRules = async () => {
     try {
         await api.put('constraint/rules', schedulerRules.value);
     } catch (error) {
-        toast.error('Error saving scheduler rules');
+        if (!DisplayErrorMessage(error)) {
+            toast.error('An error occurred while saving your scheduler rules. Please try again.')
+        }
     }
 }
 

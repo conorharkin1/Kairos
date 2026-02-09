@@ -85,6 +85,7 @@ const toast = useToast()
 import flatpickr from "flatpickr";
 import 'flatpickr/dist/themes/dark.css';
 import { convertToUTC, convertToAppTimezone } from "@/utils/dayjsUtils";
+import DisplayErrorMessage from '@/services/error'
 
 const props = defineProps({
     currentCourse: Number,
@@ -98,7 +99,7 @@ const creatingViewVisible = ref(false)
 const includeCompleted = ref(false)
 
 // Create view inputs
-const types = ['Assignment', 'Quiz', 'Todo Item']
+const types = ['Assignment', 'Quiz']
 const selectedCourseId = ref(null)
 const selectedType = ref(types[0])
 const selectedName = ref('')
@@ -164,7 +165,9 @@ const getAssignmentsForCourse = async () => {
         })
         rawAssignments.value = response.data
     } catch (error) {
-        toast.error('Error fetching assignments')
+        if (!DisplayErrorMessage(error)) {
+            toast.error('An error occurred while fetching assignments. Please try again.')
+        }
     } finally {
         isLoading.value = false
     }
@@ -181,7 +184,9 @@ const getQuizzesForCourse = async () => {
         })
         rawQuizzes.value = response.data
     } catch (error) {
-        toast.error('Error fetching quizzes')
+        if (!DisplayErrorMessage(error)) {
+            toast.error('An error occurred while fetching quizzes. Please try again.')
+        }
     } finally {
         isLoading.value = false;
     }
@@ -246,8 +251,9 @@ const createAssignment = async () => {
         toggleCreateView()
 
     } catch (error) {
-        toast.error('Error creating assignment')
-        console.error(error);
+        if (!DisplayErrorMessage(error)) {
+            toast.error('An error occurred while saving assignment. Please try again.')
+        }
     }
 }
 
@@ -280,7 +286,9 @@ const updateAssignment = async (id, updatedModel) => {
         await api.put(`assignment/${id}`, assignment);
         toast.success(`Assignment updated successfully: ${assignment.name}`)
     } catch (error) {
-        toast.error('Error updating assignment')
+        if (!DisplayErrorMessage(error)) {
+            toast.error('An error occurred while saving assignment. Please try again.')
+        }
     } finally {
         isLoading.value = false
     }
@@ -294,7 +302,9 @@ const deleteAssignment = async (id) => {
         toast.success('Assignment deleted successfully')
         await getAssignmentsForCourse()
     } catch (error) {
-        toast.error('Error deleting assignment:', error)
+        if (!DisplayErrorMessage(error)) {
+            toast.error('An error occurred while deleting assignment. Please try again.')
+        }
     } finally {
         isLoading.value = false;
     }
@@ -318,7 +328,9 @@ const createQuiz = async () => {
         toggleCreateView()
 
     } catch (error) {
-        toast.error('Error creating quiz')
+        if (!DisplayErrorMessage(error)) {
+            toast.error('An error occurred while saving quiz. Please try again.')
+        }
     }
 }
 
@@ -346,7 +358,9 @@ const updateQuiz = async (id, updatedModel) => {
         await api.put(`quiz/${id}`, quiz);
         toast.success(`Quiz updated successfully: ${quiz.name}`)
     } catch (error) {
-        toast.error('Error updating quiz')
+        if (!DisplayErrorMessage(error)) {
+            toast.error('An error occurred while saving quiz. Please try again.')
+        }
     } finally {
         isLoading.value = false;
     }
@@ -360,7 +374,9 @@ const deleteQuiz = async (id) => {
         toast.success('Quiz deleted successfully')
         await getQuizzesForCourse()
     } catch (error) {
-        toast.error('Error deleting quiz:', error)
+        if (!DisplayErrorMessage(error)) {
+            toast.error('An error occurred while deleting quiz. Please try again.')
+        }
     } finally {
         isLoading.value = false;
     }

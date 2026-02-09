@@ -35,6 +35,7 @@ import api from '@/services/api'
 import { logout, deleteAccount } from '@/services/authService'
 import { useToast } from "vue-toastification";
 import { convertToUTC, convertToAppTimezone } from "@/utils/dayjsUtils";
+import DisplayErrorMessage from '@/services/error'
 
 const apiKey = ref('')
 const updatedApiKey = ref('')
@@ -48,8 +49,10 @@ const getCurrentUser = async () => {
     try {
         const response = await api.get('/user/self');
         user.value = response.data
-    } catch {
-        toast.error('Error while fetching user:')
+    } catch (error) {
+        if (!DisplayErrorMessage(error)) {
+            toast.error('An error occurred while fetching profile. Logging out')
+        }
         logout()
     } finally {
         isLoading.value = false
@@ -63,8 +66,10 @@ const saveApiKey = async () => {
         await api.post('/user/key', apiKey.value);
         getCurrentUser()
         toast.success('API key saved successfully')
-    } catch {
-        toast.error('Error saving API key')
+    } catch(error) {
+        if (!DisplayErrorMessage(error)) {
+            toast.error('Error saving API key')
+        }
     } finally {
         isLoading.value = false
     }
@@ -76,8 +81,10 @@ const updateApiKey = async () => {
     try {
         await api.post('/user/key', updatedApiKey.value);
         toast.success('API key updated successfully')
-    } catch {
-        toast.error('Error updating API key')
+    } catch (error) {
+        if (!DisplayErrorMessage(error)) {
+            toast.error('Error saving API key')
+        }
     } finally {
         isLoading.value = false
     }
@@ -91,7 +98,9 @@ const handleDeleteAccount = async () => {
         try {
             await deleteAccount()
         } catch (error) {
-            console.error('Error deleting account:', error)
+            if (!DisplayErrorMessage(error)) {
+                toast.error('An error occurred while deleting your account. Please try again.')
+            }
         } finally {
             isLoading.value = false
         }
@@ -108,10 +117,8 @@ const updateDataFromCanvas = async () => {
         toast.success('Data updated successfully.')
         toast.warning('Please refresh the page for changes to take effect.')
     } catch (error) {
-        if (error.response?.data) {
-            toast.error(`${error.response.data.detail}`);
-        } else {
-            toast.error('Error updating data from Canvas');
+        if (!DisplayErrorMessage(error)) {
+            toast.error('An error occurred while fetching data from Canvas. Please try again later.')
         }
     } finally {
         isLoading.value = false

@@ -12,6 +12,7 @@ import { useToast } from 'vue-toastification'
 
 const toast = useToast()
 const emit = defineEmits(['schedule-created'])
+import DisplayErrorMessage from '@/services/error'
 
 const runningScheduler = ref(false)
 
@@ -24,8 +25,9 @@ const runScheduler = async () => {
         toast.success('Schedule created successfully!')
         emit('schedule-created')
     } catch (error) {
-        console.error('Error running scheduler:', error)
-        toast.error('Failed to create schedule')
+        if (!DisplayErrorMessage(error)) {
+            toast.error('An error occurred while running the scheduler. Please try again.')
+        }
     } finally {
         runningScheduler.value = false
     }

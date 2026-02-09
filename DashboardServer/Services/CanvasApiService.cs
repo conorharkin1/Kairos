@@ -119,8 +119,8 @@ namespace DashboardServer.Services
             var existingCourseIds = await _dbContext.Courses
                 .Where(c => c.ExternalCourseId.HasValue)
                 .Select(c => new { c.Id, c.ExternalCourseId }).ToListAsync();
-            
-            var existingAssignments = await _dbContext.Assignments.Where(a => a.ExternalAssignmentId.HasValue).ToListAsync();
+
+            var existingAssignments = await _dbContext.Assignments.Where(a => a.ExternalAssignmentId.HasValue && a.ExternalAssignmentId > 0).ToListAsync();
             var existingAssignmentsLookup = existingAssignments.ToDictionary(a => a.ExternalAssignmentId!.Value, a => a);
 
             var assignmentsToAdd = new List<Assignment>();
@@ -161,7 +161,7 @@ namespace DashboardServer.Services
                 .Where(c => c.ExternalCourseId.HasValue)
                 .Select(c => new { c.Id, c.ExternalCourseId }).ToListAsync();
 
-            var existingQuizzes = await _dbContext.Quizzes.Where(q => q.ExternalQuizId.HasValue).ToListAsync();
+            var existingQuizzes = await _dbContext.Quizzes.Where(q => q.ExternalQuizId.HasValue && q.ExternalQuizId > 0).ToListAsync();
             var existingQuizzesLookup = existingQuizzes.ToDictionary(q => q.ExternalQuizId!.Value, q => q);
 
             var quizzesToAdd = new List<Quiz>();

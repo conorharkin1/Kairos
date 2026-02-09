@@ -17,7 +17,7 @@
             />
         </div>
         <div class="course-tabs" v-if="currentView !== CalendarComponent && currentView !== ConstraintsComponent">
-            <CourseTabsComponent @change-course="changeCourse" :currentCourse="currentCourse" :courses="courses"/>
+            <CourseTabsComponent @set-current-course="setCurrentSelectedCourse" @set-courses="courses = $event"/>
         </div>
         <div class="todo-grid" v-if="currentView !== CalendarComponent && currentView !== ConstraintsComponent">
             <TodoGridComponent :currentCourse="currentCourse" :courses="courses"/>
@@ -61,34 +61,17 @@ const sidebarViewsRight = [
     { icon: 'icon-park-outline:redo', width: 30, height: 30, tooltip: 'Coming Soon', /*view: TodoGridComponent,*/ },
 ]
 
-const fetchCourses = async () => {
-    isLoading.value = true
-    
-    try {
-        const response = await api.get('course')
-        courses.value = response.data;
-    } catch (error) {
-        toast.error('Error fetching courses');
-    } finally {
-        isLoading.value = false
-    }
-}
-
 const changeView = (view) => {
     if (view && view !== currentView.value) {
         currentView.value = view
     }
 }
 
-const changeCourse = (courseId) => {
+const setCurrentSelectedCourse = (courseId) => {
     if (courseId && courseId !== currentCourse.value) {
         currentCourse.value = courseId
     }
 }
-
-onMounted(() => {
-    fetchCourses()
-})
 
 </script>
 

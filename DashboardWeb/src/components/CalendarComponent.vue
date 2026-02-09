@@ -20,6 +20,9 @@ import { useToast } from 'vue-toastification'
 const toast = useToast()
 import { convertToUTC, convertToAppTimezone } from "@/utils/dayjsUtils";
 import dayjs from 'dayjs'
+import DisplayErrorMessage from '@/services/error'
+
+const isLoading = ref(false)
 
 const vueCalConfig = {
     hideWeekends: false,
@@ -52,8 +55,11 @@ const refreshSchedule = async () => {
             ...(scheduleRes.data ? buildScheduleEvents(scheduleRes.data) : []),
         ]
     } catch (error) {
-        console.error('Error refreshing calendar:', error)
-        toast.error('Failed to refresh calendar')
+        if (!DisplayErrorMessage(error)) {
+            toast.error('An error occurred while fetching your assignments. Please try again.')
+        }
+    } finally {
+        isLoading.value = false
     }
 }
 

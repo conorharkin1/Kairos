@@ -20,6 +20,16 @@ namespace DashboardServer.Services
                 throw new UnauthorizedException("User is not authorized");
             }
 
+            if (string.IsNullOrWhiteSpace(course.Name))
+            {
+                throw new BadRequestException("Course name is required");
+            }
+
+            if (string.IsNullOrWhiteSpace(course.CourseCode))
+            {
+                throw new BadRequestException("Course code is required");
+            }
+
             return await _courseRepository.Create(userId, course);
         }
 

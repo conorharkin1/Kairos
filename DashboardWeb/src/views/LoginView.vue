@@ -28,6 +28,9 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { login } from '@/services/authService'
+import DisplayErrorMessage from '@/services/error'
+import { useToast } from 'vue-toastification'
+const toast = useToast()
 
 const email = ref('')
 const password = ref('')
@@ -39,13 +42,15 @@ const loginUser = async (event) => {
     isLoading.value = true
 
     try {
-        const user = await login({
+        await login({
             email: email.value,
             password: password.value,
         })
         router.push('/dashboard')
     } catch (error) {
-        alert('Login failed: ' + error.message)
+        if (!DisplayErrorMessage(error)) {
+            toast.error('An error occurred while logging in. Please try again.')
+        }
     } finally {
         isLoading.value = false
     }
