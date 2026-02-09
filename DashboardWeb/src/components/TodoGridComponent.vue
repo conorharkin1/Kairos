@@ -99,7 +99,7 @@ const creatingViewVisible = ref(false)
 const includeCompleted = ref(false)
 
 // Create view inputs
-const types = ['Assignment', 'Quiz', 'Todo Item']
+const types = ['Assignment', 'Quiz']
 const selectedCourseId = ref(null)
 const selectedType = ref(types[0])
 const selectedName = ref('')

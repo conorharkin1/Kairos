@@ -23,11 +23,19 @@ namespace DashboardServer.Services
 
         public async Task<List<CourseWeight>> GetCourseWeightsAsync()
         {
+            var courseIds = await _courseRepository.GetCourseIdsAsync();
             var constraints = await _repository.GetCourseWeightsAsync();
             if (constraints.Count == 0)
             {
-                return await CreateDefaultCourseWeights();
+                return await CreateDefaultCourseWeights(courseIds);
             }
+
+            if (constraints.Count != courseIds.Count)
+            {
+                var missingIds = courseIds.Where(ci => !constraints.Any(c => c.CourseId == ci)).ToList();
+                constraints.AddRange(await CreateDefaultCourseWeights(missingIds));
+            }
+
             return constraints;
         }
 
@@ -48,10 +56,8 @@ namespace DashboardServer.Services
             return updated;
         }
 
-        private async Task<List<CourseWeight>> CreateDefaultCourseWeights()
+        private async Task<List<CourseWeight>> CreateDefaultCourseWeights(List<int> courseIds)
         {
-            var courseIds = await _courseRepository.GetCourseIdsAsync();
-
             return courseIds.Select(id => new CourseWeight
             {
                CourseId = id,
