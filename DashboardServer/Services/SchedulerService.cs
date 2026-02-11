@@ -60,6 +60,7 @@ namespace DashboardServer.Services
             List<ScheduleBlock> blocks = await ConstructScheduleBlocks(courseHoursDict, hoursPerAssignment, minBlockLength, data.Assignments, userId);
 
             //Step 6: Calculate the priority of each block. Priority = (assignmentUrgency * 0.8) + (courseWeight * 0.2) where 0.8 and 0.2 are the behavioural constraints. (increase 0.8 to prioritise deadlines, increase 0.2 to prioritise courseweights)
+            // Returns blocks sorted by priority from highest to lowest
             blocks = await CalculateBlockPriority(data.Assignments, blocks, assignmentUrgencyDict, data.CourseWeights);
 
             // initialise the schedule matrix with avoid periods constraint and max block length constraint
@@ -174,7 +175,7 @@ namespace DashboardServer.Services
             return assignmentHoursDict;
         }
 
-        private static async Task<List<ScheduleBlock>> CreateBlocks(double hoursToAllocate, int minBlockLength, int courseId, int assignmentId, string assignmentName, string userId)
+        private static async Task<List<ScheduleBlock>> CreateBlocks(double hoursToAllocate, int minBlockLength, int courseId, int? assignmentId, string assignmentName, string userId)
         {
             List<ScheduleBlock> blocks = new List<ScheduleBlock>();
             var minutesToAllocate = hoursToAllocate * 60;
@@ -219,7 +220,7 @@ namespace DashboardServer.Services
                     }
                 }
 
-                blocks.AddRange(await CreateBlocks(courseHoursRemainingToAlloc, minBlockLength, courseId, -1, "Study", userId));
+                blocks.AddRange(await CreateBlocks(courseHoursRemainingToAlloc, minBlockLength, courseId, null, "Study", userId));
             }
 
             return blocks;
@@ -249,6 +250,8 @@ namespace DashboardServer.Services
                     priority -= 0.01;
                 }
             }
+
+            blocks = blocks.OrderByDescending(b => b.Priority).ToList();
 
             return blocks;
         }

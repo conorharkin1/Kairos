@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace DashboardServer.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260209152301_AvoidTimeBlock")]
-    partial class AvoidTimeBlock
+    [Migration("20260211185650_MakeScheduleBlockAssignmentIdNullable")]
+    partial class MakeScheduleBlockAssignmentIdNullable
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -141,6 +141,8 @@ namespace DashboardServer.Migrations
 
                     b.HasIndex("CourseId");
 
+                    b.HasIndex("UserId");
+
                     b.ToTable("Assignments");
                 });
 
@@ -160,6 +162,8 @@ namespace DashboardServer.Migrations
                         .HasColumnType("text");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("AvoidPeriods");
                 });
@@ -260,6 +264,8 @@ namespace DashboardServer.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("UserId");
+
                     b.ToTable("SchedulerRules");
                 });
 
@@ -285,6 +291,8 @@ namespace DashboardServer.Migrations
                         .HasColumnType("text");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("Courses");
                 });
@@ -329,6 +337,8 @@ namespace DashboardServer.Migrations
 
                     b.HasIndex("CourseId");
 
+                    b.HasIndex("UserId");
+
                     b.ToTable("Quizzes");
                 });
 
@@ -349,6 +359,8 @@ namespace DashboardServer.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("UserId");
+
                     b.ToTable("Schedules");
                 });
 
@@ -360,7 +372,7 @@ namespace DashboardServer.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("AssignmentId")
+                    b.Property<int?>("AssignmentId")
                         .HasColumnType("integer");
 
                     b.Property<string>("AssignmentName")
@@ -390,7 +402,11 @@ namespace DashboardServer.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("CourseId");
+
                     b.HasIndex("ScheduleId");
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("ScheduleBlocks");
                 });
@@ -535,7 +551,26 @@ namespace DashboardServer.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("DashboardServer.Models.ApplicationUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.Navigation("Course");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("DashboardServer.Models.Constraints.AvoidPeriod", b =>
+                {
+                    b.HasOne("DashboardServer.Models.ApplicationUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("DashboardServer.Models.Constraints.AvoidTimeBlock", b =>
@@ -546,6 +581,50 @@ namespace DashboardServer.Migrations
                         .OnDelete(DeleteBehavior.Cascade);
                 });
 
+            modelBuilder.Entity("DashboardServer.Models.Constraints.CourseWeight", b =>
+                {
+                    b.HasOne("DashboardServer.Models.ApplicationUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("DashboardServer.Models.Constraints.DailyCapacity", b =>
+                {
+                    b.HasOne("DashboardServer.Models.ApplicationUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("DashboardServer.Models.Constraints.SchedulerRules", b =>
+                {
+                    b.HasOne("DashboardServer.Models.ApplicationUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("DashboardServer.Models.Course", b =>
+                {
+                    b.HasOne("DashboardServer.Models.ApplicationUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("DashboardServer.Models.Quiz", b =>
                 {
                     b.HasOne("DashboardServer.Models.Course", "Course")
@@ -554,18 +633,53 @@ namespace DashboardServer.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("DashboardServer.Models.ApplicationUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.Navigation("Course");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("DashboardServer.Models.Schedule", b =>
+                {
+                    b.HasOne("DashboardServer.Models.ApplicationUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("DashboardServer.Models.ScheduleBlock", b =>
                 {
+                    b.HasOne("DashboardServer.Models.Course", "Course")
+                        .WithMany()
+                        .HasForeignKey("CourseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("DashboardServer.Models.Schedule", "Schedule")
                         .WithMany("Blocks")
                         .HasForeignKey("ScheduleId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("DashboardServer.Models.ApplicationUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Course");
+
                     b.Navigation("Schedule");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
