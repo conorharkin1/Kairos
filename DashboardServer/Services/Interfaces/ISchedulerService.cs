@@ -5,7 +5,7 @@ namespace DashboardServer.Services.Interfaces
 {
     public interface ISchedulerService
     {
-        public void RunScheduler();
+        public Task RunScheduler();
         public Task<ScheduleDTO?> GetSchedule(string userId);
     }
 }

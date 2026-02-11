@@ -141,6 +141,50 @@ namespace DashboardServer.Migrations
                     b.ToTable("Assignments");
                 });
 
+            modelBuilder.Entity("DashboardServer.Models.Constraints.AvoidPeriod", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("DayIndex")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("AvoidPeriods");
+                });
+
+            modelBuilder.Entity("DashboardServer.Models.Constraints.AvoidTimeBlock", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("AvoidPeriodId")
+                        .HasColumnType("integer");
+
+                    b.Property<TimeSpan>("EndTime")
+                        .HasColumnType("interval");
+
+                    b.Property<TimeSpan>("StartTime")
+                        .HasColumnType("interval");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AvoidPeriodId");
+
+                    b.ToTable("AvoidTimeBlock");
+                });
+
             modelBuilder.Entity("DashboardServer.Models.Constraints.CourseWeight", b =>
                 {
                     b.Property<int>("Id")
@@ -491,6 +535,14 @@ namespace DashboardServer.Migrations
                     b.Navigation("Course");
                 });
 
+            modelBuilder.Entity("DashboardServer.Models.Constraints.AvoidTimeBlock", b =>
+                {
+                    b.HasOne("DashboardServer.Models.Constraints.AvoidPeriod", null)
+                        .WithMany("AvoidTimeBlocks")
+                        .HasForeignKey("AvoidPeriodId")
+                        .OnDelete(DeleteBehavior.Cascade);
+                });
+
             modelBuilder.Entity("DashboardServer.Models.Quiz", b =>
                 {
                     b.HasOne("DashboardServer.Models.Course", "Course")
@@ -562,6 +614,11 @@ namespace DashboardServer.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("DashboardServer.Models.Constraints.AvoidPeriod", b =>
+                {
+                    b.Navigation("AvoidTimeBlocks");
                 });
 
             modelBuilder.Entity("DashboardServer.Models.Course", b =>

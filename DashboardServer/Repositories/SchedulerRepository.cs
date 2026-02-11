@@ -28,13 +28,15 @@ namespace DashboardServer.Repositories
             var rules = await _dbContext.SchedulerRules.IgnoreQueryFilters().Where(a => a.UserId == userId).FirstOrDefaultAsync();
             var capacities = await _dbContext.DailyCapacities.IgnoreQueryFilters().Where(a => a.UserId == userId).ToListAsync();
             var weights = await _dbContext.CourseWeights.IgnoreQueryFilters().Where(a => a.UserId == userId).ToListAsync();
+            var avoidPeriods = await _dbContext.AvoidPeriods.Include(ap => ap.AvoidTimeBlocks).IgnoreQueryFilters().Where(a => a.UserId == userId).ToListAsync();
 
             return new SchedulerData {
                 Assignments = assignments,
                 Courses = courses,
                 Rules = rules,
                 DailyCapacities = capacities,
-                CourseWeights = weights
+                CourseWeights = weights,
+                AvoidPeriods = avoidPeriods
             };
         }
 

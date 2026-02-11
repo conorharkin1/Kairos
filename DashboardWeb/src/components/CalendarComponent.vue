@@ -1,10 +1,19 @@
 <template>
     <div v-if="isLoading" class="loading-container loader"></div>
-    <VueCal v-bind="vueCalConfig" :events="events" />
+    <div v-else class="calendar-wrapper">
+        <VueCal v-bind="vueCalConfig" :events="events" />
+        <div class="course-legend">
+            <span class="legend-title">Courses</span>
+            <div v-for="(course, index) in courses" :key="index" class="legend-item">
+                <span class="legend-color" :class="`course-colour-${index % 6}`"></span>
+                <span class="legend-label">{{ course.courseCode }}</span>
+            </div>
+        </div>
+    </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, defineExpose } from 'vue'
 import { VueCal } from 'vue-cal'
 import 'vue-cal/style'
 import api from '../services/api.js'
@@ -25,83 +34,113 @@ const vueCalConfig = {
     timeTo: 21 * 60,
     snapToInterval: 15,
     allDayEvents: true,
-    timeStep: 30
+    timeStep: 30,
+    startWeekOnToday: true,
 }
 
+
+const courses = ref([]);
 const events = ref([]);
 
-const fetchAssignments = async () => {
+const fetchCourses = async () => {
     isLoading.value = true
+    
     try {
-        const response = await api.get('assignment/all')
-        if (response.data) {
-            buildCalendarEventsAssignments(response.data);
-        }
+        const response = await api.get('course')
+        courses.value = response.data;
     } catch (error) {
         if (!DisplayErrorMessage(error)) {
-            toast.error('An error occurred while fetching your assignments. Please try again.')
+            toast.error('An error occurred while fetching the courses. Please try again.')
         }
     } finally {
         isLoading.value = false
     }
 }
 
-const fetchSchedule = async () => {
-    isLoading.value = true
+const refreshSchedule = async () => {
     try {
-        const response = await api.get('scheduler/schedule')
-        if (response.data) {
-            constructEventsFromSchedule(response.data);
-        }
+        isLoading.value = true
+        const [assignmentsRes, scheduleRes] = await Promise.all([
+            api.get('assignment/all'),
+            api.get('scheduler/schedule'),
+        ])
+        
+        events.value = [
+            ...buildAssignmentEvents(assignmentsRes.data),
+            ...(scheduleRes.data ? buildScheduleEvents(scheduleRes.data) : []),
+        ]
     } catch (error) {
         console.error('Error fetching schedule:', error)
         if (!DisplayErrorMessage(error)) {
-            toast.error('An error occurred while fetching your schedule. Please try again.')
+            toast.error('An error occurred while fetching the schedule. Please try again.')
         }
     } finally {
         isLoading.value = false
     }
 }
 
-const constructEventsFromSchedule = (schedule) => {
-    const newEvents = [];
-
-    schedule.blocks.forEach(block => {
-        if (block) {
-            const start = convertToAppTimezone(block.startTime).toDate();
-            const end = convertToAppTimezone(block.endTime).toDate();
-            newEvents.push({
-                start: start,
-                end: end,
-                title: String(block.assignmentName),
-                class: 'vuecal-schedule-block',
-            });
-        }
-    });
-    events.value.push(...newEvents);
+const buildAssignmentEvents = (assignments) => {
+    return assignments
+        .filter(a => a.dueDate)
+        .map(a => {
+            const { start, end } = getFormattedDatesForCalendar(a.dueDate)
+            return {
+                allDay: true,
+                start,
+                end,
+                title: a.name,
+                class: getCustomClassesForAssignment(a).join(' '),
+            }
+        })
 }
 
-const buildCalendarEventsAssignments = (assignments) => {
-    const allDayEvents = [];
+const buildScheduleEvents = (schedule) => {
+    const validBlocks = schedule.blocks
+        .filter(Boolean)
+        .sort((a, b) => {
+            if (a.assignmentName !== b.assignmentName)
+                return a.assignmentName.localeCompare(b.assignmentName)
+            return new Date(a.startTime) - new Date(b.startTime)
+        })
 
-    assignments.forEach(as => {
-        if (!as.dueDate) {
-            return;
+    return mergeConsecutiveBlocks(validBlocks).map(block => ({
+        start: convertToAppTimezone(block.startTime).toDate(),
+        end: convertToAppTimezone(block.endTime).toDate(),
+        title: block.assignmentName,
+        class: `vuecal-schedule-block ${getScheduleBlockColorClass(block.courseId)}`,
+        color: '#000000',
+    }))
+}
+
+// Helpers
+
+const mergeConsecutiveBlocks = (blocks) => {
+    if (!blocks.length) return []
+
+    const merged = []
+    let current = { ...blocks[0] }
+
+    for (let i = 1; i < blocks.length; i++) {
+        const next = blocks[i]
+
+        if ( next.assignmentName === current.assignmentName 
+            && next.courseId === current.courseId 
+            && new Date(next.startTime).getTime() === new Date(current.endTime).getTime()
+        ) {
+            current.endTime = next.endTime
+        } else {
+            merged.push(current)
+            current = { ...next }
         }
+    }
 
-        const {start, end} = getFormattedDatesForCalendar(as.dueDate);
-        const classes = getCustomClassesForAssignment(as);
+    merged.push(current)
+    return merged
+}
 
-        allDayEvents.push({
-            allDay: true,
-            start: start,
-            end: end,
-            title: as.name,
-            class: classes.join(' '),
-        });
-
-    });
-    events.value.push(...allDayEvents);
+const getScheduleBlockColorClass = (courseId) => {
+    const courseIndex = courses.value.findIndex(c => c.id === courseId || c.courseId === courseId);
+    return `course-colour-${courseIndex % 6}`;
 }
 
 const getFormattedDatesForCalendar = (date) => {
@@ -109,7 +148,7 @@ const getFormattedDatesForCalendar = (date) => {
     const start = new Date(end);
     start.setHours(start.getHours() - 2);
 
-    return { start: start, end: end };
+    return { start, end };
 }
 
 const getCustomClassesForAssignment = (assignment) => {
@@ -138,18 +177,96 @@ const getCustomClassesForAssignment = (assignment) => {
     return classes;
 }
 
-onMounted(async () => {
-    await fetchSchedule()
-    await fetchAssignments()
+defineExpose({ refreshSchedule });
 
-    if (events.value.length === 0) {
-        toast.info("It seems you have no upcoming assignments or schedule, create some assignments to get started!")
-    }
+onMounted(async () => {
+    isLoading.value = true
+    await Promise.all([
+        fetchCourses(),
+        refreshSchedule()
+    ]);
+    isLoading.value = false
 })
 
 </script>
 
 <style scoped lang="scss">
+.calendar-wrapper {
+    display: flex;
+    flex-grow: 1;
+    position: relative;
+    width: 100%;
+}
+
+.course-legend {
+    position: absolute;
+    bottom: 1rem;
+    right: 1rem;
+    background: rgba(30, 30, 30, 0.9);
+    border: 1px solid $primary-text-light;
+    border-radius: 6px;
+    padding: 0.5rem 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    z-index: 10;
+    max-width: 180px;
+    font-size: 0.75rem;
+}
+
+.legend-title {
+    color: $primary-text-light;
+    font-weight: 600;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.25rem;
+    opacity: 0.8;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.legend-color {
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+    flex-shrink: 0;
+
+    &.course-colour-0 {
+        background-color: $pastel-green;
+    }
+
+    &.course-colour-1 {
+        background-color: $pastel-purple;
+    }
+
+    &.course-colour-2 {
+        background-color: $pastel-blue;
+    }
+
+    &.course-colour-3 {
+        background-color: $pastel-yellow;
+    }
+
+    &.course-colour-4 {
+        background-color: $pastel-pink;
+    }
+
+    &.course-colour-5 {
+        background-color: $pastel-sea-green;
+    }
+}
+
+.legend-label {
+    color: $primary-text-light;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
 
 .vuecal {
     flex-grow: 1;
@@ -181,18 +298,51 @@ onMounted(async () => {
 }
 
 ::v-deep(.vuecal__event.late) {
-  --vuecal-primary-color: red;
+    --vuecal-primary-color: red;
 }
+
 ::v-deep(.vuecal__event.due-soon) {
-  --vuecal-primary-color: #{$primary-orange-colour};
+    --vuecal-primary-color: #{$primary-orange-colour};
 }
+
 ::v-deep(.vuecal__event.complete) {
-  --vuecal-primary-color: #{$primary-green-colour};
+    --vuecal-primary-color: #{$primary-green-colour};
 }
+
 ::v-deep(.vuecal__event.upcoming) {
-  --vuecal-primary-color: #{$primary-blue-colour};
+    --vuecal-primary-color: #{$primary-blue-colour};
 }
+
 ::v-deep(.vuecal__event.priority) {
-  --vuecal-event-border-color: #{$primary-yellow-colour};
+    --vuecal-event-border-color: #{$primary-yellow-colour};
+}
+
+::v-deep(.vuecal__event.course-colour-0) {
+    --vuecal-primary-color: #{$pastel-green};
+}
+
+::v-deep(.vuecal__event.course-colour-1) {
+    --vuecal-primary-color: #{$pastel-purple};
+}
+
+::v-deep(.vuecal__event.course-colour-2) {
+    --vuecal-primary-color: #{$pastel-blue};
+}
+
+::v-deep(.vuecal__event.course-colour-3) {
+    --vuecal-primary-color: #{$pastel-yellow};
+}
+
+::v-deep(.vuecal__event.course-colour-4) {
+    --vuecal-primary-color: #{$pastel-pink};
+}
+
+::v-deep(.vuecal__event.course-colour-5) {
+    --vuecal-primary-color: #{$pastel-sea-green};
+}
+
+::v-deep(.vuecal__event.vuecal-schedule-block) {
+    border-left: 3px solid var(--vuecal-primary-color);
+    opacity: 0.9;
 }
 </style>

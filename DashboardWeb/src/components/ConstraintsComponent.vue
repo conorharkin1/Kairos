@@ -1,19 +1,20 @@
 <template>
     <div v-if="isLoading" class="loading-container loader"></div>
     <div v-else class="global-constraints-container">
-        <div class="daily-capacity-container">
+        <div class="constraint-container">
             <h2>Daily Work Capacity</h2>
             <label class="info">How many hours can you work each day</label>
             <div class="sliders">
                 <div class="slider" v-for="constraint in dailyCapacities" :key="constraint.dayIndex">
-                    <label>{{ dayName(constraint.dayIndex)}}</label>
+                    <label>{{ dayName(constraint.dayIndex) }}</label>
                     <br>
                     <label>{{ constraint.maxHours }} hours</label>
-                    <Slider :min="0" :max="12" :step="1" v-model="constraint.maxHours" @hasUnsavedChanges="unsavedChanges = true" />
+                    <Slider :min="0" :max="12" :step="1" v-model="constraint.maxHours"
+                        @hasUnsavedChanges="unsavedChanges = true" />
                 </div>
             </div>
         </div>
-        <div class="course-weight-container">
+        <div class="constraint-container">
             <h2>Course Weights</h2>
             <label class="info">Give a higher percentage to courses you want to prioritise</label>
             <div class="sliders">
@@ -21,25 +22,54 @@
                     <label>{{ getCourseNameById(weight.courseId) }}</label>
                     <br>
                     <label>{{ weight.weight }}%</label>
-                    <Slider :min="0" :max="100" :step="10" v-model="weight.weight" @hasUnsavedChanges="unsavedChanges = true" />
+                    <Slider :min="0" :max="100" :step="10" v-model="weight.weight"
+                        @hasUnsavedChanges="unsavedChanges = true" />
                 </div>
             </div>
         </div>
-        <div class="scheduler-rules-container">
+        <div class="constraint-container">
             <h2>Scheduler Rules</h2>
             <label class="info">The session length controls how much time you will work in consecutive chunks</label>
             <div class="sliders">
-                <div class="slider">
+                <div class="slider disabled">
                     <label>Minimum Session Length</label>
                     <br>
                     <label>{{ schedulerRules.minSessionLength }} minutes</label>
-                    <Slider :min="30" :max="240" :step="30" v-model="schedulerRules.minSessionLength" @hasUnsavedChanges="unsavedChanges = true" />
+                    <Slider :min="30" :max="240" :step="30" v-model="schedulerRules.minSessionLength"
+                        @hasUnsavedChanges="unsavedChanges = true" />
                 </div>
                 <div class="slider">
                     <label>Maximum Session Length</label>
                     <br>
                     <label>{{ schedulerRules.maxSessionLength }} minutes</label>
-                    <Slider :min="30" :max="240" :step="30" v-model="schedulerRules.maxSessionLength" @hasUnsavedChanges="unsavedChanges = true" />
+                    <Slider :min="30" :max="240" :step="30" v-model="schedulerRules.maxSessionLength"
+                        @hasUnsavedChanges="unsavedChanges = true" />
+                </div>
+            </div>
+        </div>
+        <div class="constraint-container">
+            <h2>Unavailable Times</h2>
+            <label class="info">The scheduler will avoid using any of the times provided here</label>
+            <div class="avoid-period-container">
+                <div class="avoid-constraint" v-for="constraint in avoidPeriods" :key="constraint.dayIndex">
+                    <label>{{ dayName(constraint.dayIndex) }}</label>
+                    <br>
+                    <div class="time-input-row">
+                        <flat-pickr v-model="constraint.newStartTime" :config="timeConfig" placeholder="From"
+                            class="time-input" />
+
+                        <flat-pickr v-model="constraint.newEndTime" :config="timeConfig" placeholder="To"
+                            class="time-input" /> 
+
+                        <button class="btn btn-primary btn-good" @click="addBlock(constraint); unsavedChanges = true">Add</button>
+                    </div>
+                    <div v-for="avoidPeriod in constraint.avoidTimeBlocks" :key="avoidPeriod.id">
+                        <div class="schedule-block">
+                            <label>{{ formatTime(avoidPeriod.startTime) }} - {{ formatTime(avoidPeriod.endTime) }}</label>
+                            <button @click="removeBlock(constraint, avoidPeriod); unsavedChanges = true">x</button>
+                        </div>
+                    </div>
+                    <div></div>
                 </div>
             </div>
         </div>
@@ -54,8 +84,18 @@ import { ref, onMounted } from 'vue';
 import Slider from './Slider.vue';
 import api from '../services/api.js'
 import { useToast } from 'vue-toastification'
+import flatPickr from 'vue-flatpickr-component';
+import 'flatpickr/dist/flatpickr.css';
 const toast = useToast()
 import DisplayErrorMessage from '@/services/error'
+
+const timeConfig = {
+    enableTime: true,
+    noCalendar: true,
+    dateFormat: "H:i",
+    time_24hr: true,
+    minuteIncrement: 30
+};
 
 const isLoading = ref(false)
 const unsavedChanges = ref(false)
@@ -67,6 +107,7 @@ const schedulerRules = ref({
     minSessionLength: 30,
     maxSessionLength: 180
 })
+const avoidPeriods = ref([])
 
 const getCourseNameById = (id) => {
     const course = courses.value.find(c => c.id === id);
@@ -74,7 +115,12 @@ const getCourseNameById = (id) => {
 }
 
 const dayName = (index) =>
-  ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][index]
+    ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][index]
+
+const formatTime = (time) => {
+    if (!time) return '';
+    return time.substring(0, 5);
+}
 
 const fetchCourses = async () => {
     try {
@@ -91,7 +137,6 @@ const fetchDailyCapacities = async () => {
     try {
         const response = await api.get('constraint/capacity')
         dailyCapacities.value = response.data;
-        console.log(dailyCapacities.value);
     } catch (error) {
         if (!DisplayErrorMessage(error)) {
             toast.error('An error occurred while fetching your daily capacities. Please try again.')
@@ -103,7 +148,6 @@ const fetchCourseWeights = async () => {
     try {
         const response = await api.get('constraint/weight')
         courseWeights.value = response.data;
-        console.log(courseWeights.value);
     } catch (error) {
         if (!DisplayErrorMessage(error)) {
             toast.error('An error occurred while fetching your course weights. Please try again.')
@@ -115,10 +159,20 @@ const fetchSchedulerRules = async () => {
     try {
         const response = await api.get('constraint/rules')
         schedulerRules.value = response.data;
-        console.log(schedulerRules.value);
     } catch (error) {
         if (!DisplayErrorMessage(error)) {
             toast.error('An error occurred while fetching your scheduler rules. Please try again.')
+        }
+    }
+}
+
+const fetchAvoidPeriods = async () => {
+    try {
+        const response = await api.get('constraint/avoidperiod')
+        avoidPeriods.value = response.data;
+    } catch (error) {
+        if (!DisplayErrorMessage(error)) {
+            toast.error('An error occurred while fetching the avoid period constraints. Please try again.')
         }
     }
 }
@@ -128,7 +182,8 @@ const saveConstraints = async () => {
     await Promise.all([
         saveDailyCapacities(),
         saveCourseWeights(),
-        saveSchedulerRules()
+        saveSchedulerRules(),
+        saveAvoidPeriods()
     ]);
     unsavedChanges.value = false;
     isLoading.value = false;
@@ -165,19 +220,48 @@ const saveSchedulerRules = async () => {
     }
 }
 
+const saveAvoidPeriods = async () => {
+    try {
+        await api.put('constraint/avoidperiod', avoidPeriods.value);
+    } catch (error) {
+        toast.error('Error saving avoid periods');
+    }
+}
+
+const addBlock = (constraint) => {
+    if (!constraint.newStartTime || !constraint.newEndTime) return;
+
+    constraint.avoidTimeBlocks.push({
+        id: 1,
+        startTime: constraint.newStartTime,
+        endTime: constraint.newEndTime,
+    });
+
+    constraint.newStartTime = '';
+    constraint.newEndTime = '';
+};
+
+const removeBlock = (constraint, block) => {
+    const index = constraint.avoidTimeBlocks.indexOf(block);
+    if (index > -1) {
+        constraint.avoidTimeBlocks.splice(index, 1);
+    }
+};
+
 onMounted(async () => {
     isLoading.value = true
     await Promise.all([
         fetchCourses(),
         fetchDailyCapacities(),
         fetchCourseWeights(),
-        fetchSchedulerRules()
-    ])
+        fetchSchedulerRules(),
+        fetchAvoidPeriods()
+    ]);
     isLoading.value = false
 })
 
 </script>
- 
+
 <style scoped lang="scss">
 .global-constraints-container {
     display: flex;
@@ -187,10 +271,30 @@ onMounted(async () => {
     color: $primary-text-light;
     padding: 1rem;
     gap: 3rem;
+    overflow-x: hidden;
+    box-sizing: border-box;
 }
-.daily-capacity-container,
-.course-weight-container,
-.scheduler-rules-container {
+
+.avoid-period-container {
+    display: flex;
+    flex-direction: row;
+    gap: 1rem;
+    padding: 1rem;
+    overflow-x: auto;
+}
+
+.avoid-constraint {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 0;
+    min-width: 0;
+
+    .time-input-row {
+        width: 100%;
+    }
+}
+
+.constraint-container {
     padding: 1rem;
     border: 2px solid $primary-text-light;
     border-radius: 20px;
@@ -224,5 +328,49 @@ onMounted(async () => {
     margin-top: 2rem;
     display: flex;
     justify-content: center;
+}
+
+.time-input-row {
+    display: flex;
+    flex-direction: row;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+    max-width: 100%;
+    min-width: 0;
+    flex-wrap: wrap;
+}
+
+.time-input {
+    padding: 0.5rem;
+    border-radius: 5px;
+    border: 1px solid $primary-text-light;
+    background-color: $primary-grey-background;
+    color: $primary-text-light;
+    text-align: center;
+    flex: 1 1 0;
+    min-width: 50px;
+    max-width: 80px;
+
+    &::placeholder {
+        color: $primary-text-grey;
+    }
+}
+
+.schedule-block {
+    display: flex;
+    border: 1px solid $primary-text-light;
+    background-color: $primary-blue-colour;
+    border-radius: 5px;
+    padding: 0.2rem;
+    text-align: center;
+    color: $primary-text-dark;
+    font-weight: 600;
+    justify-content: space-evenly;
+    opacity: 0.8;
+}
+
+.disabled {
+    opacity: 0.5;
+    pointer-events: none;
 }
 </style>
