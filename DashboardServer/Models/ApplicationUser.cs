@@ -8,5 +8,6 @@ namespace DashboardServer.Models
         public string? LastName { get; set; }
         public string? CanvasApiKey { get; set; }
         public DateTime? LastUpdatedData { get; set; }
+        public Schedule? Schedule { get; set; }
     }
 }

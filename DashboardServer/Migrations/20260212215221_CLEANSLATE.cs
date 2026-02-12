@@ -7,7 +7,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace DashboardServer.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class CLEANSLATE : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -381,7 +381,7 @@ namespace DashboardServer.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     ScheduleId = table.Column<int>(type: "integer", nullable: false),
                     Priority = table.Column<double>(type: "double precision", nullable: false),
-                    AssignmentId = table.Column<int>(type: "integer", nullable: false),
+                    AssignmentId = table.Column<int>(type: "integer", nullable: true),
                     AssignmentName = table.Column<string>(type: "text", nullable: true),
                     CourseId = table.Column<int>(type: "integer", nullable: false),
                     BlockType = table.Column<int>(type: "integer", nullable: false),
@@ -396,12 +396,6 @@ namespace DashboardServer.Migrations
                         name: "FK_ScheduleBlocks_AspNetUsers_UserId",
                         column: x => x.UserId,
                         principalTable: "AspNetUsers",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_ScheduleBlocks_Assignments_AssignmentId",
-                        column: x => x.AssignmentId,
-                        principalTable: "Assignments",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
@@ -503,11 +497,6 @@ namespace DashboardServer.Migrations
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_ScheduleBlocks_AssignmentId",
-                table: "ScheduleBlocks",
-                column: "AssignmentId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_ScheduleBlocks_CourseId",
                 table: "ScheduleBlocks",
                 column: "CourseId");
@@ -530,7 +519,8 @@ namespace DashboardServer.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_Schedules_UserId",
                 table: "Schedules",
-                column: "UserId");
+                column: "UserId",
+                unique: true);
         }
 
         /// <inheritdoc />
@@ -550,6 +540,9 @@ namespace DashboardServer.Migrations
 
             migrationBuilder.DropTable(
                 name: "AspNetUserTokens");
+
+            migrationBuilder.DropTable(
+                name: "Assignments");
 
             migrationBuilder.DropTable(
                 name: "AvoidTimeBlock");
@@ -576,13 +569,10 @@ namespace DashboardServer.Migrations
                 name: "AvoidPeriods");
 
             migrationBuilder.DropTable(
-                name: "Assignments");
+                name: "Courses");
 
             migrationBuilder.DropTable(
                 name: "Schedules");
-
-            migrationBuilder.DropTable(
-                name: "Courses");
 
             migrationBuilder.DropTable(
                 name: "AspNetUsers");

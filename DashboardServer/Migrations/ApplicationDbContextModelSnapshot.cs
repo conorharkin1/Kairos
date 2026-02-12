@@ -356,7 +356,8 @@ namespace DashboardServer.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("UserId")
+                        .IsUnique();
 
                     b.ToTable("Schedules");
                 });
@@ -644,8 +645,8 @@ namespace DashboardServer.Migrations
             modelBuilder.Entity("DashboardServer.Models.Schedule", b =>
                 {
                     b.HasOne("DashboardServer.Models.ApplicationUser", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
+                        .WithOne("Schedule")
+                        .HasForeignKey("DashboardServer.Models.Schedule", "UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -728,6 +729,11 @@ namespace DashboardServer.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("DashboardServer.Models.ApplicationUser", b =>
+                {
+                    b.Navigation("Schedule");
                 });
 
             modelBuilder.Entity("DashboardServer.Models.Constraints.AvoidPeriod", b =>

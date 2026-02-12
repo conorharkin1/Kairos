@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace DashboardServer.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260211145525_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20260212215221_CLEANSLATE")]
+    partial class CLEANSLATE
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -359,7 +359,8 @@ namespace DashboardServer.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("UserId")
+                        .IsUnique();
 
                     b.ToTable("Schedules");
                 });
@@ -372,7 +373,7 @@ namespace DashboardServer.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("AssignmentId")
+                    b.Property<int?>("AssignmentId")
                         .HasColumnType("integer");
 
                     b.Property<string>("AssignmentName")
@@ -401,8 +402,6 @@ namespace DashboardServer.Migrations
                         .HasColumnType("text");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("AssignmentId");
 
                     b.HasIndex("CourseId");
 
@@ -649,8 +648,8 @@ namespace DashboardServer.Migrations
             modelBuilder.Entity("DashboardServer.Models.Schedule", b =>
                 {
                     b.HasOne("DashboardServer.Models.ApplicationUser", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
+                        .WithOne("Schedule")
+                        .HasForeignKey("DashboardServer.Models.Schedule", "UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -659,12 +658,6 @@ namespace DashboardServer.Migrations
 
             modelBuilder.Entity("DashboardServer.Models.ScheduleBlock", b =>
                 {
-                    b.HasOne("DashboardServer.Models.Assignment", "Assignment")
-                        .WithMany()
-                        .HasForeignKey("AssignmentId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.HasOne("DashboardServer.Models.Course", "Course")
                         .WithMany()
                         .HasForeignKey("CourseId")
@@ -682,8 +675,6 @@ namespace DashboardServer.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("Assignment");
 
                     b.Navigation("Course");
 
@@ -741,6 +732,11 @@ namespace DashboardServer.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("DashboardServer.Models.ApplicationUser", b =>
+                {
+                    b.Navigation("Schedule");
                 });
 
             modelBuilder.Entity("DashboardServer.Models.Constraints.AvoidPeriod", b =>

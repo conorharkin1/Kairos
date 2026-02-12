@@ -63,9 +63,9 @@ namespace DashboardServer.Data
                     .HasForeignKey(b => b.ScheduleId)
                     .OnDelete(DeleteBehavior.Cascade);
 
-            builder.Entity<ApplicationUser>()
-                .HasOne<Schedule>()
-                .WithOne()
+            builder.Entity<Schedule>()
+                .HasOne(s => s.User)
+                .WithOne(u => u.Schedule)
                 .HasForeignKey<Schedule>(s => s.UserId);
 
             
