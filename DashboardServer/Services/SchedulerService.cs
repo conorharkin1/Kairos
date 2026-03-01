@@ -29,22 +29,22 @@ namespace DashboardServer.Services
         public async Task RunScheduler()
         {
             string userId = _userResolverService.UserId!;
-            await ExecuteScheduler(userId);
-        }
 
-        private async Task ExecuteScheduler(string userId)
-        {
             SchedulerData data = await _schedulerRepository.GetDataForScheduler(userId);
 
-            if (data.Assignments == null || data.Assignments.Count == 0)
-                return;
+            if (!CanScheduleRun(data))
+            {
+                throw new ValidationException("The scheduler requires assignments, courses and constraints to create a schedule.");
+            }
 
-            if (data.DailyCapacities == null || data.DailyCapacities.Count == 0 || data.CourseWeights == null || data.CourseWeights.Count == 0 || data.Rules == null)
-                return;
+            await ExecuteScheduler(userId, data);
+        }
 
+        private async Task ExecuteScheduler(string userId, SchedulerData data)
+        {
             // Step 1: Calculate the total available working hours of the week from DailyCapacities constraint
             int totalAvailableHours = await CalculateTotalHours(data.DailyCapacities);
-            int minBlockLength = data.Rules.MinSessionLength;
+            int minBlockLength = data.Rules!.MinSessionLength;
             int maxBlockLength = data.Rules.MaxSessionLength;
 
             // Step 2: Calculate the total hours each course gets allocated based on the course weights constraint
@@ -352,6 +352,29 @@ namespace DashboardServer.Services
             }
 
             return schedule;
+        }
+
+        private static bool CanScheduleRun(SchedulerData data)
+        {
+            if (data.Assignments == null || data.Assignments.Count == 0)
+                return false;
+
+            if (data.Courses == null || data.Courses.Count == 0)
+                return false;
+
+            if (data.DailyCapacities == null || data.DailyCapacities.Count == 0)
+                return false;
+            
+            if (data.CourseWeights == null || data.CourseWeights.Count == 0)
+                return false;
+            
+            if (data.Rules == null)
+                return false;
+            
+            if (data.DailyCapacities.Sum(dc => dc.MaxHours) == 0)
+                return false;
+
+            return true;
         }
     }
 }
