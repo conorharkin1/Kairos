@@ -41,6 +41,11 @@ namespace DashboardServer.Services
 
         public async Task<List<CourseWeight>> UpdateCourseWeightsAsync(List<CourseWeight> weights)
         {
+            if (weights.Count == 0)
+            {
+                return weights;
+            }
+            
             var courseIds = await _courseRepository.GetCourseIdsAsync();
             if (weights.All(w => !courseIds.Contains(w.CourseId)))
             {
