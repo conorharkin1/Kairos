@@ -14,22 +14,9 @@ namespace DashboardServer.Services
             _userRepository = userRepository;
         }
 
-        public async Task SetApiKey(string apiKey, Guid key, string userId)
+        public async Task SetApiKey(string apiKey, string userId)
         {
-            if (string.IsNullOrWhiteSpace(apiKey))
-            {
-                throw new BadRequestException("API key cannot be empty");
-            }
-
-            if (string.IsNullOrWhiteSpace(userId))
-            {
-                throw new UnauthorizedException("User is not authorized");
-            }
-
-            if (key == Guid.Empty)
-            {
-                throw new BadRequestException("Invalid encryption key");
-            }
+            Guid key = Guid.Parse(userId);
 
             var encryptedKey = _encryptService.Encrypt(apiKey, key);
             await _userRepository.SetApiKey(userId, encryptedKey);
@@ -37,11 +24,6 @@ namespace DashboardServer.Services
 
         public async Task<string> GetEncryptedApiKey(string userId)
         {
-            if (string.IsNullOrWhiteSpace(userId))
-            {
-                throw new UnauthorizedException("User is not authorized");
-            }
-
             return await _userRepository.GetEncryptedApiKey(userId);
         }
     }

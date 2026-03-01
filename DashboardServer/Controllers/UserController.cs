@@ -38,10 +38,7 @@ namespace DashboardServer.Controllers
         {
             var userId = _userManager.GetUserId(HttpContext.User)!;
 
-            // I'm creating a new guid here based on the userId to use as a key for encryption - not suitable for production but for demo it'll be fine
-            Guid encryptionKey = Guid.Parse(userId);
-
-            await _userService.SetApiKey(apiKey, encryptionKey, userId);
+            await _userService.SetApiKey(apiKey, userId);
             
             return Ok();
         }

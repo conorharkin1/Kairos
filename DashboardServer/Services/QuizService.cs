@@ -27,7 +27,7 @@ namespace DashboardServer.Services
         {
             if (string.IsNullOrWhiteSpace(userId))
             {
-                throw new UnauthorizedException("User is not authorized");
+                throw new UnAuthorizedException("User is not authorized");
             }
 
             await _quizRepository.CreateQuizzesAsync(userId, quizzes);
@@ -37,7 +37,7 @@ namespace DashboardServer.Services
         {
             if (string.IsNullOrWhiteSpace(userId))
             {
-                throw new UnauthorizedException("User is not authorized");
+                throw new UnAuthorizedException("User is not authorized");
             }
 
             if (string.IsNullOrWhiteSpace(quiz.Name))
@@ -52,7 +52,7 @@ namespace DashboardServer.Services
         {
             if (string.IsNullOrWhiteSpace(userId))
             {
-                throw new UnauthorizedException("User is not authorized");
+                throw new UnAuthorizedException("User is not authorized");
             }
             
             await _quizRepository.Delete(userId, quizId);

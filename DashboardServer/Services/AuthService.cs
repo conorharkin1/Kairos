@@ -81,7 +81,7 @@ namespace DashboardServer.Services
             var user = await _userManager.FindByEmailAsync(dto.Email);
             if (user == null || !await _userManager.CheckPasswordAsync(user, dto.Password))
             {
-                throw new UnauthorizedException("Invalid email or password");
+                throw new UnAuthorizedException("Invalid email or password");
             }
 
             var token = GenerateJwtToken(user);
@@ -122,7 +122,7 @@ namespace DashboardServer.Services
         {
             if (string.IsNullOrWhiteSpace(userId))
             {
-                throw new UnauthorizedException("User is not authorized");
+                throw new UnAuthorizedException("User is not authorized");
             }
 
             var user = await _userManager.FindByIdAsync(userId);

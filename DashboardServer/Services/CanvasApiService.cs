@@ -4,6 +4,7 @@ using DashboardServer.Data;
 using DashboardServer.DTOs.CanvasDTOs;
 using DashboardServer.Exceptions;
 using DashboardServer.Models;
+using DashboardServer.Repositories.Interfaces;
 using DashboardServer.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
@@ -16,19 +17,19 @@ namespace DashboardServer.Services
         private readonly IUserService _userService;
         private readonly ApplicationDbContext _dbContext;
         private readonly IMapper _mapper;
-        private readonly IAssignmentService _assignmentService;
+        private readonly IAssignmentRepository _assignmentRepository;
         private readonly IQuizService _quizService;
         private readonly ICourseService _courseService;
         private const string CANVAS_BASE_URL = "https://canvas.qub.ac.uk/";
 
-        public CanvasApiService(HttpClient httpClient, IEncryptService encryptService, IUserService userService, ApplicationDbContext dbContext, IMapper mapper, IAssignmentService assignmentService, IQuizService quizService, ICourseService courseService)
+        public CanvasApiService(HttpClient httpClient, IEncryptService encryptService, IUserService userService, ApplicationDbContext dbContext, IMapper mapper, IAssignmentRepository assignmentRepository, IQuizService quizService, ICourseService courseService )
         {
             _encryptService = encryptService;
             _httpClient = httpClient;
             _userService = userService;
             _dbContext = dbContext;
+            _assignmentRepository = assignmentRepository;
             _mapper = mapper;
-            _assignmentService = assignmentService;
             _quizService = quizService;
             _courseService = courseService;
             _httpClient.BaseAddress = new Uri(CANVAS_BASE_URL);
@@ -127,29 +128,30 @@ namespace DashboardServer.Services
 
             foreach(var existingCourse in existingCourseIds)
             {
-                var incomingAssignments = _mapper.Map<List<Assignment>>(await GetCourseAssignmentsFromCanvasAsync(userId, existingCourse.ExternalCourseId!.Value));
+                var incomingAssignments = await GetCourseAssignmentsFromCanvasAsync(userId, existingCourse.ExternalCourseId!.Value);
+
+                if (incomingAssignments == null)
+                {
+                    continue;
+                }
 
                 foreach (var assignment in incomingAssignments)
                 {
-                    if (!assignment.ExternalAssignmentId.HasValue)
+                    var due = assignment.due_at.HasValue ? assignment.due_at.Value.UtcDateTime : (DateTime?)null;
+                    if (existingAssignmentsLookup.TryGetValue(assignment.id, out var existingAssignment))
                     {
-                        continue;
-                    }
-
-                    if (!existingAssignmentsLookup.TryGetValue(assignment.ExternalAssignmentId!.Value, out var existingAssignment))
-                    {
-                        assignment.CourseId = existingCourse.Id;
-                        assignmentsToAdd.Add(assignment);
+                        existingAssignment.SetDueDate(due);
                     }
                     else
                     {
-                        existingAssignment.DueDate = assignment.DueDate;
+                        var newAssignment = new Assignment(userId, existingCourse.Id, assignment.name, assignment.description, due, assignment.html_url, assignment.has_submitted_submissions, false);
+                        newAssignment.SetExternalAssignmentId(assignment.id);
+                        assignmentsToAdd.Add(newAssignment);
                     }
                 }
             }
 
-            await _assignmentService.CreateAssignmentsAsync(userId, assignmentsToAdd);
-            await _dbContext.SaveChangesAsync();
+            await _assignmentRepository.CreateBulkAsync(assignmentsToAdd);
         }
         /// <summary>
         /// Fetches Quizzes from Canvas, compares to existing records. If any new quizzes are present on Canvas,
@@ -197,6 +199,7 @@ namespace DashboardServer.Services
         public async Task UpdateDataFromCanvasAsync(string userId)
         {
             var user = await _dbContext.Users.FindAsync(userId);
+
             if ((DateTime.UtcNow - user!.LastUpdatedData) < TimeSpan.FromMinutes(10))
             {
                 throw new BadRequestException("Your data was updated less than 10 minutes ago, please wait before refreshing again.");
@@ -205,7 +208,7 @@ namespace DashboardServer.Services
             await UpdateAssignmentsDataAsync(userId);
             await UpdateQuizzesDataAsync(userId);
 
-            user!.LastUpdatedData = DateTime.UtcNow;
+            user.UpdateLastSyncTime();
             await _dbContext.SaveChangesAsync();
         }
         

@@ -17,7 +17,7 @@ namespace DashboardServer.Services
         {
             if (string.IsNullOrWhiteSpace(userId))
             {
-                throw new UnauthorizedException("User is not authorized");
+                throw new UnAuthorizedException("User is not authorized");
             }
 
             if (string.IsNullOrWhiteSpace(course.Name))
@@ -37,7 +37,7 @@ namespace DashboardServer.Services
         {
             if (string.IsNullOrWhiteSpace(userId))
             {
-                throw new UnauthorizedException("User is not authorized");
+                throw new UnAuthorizedException("User is not authorized");
             }
 
             await _courseRepository.CreateCoursesAsync(userId, courses);
@@ -47,7 +47,7 @@ namespace DashboardServer.Services
         {
             if (string.IsNullOrWhiteSpace(userId))
             {
-                throw new UnauthorizedException("User is not authorized");
+                throw new UnAuthorizedException("User is not authorized");
             }
 
             return await _courseRepository.GetCoursesAsync();
@@ -57,7 +57,7 @@ namespace DashboardServer.Services
         {
             if (string.IsNullOrWhiteSpace(userId))
             {
-                throw new UnauthorizedException("User is not authorized");
+                throw new UnAuthorizedException("User is not authorized");
             }
 
             if (courseId <= 0)
@@ -72,7 +72,7 @@ namespace DashboardServer.Services
         {
             if (string.IsNullOrWhiteSpace(userId))
             {
-                throw new UnauthorizedException("User is not authorized");
+                throw new UnAuthorizedException("User is not authorized");
             }
 
             if (courseId <= 0)
