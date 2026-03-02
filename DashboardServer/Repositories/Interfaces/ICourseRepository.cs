@@ -10,9 +10,7 @@ namespace DashboardServer.Repositories.Interfaces
         Task CreateBulkAsync(List<Course> courses);
         Task DeleteAsync(Course course);
         Task Save();
-        Task<List<Course>> GetCoursesAsync(string userId);
         Task<List<int>> GetCourseIdsAsync();
-        Task<List<int>> GetCourseIdsAsync(string userId);
         Task<List<Assignment>> GetCourseAssignmentsAsync(int courseId, bool includeCompleted);
         Task<List<Quiz>> GetCourseQuizzesAsync(int courseId, bool includeCompleted);
     }

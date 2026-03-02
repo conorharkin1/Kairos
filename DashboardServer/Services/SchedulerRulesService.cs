@@ -1,4 +1,6 @@
-using DashboardServer.Exceptions;
+using AutoMapper;
+using DashboardServer.DTOs.ConstraintDTOs.Requests;
+using DashboardServer.DTOs.ConstraintDTOs.Responses;
 using DashboardServer.Models.Constraints;
 using DashboardServer.Repositories.Interfaces;
 using DashboardServer.Services.Interfaces;
@@ -7,44 +9,46 @@ namespace DashboardServer.Services
 {
     public class SchedulerRulesService : ISchedulerRulesService
     {
-        private readonly ISchedulerRulesRepository _repository;
+        private readonly ISchedulerRulesRepository _repo;
+        private readonly IMapper _mapper;
         private readonly IUserResolverService _userResolverService;
 
-        public SchedulerRulesService(ISchedulerRulesRepository repository, IUserResolverService userResolverService)
+        public SchedulerRulesService(ISchedulerRulesRepository repository, IMapper mapper, IUserResolverService userResolverService)
         {
-            _repository = repository;
+            _repo = repository;
+            _mapper = mapper;
             _userResolverService = userResolverService;
         }
 
-        private string? CURRENT_USER_ID => _userResolverService.UserId;
+        private string CurrentUserId => _userResolverService.UserId!;
 
-        public async Task<SchedulerRules> GetRulesAsync()
+        public async Task<SchedulerRulesResponseDTO> GetAsync()
         {
-            var rules = await _repository.GetRulesAsync();
+            var rules = await _repo.GetAsync();
             if (rules == null)
             {
-                rules = new SchedulerRules
-                {
-                    MinSessionLength = 30,
-                    MaxSessionLength = 180,
-                };
+                rules = new SchedulerRules(CurrentUserId);
+                rules = await _repo.CreateAsync(rules);
             }
-            return rules;
+
+            return _mapper.Map<SchedulerRulesResponseDTO>(rules);
         }
 
-        public async Task<SchedulerRules> UpdateRulesAsync(SchedulerRules rules)
+        public async Task<SchedulerRulesResponseDTO> UpdateAsync(SchedulerRulesRequestDTO dto)
         {
-            if(rules.MinSessionLength <= 0 || rules.MaxSessionLength <= 0)
+            var rules = await _repo.GetAsync();
+            if (rules == null)
             {
-                throw new ValidationException("Session lengths must be positive integers.");
+                rules = new SchedulerRules(CurrentUserId, dto.MinSessionLength, dto.MaxSessionLength);
+                rules = await _repo.CreateAsync(rules);
             }
-            if(rules.MinSessionLength > rules.MaxSessionLength)
+            else
             {
-                throw new ValidationException("Minimum session length cannot be greater than maximum session length.");
+                rules.Update(dto.MinSessionLength, dto.MaxSessionLength);
+                await _repo.Save();
             }
-            
-            var updated = await _repository.UpdateRulesAsync(rules, CURRENT_USER_ID!);
-            return updated;
+
+            return _mapper.Map<SchedulerRulesResponseDTO>(rules);
         }
     }
 }

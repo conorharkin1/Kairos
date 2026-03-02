@@ -2,17 +2,43 @@ namespace DashboardServer.Models
 {
     public class ScheduleBlock : BaseEntity
     {
-        public int ScheduleId { get; set; }
-        public Schedule? Schedule { get; set; }
-        public double Priority { get; set; }
-        public int? AssignmentId { get; set; }
-        public string? AssignmentName { get; set; }
-        public int CourseId { get; set; }
-        public Course? Course { get; set; }
-        public BlockType BlockType { get; set; }
-        public DateTime StartTime { get; set; }
-        public DateTime EndTime { get; set; }
+        protected ScheduleBlock() { }
 
+        public ScheduleBlock(string userId, int courseId, int? assignmentId, string? assignmentName, double priority, BlockType blockType) : base(userId)
+        {
+            CourseId = courseId;
+            AssignmentId = assignmentId;
+            AssignmentName = assignmentName;
+            Priority = priority;
+            BlockType = blockType;
+        }
+
+        public int ScheduleId { get; private set; }
+        public Schedule? Schedule { get; private set; }
+        public double Priority { get; private set; }
+        public int? AssignmentId { get; private set; }
+        public string? AssignmentName { get; private set; }
+        public int CourseId { get; private set; }
+        public Course? Course { get; private set; }
+        public BlockType BlockType { get; private set; }
+        public DateTime StartTime { get; private set; }
+        public DateTime EndTime { get; private set; }
+
+        public void SetSchedule(Schedule schedule)
+        {
+            Schedule = schedule;
+        }
+
+        public void SetTimeSlot(DateTime startTime, DateTime endTime)
+        {
+            StartTime = startTime;
+            EndTime = endTime;
+        }
+
+        public void SetPriority(double priority)
+        {
+            Priority = priority;
+        }
     }
 
     public enum BlockType

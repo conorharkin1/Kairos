@@ -4,7 +4,8 @@ namespace DashboardServer.Repositories.Interfaces
 {
     public interface IAvoidPeriodRepository
     {
-        public Task<List<AvoidPeriod>> GetAvoidPeriodsAsync();
-        public Task<List<AvoidPeriod>> UpdateAvoidPeriods(List<AvoidPeriod> constraints, string userId);
+        Task<List<AvoidPeriod>> GetAllAsync();
+        Task CreateBulkAsync(List<AvoidPeriod> avoidPeriods);
+        Task Save();
     }
 }

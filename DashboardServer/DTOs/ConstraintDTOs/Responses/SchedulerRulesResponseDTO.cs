@@ -1,6 +1,6 @@
-namespace DashboardServer.DTOs.ConstraintDTOs
+namespace DashboardServer.DTOs.ConstraintDTOs.Responses
 {
-    public class SchedulerRulesDTO
+    public class SchedulerRulesResponseDTO
     {
         public int Id { get; set; }
         public int MinSessionLength { get; set; }

@@ -4,8 +4,8 @@ namespace DashboardServer.Repositories.Interfaces
 {
     public interface ISchedulerRepository
     {
-        public Task<SchedulerData> GetDataForScheduler(string userId);
-        public Task SaveSchedule(string userId, ScheduleBlock?[,] schedule);
-        public Task<Schedule?> GetSchedule(string userId);
+        Task<SchedulerData> GetDataForScheduler();
+        Task SaveSchedule(string userId, ScheduleBlock?[,] schedule);
+        Task<Schedule?> GetSchedule();
     }
 }

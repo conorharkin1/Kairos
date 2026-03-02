@@ -48,19 +48,9 @@ namespace DashboardServer.Repositories
             await _dbContext.SaveChangesAsync();
         }
 
-        public async Task<List<Course>> GetCoursesAsync(string userId)
-        {
-            return await _dbContext.Courses.IgnoreQueryFilters().Where(c => c.UserId == userId).ToListAsync();
-        }
-
         public async Task<List<int>> GetCourseIdsAsync()
         {
             return await _dbContext.Courses.Select(c => c.Id).ToListAsync();
-        }
-
-        public async Task<List<int>> GetCourseIdsAsync(string userId)
-        {
-            return await _dbContext.Courses.IgnoreQueryFilters().Where(c => c.UserId == userId).Select(c => c.Id).ToListAsync();
         }
 
         public async Task<List<Assignment>> GetCourseAssignmentsAsync(int courseId, bool includeCompleted)

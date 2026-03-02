@@ -20,9 +20,9 @@ namespace DashboardServer.Services
             _mapper = mapper;
         }
 
-        public async Task<ScheduleDTO?> GetSchedule(string userId)
+        public async Task<ScheduleDTO?> GetSchedule()
         {
-            var schedule = await _schedulerRepository.GetSchedule(userId);
+            var schedule = await _schedulerRepository.GetSchedule();
             return _mapper.Map<ScheduleDTO>(schedule);
         }
 
@@ -30,7 +30,7 @@ namespace DashboardServer.Services
         {
             string userId = _userResolverService.UserId!;
 
-            SchedulerData data = await _schedulerRepository.GetDataForScheduler(userId);
+            SchedulerData data = await _schedulerRepository.GetDataForScheduler();
 
             if (!CanScheduleRun(data))
             {
@@ -183,15 +183,14 @@ namespace DashboardServer.Services
 
             for (int i = 0; i < numBlocksToCreate; i++)
             {
-                blocks.Add(new ScheduleBlock
-                {
-                    UserId = userId,
-                    AssignmentId = assignmentId,
-                    AssignmentName = assignmentName,
-                    CourseId = courseId,
-                    Priority = 0,
-                    BlockType = assignmentId != -1 ? Models.BlockType.Assignment : Models.BlockType.Study
-                });
+                blocks.Add(new ScheduleBlock(
+                    userId,
+                    courseId,
+                    assignmentId,
+                    assignmentName,
+                    0,
+                    assignmentId != -1 ? Models.BlockType.Assignment : Models.BlockType.Study
+                ));
             }
 
             return blocks;
@@ -246,7 +245,7 @@ namespace DashboardServer.Services
 
                 foreach (var block in blocks.Where(b => b.AssignmentId == assignment.Id))
                 {
-                    block.Priority = priority;
+                    block.SetPriority(priority);
                     priority -= 0.01;
                 }
             }
@@ -342,8 +341,7 @@ namespace DashboardServer.Services
                     {
                         var block = blockQueue.Dequeue();
                         DateTime startTime = startDate.AddDays(day).AddHours(9).AddMinutes(slot * 30);
-                        block.StartTime = startTime;
-                        block.EndTime = startTime.AddMinutes(30);
+                        block.SetTimeSlot(startTime, startTime.AddMinutes(30));
 
                         schedule[slot, dayIndex] = block;
                         slotsToAllocate--;

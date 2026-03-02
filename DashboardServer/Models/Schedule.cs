@@ -2,12 +2,18 @@ namespace DashboardServer.Models
 {
     public class Schedule : BaseEntity
     {
-        public Schedule()
+        protected Schedule()
         {
             Blocks = new List<ScheduleBlock>();
         }
 
-        public ICollection<ScheduleBlock> Blocks { get; set; }
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public Schedule(string userId) : base(userId)
+        {
+            Blocks = new List<ScheduleBlock>();
+            CreatedAt = DateTime.UtcNow;
+        }
+
+        public ICollection<ScheduleBlock> Blocks { get; private set; }
+        public DateTime CreatedAt { get; private set; } = DateTime.UtcNow;
     }
 }

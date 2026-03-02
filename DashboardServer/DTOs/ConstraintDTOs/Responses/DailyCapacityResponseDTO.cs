@@ -1,6 +1,6 @@
-namespace DashboardServer.DTOs.ConstraintDTOs
+namespace DashboardServer.DTOs.ConstraintDTOs.Responses
 {
-    public class DailyCapacityDTO
+    public class DailyCapacityResponseDTO
     {
         public int Id { get; set; }
         public int DayIndex { get; set; }
