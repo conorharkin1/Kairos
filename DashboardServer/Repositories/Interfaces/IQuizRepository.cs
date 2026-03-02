@@ -4,9 +4,11 @@ namespace DashboardServer.Repositories.Interfaces
 {
     public interface IQuizRepository
     {
-        Task<Quiz> Create(string userId, Quiz quiz);
-        Task CreateQuizzesAsync(string userId, List<Quiz> quizzes);
-        Task<Quiz> Update(string userId, int quizId, Quiz quiz);
-        Task Delete(string userId, int quizId);
+        Task<List<Quiz>> GetAllAsync();
+        Task<Quiz?> GetByIdAsync(int id);
+        Task<Quiz> CreateAsync(Quiz quiz);
+        Task CreateBulkAsync(List<Quiz> quizzes);
+        Task DeleteAsync(Quiz quiz);
+        Task Save();
     }
 }

@@ -16,17 +16,17 @@ namespace DashboardServer.Repositories
 
         public async Task SetApiKey(string userId, string encryptedApiKey)
         {
-            var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Id == userId);
+            var user = await _dbContext.Users.FindAsync(userId);
             if (user != null)
             {
-                user.CanvasApiKey = encryptedApiKey;
+                user.SetApiKey(encryptedApiKey);
                 await _dbContext.SaveChangesAsync();
             }
         }
 
         public async Task<string> GetEncryptedApiKey(string userId)
         {
-            var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Id == userId);
+            var user = await _dbContext.Users.FindAsync(userId);
             if (user != null && !String.IsNullOrEmpty(user.CanvasApiKey))
             {
                 return user.CanvasApiKey;

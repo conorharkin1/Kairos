@@ -14,34 +14,23 @@ namespace DashboardServer.Repositories
             _dbContext = dbContext;
         }
 
-        public async Task<List<AvoidPeriod>> GetAvoidPeriodsAsync()
+        public async Task<List<AvoidPeriod>> GetAllAsync()
         {
-            return await _dbContext.AvoidPeriods.Include(ap => ap.AvoidTimeBlocks).ToListAsync();
+            return await _dbContext.AvoidPeriods
+                .Include(ap => ap.AvoidTimeBlocks)
+                .OrderBy(ap => ap.DayIndex)
+                .ToListAsync();
         }
 
-        public async Task<List<AvoidPeriod>> UpdateAvoidPeriods(List<AvoidPeriod> constraints, string userId)
+        public async Task CreateBulkAsync(List<AvoidPeriod> avoidPeriods)
         {
-            var constraintIds = constraints.Select(c => c.Id).ToList();
-            var existingConstraints = await _dbContext.AvoidPeriods.Include(ap => ap.AvoidTimeBlocks).Where(c => constraintIds.Contains(c.Id)).ToDictionaryAsync(c => c.Id);
-            var results = new List<AvoidPeriod>();
-            foreach (var constraint in constraints)
-            {
-                if (existingConstraints.TryGetValue(constraint.Id, out var existingConstraint))
-                {
-                    existingConstraint.DayIndex = constraint.DayIndex;
-                    existingConstraint.AvoidTimeBlocks = constraint.AvoidTimeBlocks;
-                    results.Add(existingConstraint);
-                }
-                else
-                {
-                    constraint.UserId = userId;
-                    var added = _dbContext.AvoidPeriods.Add(constraint);
-                    results.Add(added.Entity);
-                }
-            }
-
+            await _dbContext.AvoidPeriods.AddRangeAsync(avoidPeriods);
             await _dbContext.SaveChangesAsync();
-            return results;
+        }
+
+        public async Task Save()
+        {
+            await _dbContext.SaveChangesAsync();
         }
     }
 }

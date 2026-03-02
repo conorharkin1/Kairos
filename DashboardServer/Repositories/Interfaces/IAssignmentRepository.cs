@@ -4,11 +4,13 @@ namespace DashboardServer.Repositories.Interfaces
 {
     public interface IAssignmentRepository
     {
-        Task<List<Assignment>> GetAll();
-        Task<List<Assignment>> GetAllCurrent(string userId);
-        Task<Assignment> Create(string userId, Assignment assignment);
-        Task CreateAssignmentsAsync(string userId, List<Assignment> assignments);
-        Task<Assignment> Update(string userId, int assignmentId, Assignment assignment);
-        Task Delete(string userId, int assignmentId);
+        Task<List<Assignment>> GetAllAsync();
+        Task<List<Assignment>> GetAllCurrentAsync();
+        Task<Assignment?> GetByIdAsync(int id);
+        Task<Assignment> CreateAsync(Assignment assignment);
+        Task CreateBulkAsync(List<Assignment> assignments);
+        Task DeleteAsync(Assignment assignment);
+
+        Task Save();
     }
 }

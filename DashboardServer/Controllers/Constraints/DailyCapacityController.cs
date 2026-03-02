@@ -1,10 +1,7 @@
-using AutoMapper;
-using DashboardServer.DTOs.ConstraintDTOs;
-using DashboardServer.Exceptions;
-using DashboardServer.Models.Constraints;
+using DashboardServer.DTOs.ConstraintDTOs.Requests;
+using DashboardServer.DTOs.ConstraintDTOs.Responses;
 using DashboardServer.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 
 namespace DashboardServer.Controllers.Constraints
@@ -12,32 +9,27 @@ namespace DashboardServer.Controllers.Constraints
     [ApiController]
     [Route("api/constraint/capacity")]
     [Authorize]
-    public class DailyCapacityController: ControllerBase
+    public class DailyCapacityController : ControllerBase
     {
-        private readonly IMapper _mapper;
         private readonly IDailyCapacityService _service;
-        
-        public DailyCapacityController(IMapper mapper, IDailyCapacityService service)
+
+        public DailyCapacityController(IDailyCapacityService service)
         {
-            _mapper = mapper;
             _service = service;
         }
 
         [HttpGet]
-        public async Task<ActionResult<List<DailyCapacityDTO>>> GetDailyCapacities()
+        public async Task<ActionResult<List<DailyCapacityResponseDTO>>> GetDailyCapacities()
         {
-            var capacities = await _service.GetDailyCapacitiesAsync();
-            return Ok(_mapper.Map<List<DailyCapacityDTO>>(capacities));
+            var capacities = await _service.GetAllAsync();
+            return Ok(capacities);
         }
 
         [HttpPut]
-        public async Task<ActionResult<List<DailyCapacityDTO>>> UpdateDailyCapacitiesAsync([FromBody] List<DailyCapacityDTO> dtos)
+        public async Task<ActionResult<List<DailyCapacityResponseDTO>>> UpdateDailyCapacities([FromBody] List<DailyCapacityRequestDTO> dtos)
         {
-            var models = _mapper.Map<List<DailyCapacity>>(dtos);
-
-            var updated = await _service.UpdateDailyCapacitiesAsync(models);
-
-            return Ok(_mapper.Map<List<DailyCapacityDTO>>(updated));
+            var updated = await _service.UpdateAsync(dtos);
+            return Ok(updated);
         }
     }
 }

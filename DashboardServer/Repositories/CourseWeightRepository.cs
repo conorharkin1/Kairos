@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DashboardServer.Repositories
 {
-    public class CourseWeightRepository: ICourseWeightRepository
+    public class CourseWeightRepository : ICourseWeightRepository
     {
         private readonly ApplicationDbContext _dbContext;
 
@@ -14,34 +14,20 @@ namespace DashboardServer.Repositories
             _dbContext = dbContext;
         }
 
-        public async Task<List<CourseWeight>> GetCourseWeightsAsync()
+        public async Task<List<CourseWeight>> GetAllAsync()
         {
             return await _dbContext.CourseWeights.ToListAsync();
         }
 
-        public async Task<List<CourseWeight>> UpdateCourseWeights(List<CourseWeight> weights, string userId)
+        public async Task CreateBulkAsync(List<CourseWeight> weights)
         {
-            var weightIds = weights.Select(w => w.Id).ToList();
-            var existingWeights = await _dbContext.CourseWeights.Where(w => weightIds.Contains(w.Id)).ToDictionaryAsync(w => w.Id);
-
-            var results = new List<CourseWeight>();
-            foreach (var weight in weights)
-            {
-                if (existingWeights.TryGetValue(weight.Id, out var existingWeight))
-                {
-                    existingWeight.Weight = weight.Weight;
-                    results.Add(existingWeight);
-                }
-                else
-                {
-                    weight.UserId = userId;
-                    var added = _dbContext.CourseWeights.Add(weight);
-                    results.Add(added.Entity);
-                }
-            }
-
+            await _dbContext.CourseWeights.AddRangeAsync(weights);
             await _dbContext.SaveChangesAsync();
-            return results;
+        }
+
+        public async Task Save()
+        {
+            await _dbContext.SaveChangesAsync();
         }
     }
 }

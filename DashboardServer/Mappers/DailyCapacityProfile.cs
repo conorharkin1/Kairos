@@ -1,5 +1,5 @@
 using AutoMapper;
-using DashboardServer.DTOs.ConstraintDTOs;
+using DashboardServer.DTOs.ConstraintDTOs.Responses;
 using DashboardServer.Models.Constraints;
 
 namespace DashboardServer.Mappers
@@ -8,8 +8,7 @@ namespace DashboardServer.Mappers
     {
         public DailyCapacityProfile()
         {
-            CreateMap<DailyCapacityDTO, DailyCapacity>();
-            CreateMap<DailyCapacity, DailyCapacityDTO>();
+            CreateMap<DailyCapacity, DailyCapacityResponseDTO>();
         }
     }
 }

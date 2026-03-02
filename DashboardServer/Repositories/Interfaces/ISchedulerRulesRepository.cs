@@ -4,7 +4,8 @@ namespace DashboardServer.Repositories.Interfaces
 {
     public interface ISchedulerRulesRepository
     {
-        public Task<SchedulerRules?> GetRulesAsync();
-        public Task<SchedulerRules> UpdateRulesAsync(SchedulerRules rules, string userId);
+        Task<SchedulerRules?> GetAsync();
+        Task<SchedulerRules> CreateAsync(SchedulerRules rules);
+        Task Save();
     }
 }

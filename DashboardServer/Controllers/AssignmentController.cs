@@ -1,5 +1,4 @@
-using AutoMapper;
-using DashboardServer.DTOs.ModelDTOs;
+using DashboardServer.DTOs.ModelDTOs.Requests;
 using DashboardServer.Models;
 using DashboardServer.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -14,44 +13,36 @@ namespace DashboardServer.Controllers
     public class AssignmentController : ControllerBase
     {
         private readonly UserManager<ApplicationUser> _userManager;
-        private readonly IMapper _mapper;
         private readonly IAssignmentService _assignmentService;
 
-
-        public AssignmentController(UserManager<ApplicationUser> userManager, IMapper mapper, IAssignmentService assignmentService)
+        public AssignmentController(UserManager<ApplicationUser> userManager, IAssignmentService assignmentService)
         {
             _userManager = userManager;
-            _mapper = mapper;
             _assignmentService = assignmentService;
         }
 
         [HttpGet("all")]
         public async Task<IActionResult> GetAll()
         {
-            string userId = _userManager.GetUserId(HttpContext.User)!;
-
-            var assignments = await _assignmentService.GetAll(userId);
-            return Ok(_mapper.Map<List<AssignmentDTO>>(assignments));
+            var assignments = await _assignmentService.GetAllAsync();
+            return Ok(assignments);
         }
 
         [HttpPost]
-        public async Task<IActionResult> CreateAssignment([FromBody] AssignmentDTO assignmentDto)
+        public async Task<IActionResult> CreateAssignment([FromBody] AssignmentRequestDTO dto)
         {
             string userId = _userManager.GetUserId(HttpContext.User)!;
-
-            var assignment = _mapper.Map<Assignment>(assignmentDto);
-            var createdAssignment = await _assignmentService.Create(userId, assignment);
-            return Ok(_mapper.Map<AssignmentDTO>(createdAssignment));
+            var result = await _assignmentService.CreateAsync(userId, dto);
+            return Ok(result);
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateAssignment(int id, [FromBody] AssignmentDTO assignmentDto)
+        public async Task<IActionResult> UpdateAssignment(int id, [FromBody] AssignmentRequestDTO dto)
         {
             string userId = _userManager.GetUserId(HttpContext.User)!;
 
-            var assignment = _mapper.Map<Assignment>(assignmentDto);
-            var updatedAssignment = await _assignmentService.Update(userId, id, assignment);
-            return Ok(_mapper.Map<AssignmentDTO>(updatedAssignment));
+            var result = await _assignmentService.UpdateAsync(userId, id, dto);
+            return Ok(result);
         }
 
         [HttpDelete("{id}")]
@@ -59,7 +50,7 @@ namespace DashboardServer.Controllers
         {
             string userId = _userManager.GetUserId(HttpContext.User)!;
             
-            await _assignmentService.Delete(userId, id);
+            await _assignmentService.DeleteAsync(userId, id);
             return NoContent();
         }
     }

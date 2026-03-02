@@ -14,43 +14,43 @@ namespace DashboardServer.Repositories
             _dbContext = dbContext;
         }
 
-        public async Task<Course> Create(string userId, Course course)
+        public async Task<List<Course>> GetAllAsync()
         {
-            course.UserId = userId;
+            return await _dbContext.Courses.AsNoTracking().ToListAsync();
+        }
+
+        public async Task<Course?> GetByIdAsync(int id)
+        {
+            return await _dbContext.Courses.FindAsync(id);
+        }
+
+        public async Task<Course> CreateAsync(Course course)
+        {
             var createdCourse = await _dbContext.Courses.AddAsync(course);
             await _dbContext.SaveChangesAsync();
             return createdCourse.Entity;
         }
 
-        public async Task CreateCoursesAsync(string userId, List<Course> courses)
+        public async Task CreateBulkAsync(List<Course> courses)
         {
-            foreach (var course in courses)
-            {
-                course.UserId = userId;
-            }
-
             await _dbContext.Courses.AddRangeAsync(courses);
             await _dbContext.SaveChangesAsync();
         }
 
-        public async Task<List<Course>> GetCoursesAsync()
+        public async Task DeleteAsync(Course course)
         {
-            return await _dbContext.Courses.ToListAsync();
+            _dbContext.Courses.Remove(course);
+            await _dbContext.SaveChangesAsync();
         }
 
-        public async Task<List<Course>> GetCoursesAsync(string userId)
+        public async Task Save()
         {
-            return await _dbContext.Courses.IgnoreQueryFilters().Where(c => c.UserId == userId).ToListAsync();
+            await _dbContext.SaveChangesAsync();
         }
 
         public async Task<List<int>> GetCourseIdsAsync()
         {
             return await _dbContext.Courses.Select(c => c.Id).ToListAsync();
-        }
-
-        public async Task<List<int>> GetCourseIdsAsync(string userId)
-        {
-            return await _dbContext.Courses.IgnoreQueryFilters().Where(c => c.UserId == userId).Select(c => c.Id).ToListAsync();
         }
 
         public async Task<List<Assignment>> GetCourseAssignmentsAsync(int courseId, bool includeCompleted)

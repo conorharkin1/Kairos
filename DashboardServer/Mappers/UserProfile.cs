@@ -8,7 +8,6 @@ namespace DashboardServer.Mappers
     {
         public UserProfile()
         {
-            CreateMap<RegisterDTO, ApplicationUser>();
             CreateMap<ApplicationUser, UserDTO>()
             .ForMember(dest => dest.IsApiKeySet, opt => opt.MapFrom(src => !string.IsNullOrEmpty(src.CanvasApiKey)));
         }

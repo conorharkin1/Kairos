@@ -1,8 +1,6 @@
 using DashboardServer.Models;
 using DashboardServer.Models.Constraints;
-using DashboardServer.Services;
 using DashboardServer.Services.Interfaces;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
@@ -72,6 +70,12 @@ namespace DashboardServer.Data
             builder.Entity<DailyCapacity>()
                 .HasIndex(dc => new { dc.UserId, dc.DayIndex })
                 .IsUnique();
+
+            builder.Entity<CourseWeight>()
+                .HasOne(cw => cw.Course)
+                .WithMany()
+                .HasForeignKey(cw => cw.CourseId)
+                .OnDelete(DeleteBehavior.Cascade);
 
             builder.Entity<CourseWeight>()
                 .HasIndex(cw => new { cw.UserId, cw.CourseId })

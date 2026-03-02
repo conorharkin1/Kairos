@@ -1,9 +1,9 @@
 using System.Net.Http.Headers;
-using AutoMapper;
 using DashboardServer.Data;
 using DashboardServer.DTOs.CanvasDTOs;
 using DashboardServer.Exceptions;
 using DashboardServer.Models;
+using DashboardServer.Repositories.Interfaces;
 using DashboardServer.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
@@ -15,33 +15,31 @@ namespace DashboardServer.Services
         private readonly IEncryptService _encryptService;
         private readonly IUserService _userService;
         private readonly ApplicationDbContext _dbContext;
-        private readonly IMapper _mapper;
-        private readonly IAssignmentService _assignmentService;
-        private readonly IQuizService _quizService;
-        private readonly ICourseService _courseService;
+        private readonly IAssignmentRepository _assignmentRepository;
+        private readonly IQuizRepository _quizRepository;
+        private readonly ICourseRepository _courseRepository;
         private const string CANVAS_BASE_URL = "https://canvas.qub.ac.uk/";
 
-        public CanvasApiService(HttpClient httpClient, IEncryptService encryptService, IUserService userService, ApplicationDbContext dbContext, IMapper mapper, IAssignmentService assignmentService, IQuizService quizService, ICourseService courseService)
+        public CanvasApiService(HttpClient httpClient, IEncryptService encryptService, IUserService userService, ApplicationDbContext dbContext, IAssignmentRepository assignmentRepository, IQuizRepository quizRepository, ICourseRepository courseRepository)
         {
             _encryptService = encryptService;
             _httpClient = httpClient;
             _userService = userService;
             _dbContext = dbContext;
-            _mapper = mapper;
-            _assignmentService = assignmentService;
-            _quizService = quizService;
-            _courseService = courseService;
+            _assignmentRepository = assignmentRepository;
+            _quizRepository = quizRepository;
+            _courseRepository = courseRepository;
             _httpClient.BaseAddress = new Uri(CANVAS_BASE_URL);
         }
 
-        public async Task<List<CanvasCourseDTO>> GetFavoriteCoursesFromCanvasAsync(string userId)
+        private async Task<List<CanvasCourseDTO>> GetFavoriteCoursesFromCanvasAsync(string userId)
         {
             await AddAuthHeaderAsync(userId);
             var courses = await _httpClient.GetFromJsonAsync<List<CanvasCourseDTO>>("/api/v1/users/self/favorites/courses");
             return courses ?? [];
         }
 
-        public async Task<List<CanvasAssignmentDTO>> GetCourseAssignmentsFromCanvasAsync(string userId, int courseId)
+        private async Task<List<CanvasAssignmentDTO>> GetCourseAssignmentsFromCanvasAsync(string userId, int courseId)
         {
             await AddAuthHeaderAsync(userId);
             try
@@ -92,22 +90,20 @@ namespace DashboardServer.Services
         private async Task UpdateCoursesDataAsync(string userId)
         {
             var existingCanvasCourses = await _dbContext.Courses.Where(c => c.ExternalCourseId.HasValue).ToDictionaryAsync(c => c.ExternalCourseId!.Value, c => c);
-            var incomingCanvasCourses = _mapper.Map<List<Course>>(await GetFavoriteCoursesFromCanvasAsync(userId));
+            var incomingCanvasCourses = await GetFavoriteCoursesFromCanvasAsync(userId);
             var coursesToAdd = new List<Course>();
-            
-            foreach (var course in incomingCanvasCourses)
+
+            foreach (var canvasCourse in incomingCanvasCourses)
             {
-                if (!existingCanvasCourses.TryGetValue(course.ExternalCourseId!.Value, out var existingCourse))
+                if (!existingCanvasCourses.ContainsKey(canvasCourse.id))
                 {
-                    coursesToAdd.Add(course);
-                }
-                else
-                {
-                    continue;
+                    var newCourse = new Course(userId, canvasCourse.course_code, canvasCourse.name);
+                    newCourse.SetExternalCourseId(canvasCourse.id);
+                    coursesToAdd.Add(newCourse);
                 }
             }
 
-            await _courseService.CreateCoursesAsync(userId, coursesToAdd);
+            await _courseRepository.CreateBulkAsync(coursesToAdd);
         }
 
         /// <summary>
@@ -127,29 +123,30 @@ namespace DashboardServer.Services
 
             foreach(var existingCourse in existingCourseIds)
             {
-                var incomingAssignments = _mapper.Map<List<Assignment>>(await GetCourseAssignmentsFromCanvasAsync(userId, existingCourse.ExternalCourseId!.Value));
+                var incomingAssignments = await GetCourseAssignmentsFromCanvasAsync(userId, existingCourse.ExternalCourseId!.Value);
+
+                if (incomingAssignments == null)
+                {
+                    continue;
+                }
 
                 foreach (var assignment in incomingAssignments)
                 {
-                    if (!assignment.ExternalAssignmentId.HasValue)
+                    var due = assignment.due_at.HasValue ? assignment.due_at.Value.UtcDateTime : (DateTime?)null;
+                    if (existingAssignmentsLookup.TryGetValue(assignment.id, out var existingAssignment))
                     {
-                        continue;
-                    }
-
-                    if (!existingAssignmentsLookup.TryGetValue(assignment.ExternalAssignmentId!.Value, out var existingAssignment))
-                    {
-                        assignment.CourseId = existingCourse.Id;
-                        assignmentsToAdd.Add(assignment);
+                        existingAssignment.SetDueDate(due);
                     }
                     else
                     {
-                        existingAssignment.DueDate = assignment.DueDate;
+                        var newAssignment = new Assignment(userId, existingCourse.Id, assignment.name, assignment.description, due, assignment.html_url, assignment.has_submitted_submissions, false);
+                        newAssignment.SetExternalAssignmentId(assignment.id);
+                        assignmentsToAdd.Add(newAssignment);
                     }
                 }
             }
 
-            await _assignmentService.CreateAssignmentsAsync(userId, assignmentsToAdd);
-            await _dbContext.SaveChangesAsync();
+            await _assignmentRepository.CreateBulkAsync(assignmentsToAdd);
         }
         /// <summary>
         /// Fetches Quizzes from Canvas, compares to existing records. If any new quizzes are present on Canvas,
@@ -168,35 +165,35 @@ namespace DashboardServer.Services
 
             foreach(var existingCourse in existingCourseIds)
             {
-                var incomingQuizzes = _mapper.Map<List<Quiz>>(await GetCourseQuizzesFromCanvasAsync(userId, existingCourse.ExternalCourseId!.Value));
+                var incomingQuizzes = await GetCourseQuizzesFromCanvasAsync(userId, existingCourse.ExternalCourseId!.Value);
 
-                foreach (var quiz in incomingQuizzes)
+                foreach (var canvasQuiz in incomingQuizzes)
                 {
-                    if (!quiz.ExternalQuizId.HasValue)
-                    {
-                        continue;
-                    }
+                    var dueDate = canvasQuiz.due_at.HasValue ? canvasQuiz.due_at.Value.UtcDateTime : (DateTime?)null;
+                    var lockDate = canvasQuiz.lock_at.HasValue ? canvasQuiz.lock_at.Value.UtcDateTime : (DateTime?)null;
 
-                    if (!existingQuizzesLookup.TryGetValue(quiz.ExternalQuizId!.Value, out var existingQuiz))
+                    if (existingQuizzesLookup.TryGetValue(canvasQuiz.id, out var existingQuiz))
                     {
-                        quiz.CourseId = existingCourse.Id;
-                        quizzesToAdd.Add(quiz);
+                        existingQuiz.SetDueDate(dueDate);
+                        existingQuiz.SetLockDate(lockDate);
                     }
                     else
                     {
-                        existingQuiz.DueDate = quiz.DueDate;
-                        existingQuiz.LockDate = quiz.LockDate;
+                        var newQuiz = new Quiz(userId, existingCourse.Id, canvasQuiz.title, dueDate, lockDate, canvasQuiz.html_url, false, false);
+                        newQuiz.SetExternalQuizId(canvasQuiz.id);
+                        quizzesToAdd.Add(newQuiz);
                     }
                 }
             }
 
-            await _quizService.CreateQuizzesAsync(userId, quizzesToAdd);
+            await _quizRepository.CreateBulkAsync(quizzesToAdd);
             await _dbContext.SaveChangesAsync();
         }
 
         public async Task UpdateDataFromCanvasAsync(string userId)
         {
             var user = await _dbContext.Users.FindAsync(userId);
+
             if ((DateTime.UtcNow - user!.LastUpdatedData) < TimeSpan.FromMinutes(10))
             {
                 throw new BadRequestException("Your data was updated less than 10 minutes ago, please wait before refreshing again.");
@@ -205,7 +202,7 @@ namespace DashboardServer.Services
             await UpdateAssignmentsDataAsync(userId);
             await UpdateQuizzesDataAsync(userId);
 
-            user!.LastUpdatedData = DateTime.UtcNow;
+            user.UpdateLastSyncTime();
             await _dbContext.SaveChangesAsync();
         }
         

@@ -1,43 +1,35 @@
+using DashboardServer.DTOs.ConstraintDTOs.Requests;
+using DashboardServer.DTOs.ConstraintDTOs.Responses;
+using DashboardServer.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+
 namespace DashboardServer.Controllers.Constraints
 {
-    using AutoMapper;
-    using DashboardServer.DTOs.ConstraintDTOs;
-    using DashboardServer.Exceptions;
-    using DashboardServer.Models.Constraints;
-    using DashboardServer.Services.Interfaces;
-    using Microsoft.AspNetCore.Authorization;
-    using Microsoft.AspNetCore.Http.HttpResults;
-    using Microsoft.AspNetCore.Mvc;
-
     [ApiController]
     [Route("api/constraint/avoidperiod")]
     [Authorize]
     public class AvoidPeriodController : ControllerBase
     {
-        private readonly IMapper _mapper;
         private readonly IAvoidPeriodService _service;
 
-        public AvoidPeriodController(IMapper mapper, IAvoidPeriodService service)
+        public AvoidPeriodController(IAvoidPeriodService service)
         {
-            _mapper = mapper;
             _service = service;
         }
 
         [HttpGet]
-        public async Task<ActionResult<List<AvoidPeriodDTO>>> GetAvoidPeriods()
+        public async Task<ActionResult<List<AvoidPeriodResponseDTO>>> GetAvoidPeriods()
         {
-            var periods = await _service.GetAvoidPeriodsAsync();
-            return Ok(_mapper.Map<List<AvoidPeriodDTO>>(periods));
+            var periods = await _service.GetAllAsync();
+            return Ok(periods);
         }
 
         [HttpPut]
-        public async Task<ActionResult<List<AvoidPeriodDTO>>> UpdateAvoidPeriodsAsync([FromBody] List<AvoidPeriodDTO> dtos)
+        public async Task<ActionResult<List<AvoidPeriodResponseDTO>>> UpdateAvoidPeriods([FromBody] List<AvoidPeriodRequestDTO> dtos)
         {
-            var models = _mapper.Map<List<AvoidPeriod>>(dtos);
-
-            var updated = await _service.UpdateAvoidPeriodsAsync(models);
-
-            return Ok(_mapper.Map<List<AvoidPeriodDTO>>(updated));
+            var updated = await _service.UpdateAsync(dtos);
+            return Ok(updated);
         }
     }
 }

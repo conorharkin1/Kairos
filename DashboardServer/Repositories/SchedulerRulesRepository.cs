@@ -14,28 +14,21 @@ namespace DashboardServer.Repositories
             _dbContext = dbContext;
         }
 
-        public async Task<SchedulerRules?> GetRulesAsync()
+        public async Task<SchedulerRules?> GetAsync()
         {
-            var rules = await _dbContext.SchedulerRules.FirstOrDefaultAsync();
-            return rules;
+            return await _dbContext.SchedulerRules.FirstOrDefaultAsync();
         }
 
-        public async Task<SchedulerRules> UpdateRulesAsync(SchedulerRules rules, string userId)
+        public async Task<SchedulerRules> CreateAsync(SchedulerRules rules)
         {
-            var existingRules = await _dbContext.SchedulerRules.FirstOrDefaultAsync();
-            
-            if (existingRules == null)
-            {
-                rules.UserId = userId;
-                var added = await _dbContext.SchedulerRules.AddAsync(rules);
-                await _dbContext.SaveChangesAsync();
-                return added.Entity;
-            }
-
-            existingRules.MinSessionLength = rules.MinSessionLength;
-            existingRules.MaxSessionLength = rules.MaxSessionLength;
+            var created = await _dbContext.SchedulerRules.AddAsync(rules);
             await _dbContext.SaveChangesAsync();
-            return existingRules;
+            return created.Entity;
+        }
+
+        public async Task Save()
+        {
+            await _dbContext.SaveChangesAsync();
         }
     }
 }

@@ -1,4 +1,6 @@
+using System.Diagnostics;
 using DashboardServer.Data;
+using DashboardServer.Exceptions;
 using DashboardServer.Models;
 using DashboardServer.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -14,67 +16,43 @@ namespace DashboardServer.Repositories
             _dbContext = dbContext;
         }
 
-        public async Task<List<Assignment>> GetAll()
+        public async Task<List<Assignment>> GetAllAsync()
         {
-            return await _dbContext.Assignments
-                .ToListAsync();
+            return await _dbContext.Assignments.AsNoTracking().ToListAsync();
         }
 
-        public async Task<List<Assignment>> GetAllCurrent(string userId)
+        public async Task<List<Assignment>> GetAllCurrentAsync()
         {
-            return await _dbContext.Assignments.IgnoreQueryFilters().Where(a => a.DueDate >= DateTime.UtcNow && a.UserId == userId).ToListAsync();
+            return await _dbContext.Assignments.Where(a => a.DueDate >= DateTime.UtcNow).ToListAsync();
         }
 
-        public async Task<Assignment> Create(string userId, Assignment assignment)
+        public async Task<Assignment?> GetByIdAsync(int id)
         {
-            assignment.UserId = userId;
+            return await _dbContext.Assignments.FindAsync(id);
+        }
+
+        public async Task<Assignment> CreateAsync(Assignment assignment)
+        {
             var createdAssignment = await _dbContext.Assignments.AddAsync(assignment);
             await _dbContext.SaveChangesAsync();
             return createdAssignment.Entity;
         }
 
-        public async Task CreateAssignmentsAsync(string userId, List<Assignment> assignments)
+        public async Task CreateBulkAsync(List<Assignment> assignments)
         {
-            foreach (var assignment in assignments)
-            {
-                assignment.UserId = userId;
-            }
-
             await _dbContext.Assignments.AddRangeAsync(assignments);
             await _dbContext.SaveChangesAsync();
         }
 
-        public async Task<Assignment> Update(string userId, int assignmentId, Assignment assignment)
+        public async Task DeleteAsync(Assignment assignment)
         {
-            var existingAssignment = await _dbContext.Assignments.FirstOrDefaultAsync(a => a.Id == assignmentId && a.UserId == userId);
-            if (existingAssignment == null)
-            {
-                throw new KeyNotFoundException("Assignment not found");
-            }
-
-            existingAssignment.Name = assignment.Name;
-            existingAssignment.DueDate = assignment.DueDate;
-            existingAssignment.Description = assignment.Description;
-            existingAssignment.HtmlUrl = assignment.HtmlUrl;
-            existingAssignment.IsComplete = assignment.IsComplete;
-            existingAssignment.IsPriority = assignment.IsPriority;
-
+            _dbContext.Assignments.Remove(assignment);
             await _dbContext.SaveChangesAsync();
-            return existingAssignment;
         }
 
-        public async Task Delete(string userId, int assignmentId)
+        public async Task Save()
         {
-            var assignment = await _dbContext.Assignments.FindAsync(assignmentId);
-            if (assignment != null && assignment.UserId == userId)
-            {
-                _dbContext.Assignments.Remove(assignment);
-                await _dbContext.SaveChangesAsync();
-            }
-            else
-            {
-                throw new KeyNotFoundException("Assignment not found");
-            }
+            await _dbContext.SaveChangesAsync();
         }
     }
 }

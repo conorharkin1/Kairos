@@ -18,26 +18,26 @@ namespace DashboardServer.Repositories
             _courseRepository = courseRepository;
         }
 
-        public async Task<SchedulerData> GetDataForScheduler(string userId)
+        public async Task<SchedulerData> GetDataForScheduler()
         {
             // Data
-            var assignments = await _assignmentRepository.GetAllCurrent(userId);
-            var courses = await _courseRepository.GetCoursesAsync(userId);
+            var assignments = await _assignmentRepository.GetAllCurrentAsync();
+            var courses = await _courseRepository.GetAllAsync();
 
             // Constraints
-            var rules = await _dbContext.SchedulerRules.IgnoreQueryFilters().Where(a => a.UserId == userId).FirstOrDefaultAsync();
-            var capacities = await _dbContext.DailyCapacities.IgnoreQueryFilters().Where(a => a.UserId == userId).ToListAsync();
-            var weights = await _dbContext.CourseWeights.IgnoreQueryFilters().Where(a => a.UserId == userId).ToListAsync();
-            var avoidPeriods = await _dbContext.AvoidPeriods.Include(ap => ap.AvoidTimeBlocks).IgnoreQueryFilters().Where(a => a.UserId == userId).ToListAsync();
+            var rules = await _dbContext.SchedulerRules.FirstOrDefaultAsync();
+            var capacities = await _dbContext.DailyCapacities.ToListAsync();
+            var weights = await _dbContext.CourseWeights.ToListAsync();
+            var avoidPeriods = await _dbContext.AvoidPeriods.Include(ap => ap.AvoidTimeBlocks).ToListAsync();
 
-            return new SchedulerData {
-                Assignments = assignments,
-                Courses = courses,
-                Rules = rules,
-                DailyCapacities = capacities,
-                CourseWeights = weights,
-                AvoidPeriods = avoidPeriods
-            };
+            return new SchedulerData(
+                assignments,
+                courses,
+                weights,
+                capacities,
+                rules,
+                avoidPeriods
+            );
         }
 
         public async Task SaveSchedule(string userId, ScheduleBlock?[,] scheduleMatrix)
@@ -45,8 +45,7 @@ namespace DashboardServer.Repositories
             // Firstly delete the existing schedule of the user
             var existing = await _dbContext.Schedules
                 .Include(s => s.Blocks)
-                .IgnoreQueryFilters()
-                .FirstOrDefaultAsync(s => s.UserId == userId);
+                .FirstOrDefaultAsync();
             
             if (existing != null)
             {
@@ -54,11 +53,7 @@ namespace DashboardServer.Repositories
                 await _dbContext.SaveChangesAsync();
             }
 
-            var schedule = new Schedule
-            {
-                UserId = userId,
-                CreatedAt = DateTime.UtcNow
-            };
+            var schedule = new Schedule(userId);
 
             int rows = scheduleMatrix.GetLength(0);
             int columns = scheduleMatrix.GetLength(1);
@@ -70,7 +65,7 @@ namespace DashboardServer.Repositories
                     var block = scheduleMatrix[row, col];
                     if (block != null)
                     {
-                        block.Schedule = schedule;
+                        block.SetSchedule(schedule);
                         schedule.Blocks.Add(block);
                     }
                 }
@@ -80,11 +75,11 @@ namespace DashboardServer.Repositories
             await _dbContext.SaveChangesAsync();
         }
 
-        public async Task<Schedule?> GetSchedule(string userId)
+        public async Task<Schedule?> GetSchedule()
         {
             var schedule = await _dbContext.Schedules
                 .Include(s => s.Blocks)
-                .FirstOrDefaultAsync(s => s.UserId == userId);
+                .FirstOrDefaultAsync();
 
             return schedule;
         }

@@ -1,10 +1,11 @@
-using DashboardServer.Models.Constraints;
+using DashboardServer.DTOs.ConstraintDTOs.Requests;
+using DashboardServer.DTOs.ConstraintDTOs.Responses;
 
 namespace DashboardServer.Services.Interfaces
 {
     public interface ISchedulerRulesService
     {
-        Task<SchedulerRules> GetRulesAsync();
-        Task<SchedulerRules> UpdateRulesAsync(SchedulerRules rules);
+        Task<SchedulerRulesResponseDTO> GetAsync();
+        Task<SchedulerRulesResponseDTO> UpdateAsync(SchedulerRulesRequestDTO rules);
     }
 }

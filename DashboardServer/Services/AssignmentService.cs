@@ -1,3 +1,6 @@
+using AutoMapper;
+using DashboardServer.DTOs.ModelDTOs.Requests;
+using DashboardServer.DTOs.ModelDTOs.Responses;
 using DashboardServer.Exceptions;
 using DashboardServer.Models;
 using DashboardServer.Repositories.Interfaces;
@@ -7,65 +10,60 @@ namespace DashboardServer.Services
 {
     public class AssignmentService : IAssignmentService
     {
-        private readonly IAssignmentRepository _assignmentRepository;
-        public AssignmentService(IAssignmentRepository assignmentRepository)
+        private readonly IAssignmentRepository _repo;
+        private readonly IMapper _mapper;
+        public AssignmentService(IAssignmentRepository assignmentRepository, IMapper mapper)
         {
-            _assignmentRepository = assignmentRepository;
+            _repo = assignmentRepository;
+            _mapper = mapper;
         }
 
-        public async Task<List<Assignment>> GetAll(string userId)
+        public async Task<List<AssignmentResponseDTO>> GetAllAsync()
         {
-            if (string.IsNullOrWhiteSpace(userId))
-            {
-                throw new UnauthorizedException("User is not authorized");
-            }
-
-            return await _assignmentRepository.GetAll();
+            var result = await _repo.GetAllAsync();
+            return _mapper.Map<List<AssignmentResponseDTO>>(result);
         }
 
-        public async Task<Assignment> Create(string userId, Assignment assignment)
+        public async Task<AssignmentResponseDTO> CreateAsync(string userId, AssignmentRequestDTO dto)
         {
-            if (string.IsNullOrWhiteSpace(assignment.Name))
-            {
-                throw new BadRequestException("Assignment name cannot be empty");
-            }
+            Assignment assignment = new Assignment(userId, dto.CourseId, dto.Name, dto.Description, dto.DueDate, dto.HtmlUrl, dto.IsComplete, dto.IsPriority);
 
-            return await _assignmentRepository.Create(userId, assignment);
+            var createdAssignment = await _repo.CreateAsync(assignment);
+            return _mapper.Map<AssignmentResponseDTO>(createdAssignment);
         }
 
-        public async Task CreateAssignmentsAsync(string userId, List<Assignment> assignments)
+        public async Task CreateBulkAsync(string userId, List<AssignmentRequestDTO> assignments)
         {
-            if (string.IsNullOrWhiteSpace(userId))
-            {
-                throw new UnauthorizedException("User is not authorized");
-            }
+            List<Assignment> assignmentsToCreate = assignments.Select(dto => new Assignment(userId, dto.CourseId, dto.Name, dto.Description, dto.DueDate, dto.HtmlUrl, dto.IsComplete, dto.IsPriority)).ToList();
 
-            await _assignmentRepository.CreateAssignmentsAsync(userId, assignments);
+            await _repo.CreateBulkAsync(assignmentsToCreate);
         }
 
-        public async Task<Assignment> Update(string userId, int assignmentId, Assignment assignment)
+        public async Task<AssignmentResponseDTO> UpdateAsync(string userId, int assignmentId, AssignmentRequestDTO dto)
         {
-            if (string.IsNullOrWhiteSpace(userId))
+            Assignment assignment = await _repo.GetByIdAsync(assignmentId) ?? throw new NotFoundException("Assignment does not exist");
+
+            if (assignment.UserId != userId)
             {
-                throw new UnauthorizedException("User is not authorized");
+                throw new UnAuthorizedException("User is not authorized to update this assignment");
             }
 
-            if (string.IsNullOrWhiteSpace(assignment.Name))
-            {
-                throw new BadRequestException("Assignment name cannot be empty");
-            }
-
-            return await _assignmentRepository.Update(userId, assignmentId, assignment);
+            assignment.Update(dto.Name, dto.Description, dto.DueDate, dto.HtmlUrl, dto.IsComplete, dto.IsPriority);
+            
+            await _repo.Save();
+            return _mapper.Map<AssignmentResponseDTO>(assignment);
         }
 
-        public async Task Delete(string userId, int assignmentId)
+        public async Task DeleteAsync(string userId, int assignmentId)
         {
-            if (string.IsNullOrWhiteSpace(userId))
+            var assignment = await _repo.GetByIdAsync(assignmentId) ?? throw new NotFoundException("Assignment does not exist");
+
+            if (assignment.UserId != userId)
             {
-                throw new UnauthorizedException("User is not authorized");
+                throw new UnAuthorizedException("User is not authorized to delete this assignment");
             }
 
-            await _assignmentRepository.Delete(userId, assignmentId);
+            await _repo.DeleteAsync(assignment);
         }
     }
 }
