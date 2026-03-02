@@ -52,7 +52,7 @@ namespace DashboardServer.Services
                 throw new BadRequestException("A user with this email already exists");
             }
 
-            ApplicationUser user = new ApplicationUser(dto.FirstName, dto.LastName, "")
+            ApplicationUser user = new ApplicationUser(dto.FirstName, dto.LastName)
             {
                 UserName = dto.Email,
                 Email = dto.Email

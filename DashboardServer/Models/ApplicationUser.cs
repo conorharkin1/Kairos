@@ -13,11 +13,10 @@ namespace DashboardServer.Models
 
         public ApplicationUser() { }
 
-        public ApplicationUser(string firstName, string lastName, string canvasApiKey) : base()
+        public ApplicationUser(string firstName, string lastName) : base()
         {
             FirstName = firstName;
             LastName = lastName;
-            CanvasApiKey = canvasApiKey;
         }
 
         public void UpdateLastSyncTime()
