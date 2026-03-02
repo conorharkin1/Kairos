@@ -15,13 +15,11 @@ namespace DashboardServer.Controllers
     public class AssignmentController : ControllerBase
     {
         private readonly UserManager<ApplicationUser> _userManager;
-        private readonly IMapper _mapper;
         private readonly IAssignmentService _assignmentService;
 
-        public AssignmentController(UserManager<ApplicationUser> userManager, IMapper mapper, IAssignmentService assignmentService)
+        public AssignmentController(UserManager<ApplicationUser> userManager, IAssignmentService assignmentService)
         {
             _userManager = userManager;
-            _mapper = mapper;
             _assignmentService = assignmentService;
         }
 
@@ -29,17 +27,15 @@ namespace DashboardServer.Controllers
         public async Task<IActionResult> GetAll()
         {
             var assignments = await _assignmentService.GetAllAsync();
-            return Ok(_mapper.Map<List<AssignmentResponseDTO>>(assignments));
+            return Ok(assignments);
         }
 
         [HttpPost]
         public async Task<IActionResult> CreateAssignment([FromBody] AssignmentRequestDTO dto)
         {
             string userId = _userManager.GetUserId(HttpContext.User)!;
-
             var result = await _assignmentService.CreateAsync(userId, dto);
-
-            return Ok(_mapper.Map<AssignmentResponseDTO>(result));
+            return Ok(result);
         }
 
         [HttpPut("{id}")]

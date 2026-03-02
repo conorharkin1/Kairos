@@ -19,16 +19,18 @@ namespace DashboardServer.Services
             _mapper = mapper;
         }
 
-        public async Task<List<Assignment>> GetAllAsync()
+        public async Task<List<AssignmentResponseDTO>> GetAllAsync()
         {
-            return await _repo.GetAllAsync();
+            var result = await _repo.GetAllAsync();
+            return _mapper.Map<List<AssignmentResponseDTO>>(result);
         }
 
-        public async Task<Assignment> CreateAsync(string userId, AssignmentRequestDTO dto)
+        public async Task<AssignmentResponseDTO> CreateAsync(string userId, AssignmentRequestDTO dto)
         {
             Assignment assignment = new Assignment(userId, dto.CourseId, dto.Name, dto.Description, dto.DueDate, dto.HtmlUrl, dto.IsComplete, dto.IsPriority);
 
-            return await _repo.CreateAsync(assignment);
+            var createdAssignment = await _repo.CreateAsync(assignment);
+            return _mapper.Map<AssignmentResponseDTO>(createdAssignment);
         }
 
         public async Task CreateBulkAsync(string userId, List<AssignmentRequestDTO> assignments)

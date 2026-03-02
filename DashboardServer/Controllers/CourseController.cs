@@ -1,13 +1,9 @@
-using System.Net.Http.Headers;
-using AutoMapper;
-using DashboardServer.DTOs.ModelDTOs;
-using Microsoft.AspNetCore.Mvc;
-using CourseModel = DashboardServer.Models.Course;
-using AssignmentModel = DashboardServer.Models.Assignment;
-using Microsoft.AspNetCore.Identity;
+using DashboardServer.DTOs.ModelDTOs.Requests;
 using DashboardServer.Models;
 using DashboardServer.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 
 namespace DashboardServer.Controllers
 {
@@ -16,60 +12,58 @@ namespace DashboardServer.Controllers
     [Authorize]
     public class CourseController : ControllerBase
     {
-        private readonly IMapper _mapper;
         private readonly UserManager<ApplicationUser> _userManager;
-        private readonly ICanvasApiService _canvasApiService;
         private readonly ICourseService _courseService;
 
-        public CourseController(IMapper mapper, UserManager<ApplicationUser> userManager, ICanvasApiService canvasApiService, ICourseService courseService)
+        public CourseController(UserManager<ApplicationUser> userManager, ICourseService courseService)
         {
-            _mapper = mapper;
             _userManager = userManager;
-            _canvasApiService = canvasApiService;
             _courseService = courseService;
         }
 
         [HttpGet("")]
-        public async Task<IActionResult> GetAllCourses()
+        public async Task<IActionResult> GetAll()
         {
-            string userId = _userManager.GetUserId(HttpContext.User)!;
-
-            var courses = await _courseService.GetCoursesAsync(userId);
-            var courseDtos = _mapper.Map<List<CourseDTO>>(courses);
-
-            return Ok(courseDtos);
+            var courses = await _courseService.GetAllAsync();
+            return Ok(courses);
         }
 
         [HttpGet("{courseId}/assignments")]
         public async Task<IActionResult> GetCourseAssignments(int courseId, bool includeCompleted = false)
         {
-            string userId = _userManager.GetUserId(HttpContext.User)!;
-
-            var assignments = await _courseService.GetCourseAssignmentsAsync(userId, courseId, includeCompleted);
-            var assignmentDtos = _mapper.Map<List<AssignmentDTO>>(assignments);
-
-            return Ok(assignmentDtos);
+            var assignments = await _courseService.GetCourseAssignmentsAsync(courseId, includeCompleted);
+            return Ok(assignments);
         }
 
         [HttpGet("{courseId}/quizzes")]
         public async Task<IActionResult> GetCourseQuizzes(int courseId, bool includeCompleted = false)
         {
-            string userId = _userManager.GetUserId(HttpContext.User)!;
-
-            var quizzes = await _courseService.GetCourseQuizzesAsync(userId, courseId, includeCompleted);
-            var quizDtos = _mapper.Map<List<QuizDTO>>(quizzes);
-
-            return Ok(quizDtos);
+            var quizzes = await _courseService.GetCourseQuizzesAsync(courseId, includeCompleted);
+            return Ok(quizzes);
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody] CourseDTO courseDto)
+        public async Task<IActionResult> Create([FromBody] CourseRequestDTO courseDto)
         {
             string userId = _userManager.GetUserId(HttpContext.User)!;
+            var result = await _courseService.CreateAsync(userId, courseDto);
+            return Ok(result);
+        }
 
-            var course = _mapper.Map<CourseModel>(courseDto);
-            var createdCourse = await _courseService.Create(userId, course);
-            return Ok(_mapper.Map<CourseDTO>(createdCourse));
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateCourse(int id, [FromBody] CourseRequestDTO dto)
+        {
+            string userId = _userManager.GetUserId(HttpContext.User)!;
+            var result = await _courseService.UpdateAsync(userId, id, dto);
+            return Ok(result);
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteCourse(int id)
+        {
+            string userId = _userManager.GetUserId(HttpContext.User)!;
+            await _courseService.DeleteAsync(userId, id);
+            return NoContent();
         }
     }
 }

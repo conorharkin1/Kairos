@@ -1,3 +1,6 @@
+using AutoMapper;
+using DashboardServer.DTOs.ModelDTOs.Requests;
+using DashboardServer.DTOs.ModelDTOs.Responses;
 using DashboardServer.Exceptions;
 using DashboardServer.Models;
 using DashboardServer.Repositories.Interfaces;
@@ -7,55 +10,61 @@ namespace DashboardServer.Services
 {
     public class QuizService : IQuizService
     {
-        private readonly IQuizRepository _quizRepository;
-        public QuizService(IQuizRepository quizRepository)
+        private readonly IQuizRepository _repo;
+        private readonly IMapper _mapper;
+
+        public QuizService(IQuizRepository quizRepository, IMapper mapper)
         {
-            _quizRepository = quizRepository;
+            _repo = quizRepository;
+            _mapper = mapper;
         }
 
-        public async Task<Quiz> Create(string userId, Quiz quiz)
+        public async Task<List<QuizResponseDTO>> GetAllAsync()
         {
-            if (string.IsNullOrWhiteSpace(quiz.Name))
-            {
-                throw new BadRequestException("Quiz name cannot be empty");
-            }
-
-            return await _quizRepository.Create(userId, quiz);
+            var result = await _repo.GetAllAsync();
+            return _mapper.Map<List<QuizResponseDTO>>(result);
         }
 
-        public async Task CreateQuizzesAsync(string userId, List<Quiz> quizzes)
+        public async Task<QuizResponseDTO> CreateAsync(string userId, QuizRequestDTO dto)
         {
-            if (string.IsNullOrWhiteSpace(userId))
-            {
-                throw new UnAuthorizedException("User is not authorized");
-            }
+            Quiz quiz = new Quiz(userId, dto.CourseId, dto.Name, dto.DueDate, dto.LockDate, dto.HtmlUrl, dto.IsComplete, dto.IsPriority);
 
-            await _quizRepository.CreateQuizzesAsync(userId, quizzes);
+            var createdQuiz = await _repo.CreateAsync(quiz);
+            return _mapper.Map<QuizResponseDTO>(createdQuiz);
         }
 
-        public async Task<Quiz> Update(string userId, int quizId, Quiz quiz)
+        public async Task CreateBulkAsync(string userId, List<QuizRequestDTO> quizzes)
         {
-            if (string.IsNullOrWhiteSpace(userId))
-            {
-                throw new UnAuthorizedException("User is not authorized");
-            }
+            List<Quiz> quizzesToCreate = quizzes.Select(dto => new Quiz(userId, dto.CourseId, dto.Name, dto.DueDate, dto.LockDate, dto.HtmlUrl, dto.IsComplete, dto.IsPriority)).ToList();
 
-            if (string.IsNullOrWhiteSpace(quiz.Name))
-            {
-                throw new BadRequestException("Quiz name cannot be empty");
-            }
-
-            return await _quizRepository.Update(userId, quizId, quiz);
+            await _repo.CreateBulkAsync(quizzesToCreate);
         }
 
-        public async Task Delete(string userId, int quizId)
+        public async Task<QuizResponseDTO> UpdateAsync(string userId, int quizId, QuizRequestDTO dto)
         {
-            if (string.IsNullOrWhiteSpace(userId))
+            Quiz quiz = await _repo.GetByIdAsync(quizId) ?? throw new NotFoundException("Quiz does not exist");
+
+            if (quiz.UserId != userId)
             {
-                throw new UnAuthorizedException("User is not authorized");
+                throw new UnAuthorizedException("User is not authorized to update this quiz");
             }
-            
-            await _quizRepository.Delete(userId, quizId);
+
+            quiz.Update(dto.Name, dto.DueDate, dto.LockDate, dto.HtmlUrl, dto.IsComplete, dto.IsPriority);
+
+            await _repo.Save();
+            return _mapper.Map<QuizResponseDTO>(quiz);
+        }
+
+        public async Task DeleteAsync(string userId, int quizId)
+        {
+            var quiz = await _repo.GetByIdAsync(quizId) ?? throw new NotFoundException("Quiz does not exist");
+
+            if (quiz.UserId != userId)
+            {
+                throw new UnAuthorizedException("User is not authorized to delete this quiz");
+            }
+
+            await _repo.DeleteAsync(quiz);
         }
     }
 }

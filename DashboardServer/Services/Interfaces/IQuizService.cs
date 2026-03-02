@@ -1,12 +1,14 @@
-using DashboardServer.Models;
+using DashboardServer.DTOs.ModelDTOs.Requests;
+using DashboardServer.DTOs.ModelDTOs.Responses;
 
 namespace DashboardServer.Services.Interfaces
 {
     public interface IQuizService
     {
-        public Task<Quiz> Create(string userId, Quiz quiz);
-        public Task CreateQuizzesAsync(string userId, List<Quiz> quizzes);
-        public Task<Quiz> Update(string userId, int quizId, Quiz quiz);
-        public Task Delete(string userId, int quizId);
+        Task<List<QuizResponseDTO>> GetAllAsync();
+        Task<QuizResponseDTO> CreateAsync(string userId, QuizRequestDTO quiz);
+        Task CreateBulkAsync(string userId, List<QuizRequestDTO> quizzes);
+        Task<QuizResponseDTO> UpdateAsync(string userId, int quizId, QuizRequestDTO quiz);
+        Task DeleteAsync(string userId, int quizId);
     }
 }

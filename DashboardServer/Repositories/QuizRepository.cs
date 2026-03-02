@@ -14,56 +14,38 @@ namespace DashboardServer.Repositories
             _dbContext = dbContext;
         }
 
-        public async Task<Quiz> Create(string userId, Quiz quiz)
+        public async Task<List<Quiz>> GetAllAsync()
         {
-            quiz.UserId = userId;
+            return await _dbContext.Quizzes.AsNoTracking().ToListAsync();
+        }
+
+        public async Task<Quiz?> GetByIdAsync(int id)
+        {
+            return await _dbContext.Quizzes.FindAsync(id);
+        }
+
+        public async Task<Quiz> CreateAsync(Quiz quiz)
+        {
             var createdQuiz = await _dbContext.Quizzes.AddAsync(quiz);
             await _dbContext.SaveChangesAsync();
             return createdQuiz.Entity;
         }
 
-        public async Task CreateQuizzesAsync(string userId, List<Quiz> quizzes)
+        public async Task CreateBulkAsync(List<Quiz> quizzes)
         {
-            foreach (var quiz in quizzes)
-            {
-                quiz.UserId = userId;
-            }
-
             await _dbContext.Quizzes.AddRangeAsync(quizzes);
             await _dbContext.SaveChangesAsync();
         }
 
-        public async Task<Quiz> Update(string userId, int quizId, Quiz quiz)
+        public async Task DeleteAsync(Quiz quiz)
         {
-            var existingQuiz = await _dbContext.Quizzes.FirstOrDefaultAsync(q => q.Id == quizId && q.UserId == userId);
-            if (existingQuiz == null)
-            {
-                throw new KeyNotFoundException("Quiz not found");
-            }
-
-            existingQuiz.Name = quiz.Name;
-            existingQuiz.DueDate = quiz.DueDate;
-            existingQuiz.LockDate = quiz.LockDate;
-            existingQuiz.HtmlUrl = quiz.HtmlUrl;
-            existingQuiz.IsComplete = quiz.IsComplete;
-            existingQuiz.IsPriority = quiz.IsPriority;
-
+            _dbContext.Quizzes.Remove(quiz);
             await _dbContext.SaveChangesAsync();
-            return existingQuiz;
         }
 
-        public async Task Delete(string userId, int quizId)
+        public async Task Save()
         {
-            var quiz = await _dbContext.Quizzes.FindAsync(quizId);
-            if (quiz != null && quiz.UserId == userId)
-            {
-                _dbContext.Quizzes.Remove(quiz);
-                await _dbContext.SaveChangesAsync();
-            }
-            else
-            {
-                throw new KeyNotFoundException("Quiz not found");
-            }
+            await _dbContext.SaveChangesAsync();
         }
     }
 }

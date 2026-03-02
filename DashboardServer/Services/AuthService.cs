@@ -36,16 +36,27 @@ namespace DashboardServer.Services
                 throw new BadRequestException("Password is required");
             }
 
+            if (string.IsNullOrWhiteSpace(dto.FirstName))
+            {
+                throw new BadRequestException("First name is required");
+            }
+
+            if (string.IsNullOrWhiteSpace(dto.LastName))
+            {
+                throw new BadRequestException("Last name is required");
+            }
+
             var existingUser = await _userManager.FindByEmailAsync(dto.Email);
             if (existingUser != null)
             {
                 throw new BadRequestException("A user with this email already exists");
             }
 
-            var user = _mapper.Map<ApplicationUser>(dto);
-            user.UserName = dto.Email;
-            user.FirstName = dto.FirstName;
-            user.LastName = dto.LastName;
+            ApplicationUser user = new ApplicationUser(dto.FirstName, dto.LastName, "")
+            {
+                UserName = dto.Email,
+                Email = dto.Email
+            };
 
             var result = await _userManager.CreateAsync(user, dto.Password);
 

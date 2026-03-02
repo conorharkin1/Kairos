@@ -1,13 +1,16 @@
-using DashboardServer.Models;
+using DashboardServer.DTOs.ModelDTOs.Requests;
+using DashboardServer.DTOs.ModelDTOs.Responses;
 
 namespace DashboardServer.Services.Interfaces
 {
     public interface ICourseService
     {
-        public Task<Course> Create(string userId, Course course);
-        public Task CreateCoursesAsync(string userId, List<Course> courses);
-        public Task<List<Course>> GetCoursesAsync(string userId);
-        public Task<List<Assignment>> GetCourseAssignmentsAsync(string userId, int courseId, bool includeCompleted);
-        public Task<List<Quiz>> GetCourseQuizzesAsync(string userId, int courseId, bool includeCompleted);
+        Task<List<CourseResponseDTO>> GetAllAsync();
+        Task<CourseResponseDTO> CreateAsync(string userId, CourseRequestDTO course);
+        Task CreateBulkAsync(string userId, List<CourseRequestDTO> courses);
+        Task<CourseResponseDTO> UpdateAsync(string userId, int courseId, CourseRequestDTO course);
+        Task DeleteAsync(string userId, int courseId);
+        Task<List<AssignmentResponseDTO>> GetCourseAssignmentsAsync(int courseId, bool includeCompleted);
+        Task<List<QuizResponseDTO>> GetCourseQuizzesAsync(int courseId, bool includeCompleted);
     }
 }
