@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace DashboardServer.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260212215221_CLEANSLATE")]
-    partial class CLEANSLATE
+    [Migration("20260302132509_ForeignKeyOnCourseWeight")]
+    partial class ForeignKeyOnCourseWeight
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -131,6 +131,7 @@ namespace DashboardServer.Migrations
                         .HasColumnType("boolean");
 
                     b.Property<string>("Name")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("UserId")
@@ -212,6 +213,8 @@ namespace DashboardServer.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("CourseId");
+
                     b.HasIndex("UserId", "CourseId")
                         .IsUnique();
 
@@ -278,12 +281,14 @@ namespace DashboardServer.Migrations
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("CourseCode")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<int?>("ExternalCourseId")
                         .HasColumnType("integer");
 
                     b.Property<string>("Name")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("UserId")
@@ -327,6 +332,7 @@ namespace DashboardServer.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Name")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("UserId")
@@ -584,11 +590,19 @@ namespace DashboardServer.Migrations
 
             modelBuilder.Entity("DashboardServer.Models.Constraints.CourseWeight", b =>
                 {
+                    b.HasOne("DashboardServer.Models.Course", "Course")
+                        .WithMany()
+                        .HasForeignKey("CourseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("DashboardServer.Models.ApplicationUser", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Course");
 
                     b.Navigation("User");
                 });

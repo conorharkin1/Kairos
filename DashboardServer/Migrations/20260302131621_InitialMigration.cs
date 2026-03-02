@@ -7,7 +7,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace DashboardServer.Migrations
 {
     /// <inheritdoc />
-    public partial class CLEANSLATE : Migration
+    public partial class InitialMigration : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -188,8 +188,8 @@ namespace DashboardServer.Migrations
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     ExternalCourseId = table.Column<int>(type: "integer", nullable: true),
-                    CourseCode = table.Column<string>(type: "text", nullable: true),
-                    Name = table.Column<string>(type: "text", nullable: true),
+                    CourseCode = table.Column<string>(type: "text", nullable: false),
+                    Name = table.Column<string>(type: "text", nullable: false),
                     UserId = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
@@ -315,7 +315,7 @@ namespace DashboardServer.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     ExternalAssignmentId = table.Column<int>(type: "integer", nullable: true),
                     CourseId = table.Column<int>(type: "integer", nullable: false),
-                    Name = table.Column<string>(type: "text", nullable: true),
+                    Name = table.Column<string>(type: "text", nullable: false),
                     Description = table.Column<string>(type: "text", nullable: true),
                     DueDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     HtmlUrl = table.Column<string>(type: "text", nullable: true),
@@ -348,7 +348,7 @@ namespace DashboardServer.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     ExternalQuizId = table.Column<int>(type: "integer", nullable: true),
                     CourseId = table.Column<int>(type: "integer", nullable: false),
-                    Name = table.Column<string>(type: "text", nullable: true),
+                    Name = table.Column<string>(type: "text", nullable: false),
                     DueDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     LockDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     HtmlUrl = table.Column<string>(type: "text", nullable: true),

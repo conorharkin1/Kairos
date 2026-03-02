@@ -62,16 +62,6 @@ namespace DashboardServer.Models
             CourseId = courseId;
         }
 
-        public void SetCompletion(bool isComplete)
-        {
-            IsComplete = isComplete;
-        }
-
-        public void SetPriority(bool isPriority)
-        {
-            IsPriority = isPriority;
-        }
-
         public void SetDueDate(DateTime? dueDate)
         {
             DueDate = dueDate;

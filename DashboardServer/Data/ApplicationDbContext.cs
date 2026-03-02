@@ -72,6 +72,12 @@ namespace DashboardServer.Data
                 .IsUnique();
 
             builder.Entity<CourseWeight>()
+                .HasOne(cw => cw.Course)
+                .WithMany()
+                .HasForeignKey(cw => cw.CourseId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<CourseWeight>()
                 .HasIndex(cw => new { cw.UserId, cw.CourseId })
                 .IsUnique();
             

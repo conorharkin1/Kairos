@@ -5,6 +5,7 @@ namespace DashboardServer.Models.Constraints
     public class CourseWeight : BaseEntity
     {
         public int CourseId { get; private set; }
+        public Course Course { get; private set; } = default!;
         /// <summary>
         /// Weight of the course as a percentage
         /// </summary>

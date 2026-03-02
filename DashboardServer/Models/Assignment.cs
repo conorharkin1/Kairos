@@ -52,26 +52,6 @@ namespace DashboardServer.Models
             IsPriority = isPriority;
         }
 
-        public void SetCourseId(int courseId)
-        {
-            if (courseId <= 0)
-            {
-                throw new ValidationException("Valid Course Id is required");
-            }
-
-            CourseId = courseId;
-        }
-
-        public void SetCompletion(bool isComplete)
-        {
-            IsComplete = isComplete;
-        }
-
-        public void SetPriority(bool isPriority)
-        {
-            IsPriority = isPriority;
-        }
-
         public void SetDueDate(DateTime? dueDate)
         {
             DueDate = dueDate;
