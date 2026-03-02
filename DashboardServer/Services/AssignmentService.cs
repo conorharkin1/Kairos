@@ -1,5 +1,4 @@
 using AutoMapper;
-using DashboardServer.DTOs.CanvasDTOs;
 using DashboardServer.DTOs.ModelDTOs.Requests;
 using DashboardServer.DTOs.ModelDTOs.Responses;
 using DashboardServer.Exceptions;

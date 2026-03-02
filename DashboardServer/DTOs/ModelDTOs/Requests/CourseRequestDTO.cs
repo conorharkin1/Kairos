@@ -10,9 +10,9 @@ namespace DashboardServer.DTOs.ModelDTOs.Requests
         /// The code of the course. eg. CSC3032
         /// </summary>
         [Required(ErrorMessage = "Course code is required")]
-        public string? CourseCode { get; set; }
+        public required string CourseCode { get; set; }
 
         [Required(ErrorMessage = "Course name is required")]
-        public string? Name { get; set; }
+        public required string Name { get; set; }
     }
 }

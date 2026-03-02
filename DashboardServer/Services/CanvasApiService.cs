@@ -32,14 +32,14 @@ namespace DashboardServer.Services
             _httpClient.BaseAddress = new Uri(CANVAS_BASE_URL);
         }
 
-        public async Task<List<CanvasCourseDTO>> GetFavoriteCoursesFromCanvasAsync(string userId)
+        private async Task<List<CanvasCourseDTO>> GetFavoriteCoursesFromCanvasAsync(string userId)
         {
             await AddAuthHeaderAsync(userId);
             var courses = await _httpClient.GetFromJsonAsync<List<CanvasCourseDTO>>("/api/v1/users/self/favorites/courses");
             return courses ?? [];
         }
 
-        public async Task<List<CanvasAssignmentDTO>> GetCourseAssignmentsFromCanvasAsync(string userId, int courseId)
+        private async Task<List<CanvasAssignmentDTO>> GetCourseAssignmentsFromCanvasAsync(string userId, int courseId)
         {
             await AddAuthHeaderAsync(userId);
             try

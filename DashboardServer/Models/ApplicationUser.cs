@@ -25,11 +25,6 @@ namespace DashboardServer.Models
             LastUpdatedData = DateTime.UtcNow;
         }
 
-        public void SetSchedule(Schedule schedule)
-        {
-            Schedule = schedule;
-        }
-
         public void SetApiKey(string encryptedApiKey)
         {
             if (string.IsNullOrWhiteSpace(encryptedApiKey))
