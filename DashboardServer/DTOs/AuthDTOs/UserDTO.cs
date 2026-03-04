@@ -8,5 +8,6 @@ namespace DashboardServer.DTOs.AuthDTOs
         public string? LastName { get; set; }
         public bool IsApiKeySet { get; set; }
         public DateTime? LastUpdatedData { get; set; }
+        public bool IsOptedOutForEmails { get; set; }
     }
 }

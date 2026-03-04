@@ -47,6 +47,9 @@ namespace DashboardServer.Migrations
                     b.Property<string>("FirstName")
                         .HasColumnType("text");
 
+                    b.Property<bool>("IsOptedOutForEmails")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("LastName")
                         .HasColumnType("text");
 
@@ -141,7 +144,7 @@ namespace DashboardServer.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Assignments", (string)null);
+                    b.ToTable("Assignments");
                 });
 
             modelBuilder.Entity("DashboardServer.Models.Constraints.AvoidPeriod", b =>
@@ -163,7 +166,7 @@ namespace DashboardServer.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("AvoidPeriods", (string)null);
+                    b.ToTable("AvoidPeriods");
                 });
 
             modelBuilder.Entity("DashboardServer.Models.Constraints.AvoidTimeBlock", b =>
@@ -187,7 +190,7 @@ namespace DashboardServer.Migrations
 
                     b.HasIndex("AvoidPeriodId");
 
-                    b.ToTable("AvoidTimeBlock", (string)null);
+                    b.ToTable("AvoidTimeBlock");
                 });
 
             modelBuilder.Entity("DashboardServer.Models.Constraints.CourseWeight", b =>
@@ -215,7 +218,7 @@ namespace DashboardServer.Migrations
                     b.HasIndex("UserId", "CourseId")
                         .IsUnique();
 
-                    b.ToTable("CourseWeights", (string)null);
+                    b.ToTable("CourseWeights");
                 });
 
             modelBuilder.Entity("DashboardServer.Models.Constraints.DailyCapacity", b =>
@@ -241,7 +244,7 @@ namespace DashboardServer.Migrations
                     b.HasIndex("UserId", "DayIndex")
                         .IsUnique();
 
-                    b.ToTable("DailyCapacities", (string)null);
+                    b.ToTable("DailyCapacities");
                 });
 
             modelBuilder.Entity("DashboardServer.Models.Constraints.SchedulerRules", b =>
@@ -266,7 +269,7 @@ namespace DashboardServer.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("SchedulerRules", (string)null);
+                    b.ToTable("SchedulerRules");
                 });
 
             modelBuilder.Entity("DashboardServer.Models.Course", b =>
@@ -296,7 +299,7 @@ namespace DashboardServer.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Courses", (string)null);
+                    b.ToTable("Courses");
                 });
 
             modelBuilder.Entity("DashboardServer.Models.Quiz", b =>
@@ -342,7 +345,7 @@ namespace DashboardServer.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Quizzes", (string)null);
+                    b.ToTable("Quizzes");
                 });
 
             modelBuilder.Entity("DashboardServer.Models.Schedule", b =>
@@ -365,7 +368,7 @@ namespace DashboardServer.Migrations
                     b.HasIndex("UserId")
                         .IsUnique();
 
-                    b.ToTable("Schedules", (string)null);
+                    b.ToTable("Schedules");
                 });
 
             modelBuilder.Entity("DashboardServer.Models.ScheduleBlock", b =>
@@ -412,7 +415,7 @@ namespace DashboardServer.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("ScheduleBlocks", (string)null);
+                    b.ToTable("ScheduleBlocks");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>

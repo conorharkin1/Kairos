@@ -1,17 +1,21 @@
 using System.Text;
 using AutoMapper;
 using DashboardServer.Data;
+using DashboardServer.Exceptions;
 using DashboardServer.Filters;
 using DashboardServer.Models;
 using DashboardServer.Repositories;
 using DashboardServer.Repositories.Interfaces;
 using DashboardServer.Services;
 using DashboardServer.Services.Interfaces;
+using Hangfire;
+using Hangfire.PostgreSql;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.IdentityModel.Tokens;
+using Resend;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -56,6 +60,20 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 builder.Services.AddAuthorization();
 
+builder.Services.AddOptions();
+builder.Services.AddHttpClient<ResendClient>();
+builder.Services.Configure<ResendClientOptions>( o =>
+{
+    o.ApiToken = builder.Configuration["Resend:ApiToken"] ?? throw new UnAuthorizedException("Resend API token not configured"); 
+});
+
+builder.Services.AddHangfire(config => 
+    config.UsePostgreSqlStorage(c =>
+        c.UseNpgsqlConnection(builder.Configuration.GetConnectionString("HangfireConnection"))));
+
+builder.Services.AddHangfireServer();
+
+builder.Services.AddTransient<IResend, ResendClient>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IEncryptService, EncryptService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
@@ -68,6 +86,7 @@ builder.Services.AddScoped<IDailyCapacityService, DailyCapacityService>();
 builder.Services.AddScoped<ISchedulerRulesService, SchedulerRulesService>();
 builder.Services.AddScoped<ISchedulerService, SchedulerService>();
 builder.Services.AddScoped<IAvoidPeriodService, AvoidPeriodService>();
+builder.Services.AddScoped<IEmailService, EmailService>();
 
 // Adding this to attempt injecting the DbContext with HttpContext so I can access the current user and create a global query filter.
 builder.Services.AddHttpContextAccessor();
@@ -109,5 +128,14 @@ app.UseStaticFiles();
 
 // Exposes the /login /register endpoints implicitly
 app.MapIdentityApi<IdentityUser>();
+
+app.UseHangfireDashboard();
+
+using (var scope = app.Services.CreateScope())
+{
+    var recurringJobManager = scope.ServiceProvider.GetRequiredService<IRecurringJobManager>();
+    recurringJobManager.RemoveIfExists("SendReminderEmails");
+    recurringJobManager.AddOrUpdate<IEmailService>("SendReminderEmails", service => service.SendReminderEmails(), Cron.Daily);
+}
 
 app.Run();

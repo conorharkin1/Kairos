@@ -1,5 +1,6 @@
 using AutoMapper;
 using DashboardServer.DTOs.AuthDTOs;
+using DashboardServer.DTOs.ModelDTOs.Requests;
 using DashboardServer.Models;
 using DashboardServer.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -49,6 +50,15 @@ namespace DashboardServer.Controllers
             var userId = _userManager.GetUserId(HttpContext.User)!;
 
             await _canvasApiService.UpdateDataFromCanvasAsync(userId);
+            return Ok();
+        }
+
+        [HttpPut("email-preferences")]
+        public async Task<IActionResult> SetEmailOptOut([FromBody] EmailPreferencesRequestDTO request)
+        {
+            var userId = _userManager.GetUserId(HttpContext.User)!;
+
+            await _userService.SetEmailOptOut(userId, request.IsOptedOutForEmails);
             return Ok();
         }
     }
