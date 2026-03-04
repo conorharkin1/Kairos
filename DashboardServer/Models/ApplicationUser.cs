@@ -10,6 +10,7 @@ namespace DashboardServer.Models
         public string? CanvasApiKey { get; private set; }
         public DateTime? LastUpdatedData { get; private set; }
         public Schedule? Schedule { get; private set; }
+        public bool IsOptedOutForEmails { get; private set; } = false;
 
         public ApplicationUser() { }
 
@@ -32,6 +33,11 @@ namespace DashboardServer.Models
             }
             
             CanvasApiKey = encryptedApiKey;
+        }
+
+        public void SetEmailOptOut(bool optOut)
+        {
+            IsOptedOutForEmails = optOut;
         }
     }
 }

@@ -26,5 +26,10 @@ namespace DashboardServer.Services
         {
             return await _userRepository.GetEncryptedApiKey(userId);
         }
+
+        public async Task SetEmailOptOut(string userId, bool optOut)
+        {
+            await _userRepository.SetEmailOptOut(userId, optOut);
+        }
     }
 }

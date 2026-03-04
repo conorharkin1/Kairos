@@ -26,6 +26,16 @@ namespace DashboardServer.Repositories
             return await _dbContext.Assignments.Where(a => a.DueDate >= DateTime.UtcNow).ToListAsync();
         }
 
+        public async Task<List<Assignment>> GetAllUpcomingUnsubmittedAsync()
+        {
+            return await _dbContext.Assignments
+                .IgnoreQueryFilters()
+                .Include(a => a.Course)
+                .Where(a => a.DueDate > DateTime.UtcNow && !a.IsComplete)
+                .OrderBy(a => a.DueDate)
+                .ToListAsync();
+        }
+
         public async Task<Assignment?> GetByIdAsync(int id)
         {
             return await _dbContext.Assignments.FindAsync(id);
