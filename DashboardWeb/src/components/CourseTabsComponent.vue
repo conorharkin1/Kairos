@@ -4,6 +4,7 @@
         <h3>{{ course.courseCode }}</h3>
     </div>
         <button v-if="!showCreate" class="btn btn-primary btn-good create-course" @click="toggleShowCreate">Create Course</button>
+        <button v-if="currentCourse != 0" class="btn btn-primary btn-danger delete-course" @click="deleteCourse">Delete Course</button>
         <div v-if="showCreate" class="create-inputs">
             <input v-model="newCourseName" type="text" placeholder="Course Name" class="input" />
             <input v-model="newCourseCode" type="text" placeholder="Course Code" class="input" />
@@ -47,6 +48,27 @@ const createCourse = async () => {
     } finally {
         isLoading.value = false
         toggleShowCreate()
+        await fetchCourses()
+    }
+}
+
+const deleteCourse = async () => {
+    if (!currentCourse.value) {
+        toast.error('No course selected to delete.')
+        return
+    }
+    
+    isLoading.value = true
+    try {
+        await api.delete(`course/${currentCourse.value}`)
+        changeCourse(0)
+        toast.success('Course deleted successfully!')
+    } catch (error) {
+        if (!DisplayErrorMessage(error)) {
+            toast.error('An error occurred while deleting the course. Please try again.')
+        }
+    } finally {
+        isLoading.value = false
         await fetchCourses()
     }
 }
@@ -119,6 +141,11 @@ onMounted(() => {
 }
 
 .create-course {
+    margin-left: 1rem;
+    width: 10rem;
+}
+
+.delete-course {
     margin-left: 1rem;
     width: 10rem;
 }
