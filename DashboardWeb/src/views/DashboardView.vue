@@ -13,6 +13,7 @@
                 :sidebarViewsRight="sidebarViewsRight"
                 side="right"
                 @change-view="changeView"
+                @handle-action="handleAction"
                 :currentView="currentView"
             />
         </div>
@@ -38,6 +39,10 @@ import TodoGridComponent from '@/components/TodoGridComponent.vue'
 import SchedulerComponent from '@/components/SchedulerComponent.vue'
 import ConstraintsComponent from '@/components/ConstraintsComponent.vue'
 import api from '../services/api.js'
+import DisplayErrorMessage from '@/services/error'
+import { useToast } from 'vue-toastification'
+
+const toast = useToast()
 
 const isLoading = ref(false)
 const currentView = shallowRef(CalendarComponent)
@@ -52,18 +57,43 @@ const onScheduleCreated = () => {
 }
 
 const sidebarViewsLeft = [
-    { icon: 'ix:maintenance-octagon', height: 30, width: 30, tooltip: 'Maintenance', view: ProfileComponent },
+    { icon: 'ix:maintenance-octagon', height: 30, width: 30, tooltip: 'Profile and Dashboard', view: ProfileComponent },
     { icon: 'ep:calendar', height: 30, width: 30, tooltip: 'Calendar', view: CalendarComponent },
     { icon: 'uiw:dot-chart', height: 30, width: 30, tooltip: 'Constraints', view: ConstraintsComponent },
 ]
 const sidebarViewsRight = [
-    { icon: 'la:download', width: 30, height: 30, tooltip: 'Coming Soon', /*view: TodoGridComponent,*/ },
-    { icon: 'icon-park-outline:redo', width: 30, height: 30, tooltip: 'Coming Soon', /*view: TodoGridComponent,*/ },
+    { icon: 'la:download', width: 30, height: 30, tooltip: 'Export Schedule', action: 'export' },
+    { icon: 'teenyicons:loader-solid', width: 30, height: 30, tooltip: 'Generate Schedule', action: 'generate' },
 ]
 
 const changeView = (view) => {
     if (view && view !== currentView.value) {
         currentView.value = view
+    }
+}
+
+const handleAction = async (action) => {
+    if (action === 'export') {
+        try {
+            isLoading.value = true;
+            const response = await api.get('scheduler/export', { responseType: 'blob' });
+            const blob = await response.data;
+
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement("a");
+
+            link.href = url;
+            link.download = `weeklyschedule-${new Date().toISOString()}.ics`;
+            link.click();
+
+            window.URL.revokeObjectURL(url);
+        } catch (error) {
+            if (!DisplayErrorMessage(error)) {
+                toast.error('An error occurred while exporting your schedule. Please try again.')
+            }
+        } finally {
+            isLoading.value = false;
+        }
     }
 }
 
