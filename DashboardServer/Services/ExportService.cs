@@ -17,6 +17,14 @@ namespace DashboardServer.Services
             _schedulerService = schedulerService;
         }
 
+        /// <summary>
+        /// ATTRIBUTION:
+        /// The below code was adapted from the ICal .NET library documentation and examples.
+        /// URL: https://github.com/ical-org/ical.net/wiki
+        /// </summary>
+        /// <returns> A byte array containing the ICS file </returns>
+        /// <exception cref="NotFoundException"></exception>
+        /// <exception cref="Exception"></exception>
         public async Task<byte[]> GetScheduleAsIcsAsync()
         {
             var schedule = await _schedulerService.GetSchedule();
