@@ -106,7 +106,7 @@ const buildScheduleEvents = (schedule) => {
     return mergeConsecutiveBlocks(validBlocks).map(block => ({
         start: convertToAppTimezone(block.startTime).toDate(),
         end: convertToAppTimezone(block.endTime).toDate(),
-        title: block.assignmentName,
+        title: block.name,
         class: `vuecal-schedule-block ${getScheduleBlockColorClass(block.courseId)}`,
         color: '#000000',
     }))
@@ -268,6 +268,9 @@ onMounted(async () => {
     text-overflow: ellipsis;
 }
 
+/// ATTRIBUTION
+/// The below styles were adapted from the defaults provided by the documentation of VueCal
+/// Source: https://antoniandre.github.io/vue-cal/examples/view#ex--css-variables
 .vuecal {
     flex-grow: 1;
     border-left: 3px solid $primary-text-light;
@@ -289,12 +292,17 @@ onMounted(async () => {
     --vuecal-transition-duration: 0.3s;
 }
 
-.vuecal__title small {
-    display: none !important;
-}
-
 .vuecal__cell-events {
     overflow-y: auto;
+}
+
+::v-deep(.vuecal__event-details .vuecal__event-title) {
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+::v-deep(.vuecal__event-details .vuecal__event-time) {
+    font-size: 1rem;
 }
 
 ::v-deep(.vuecal__event.late) {

@@ -87,6 +87,7 @@ builder.Services.AddScoped<ISchedulerRulesService, SchedulerRulesService>();
 builder.Services.AddScoped<ISchedulerService, SchedulerService>();
 builder.Services.AddScoped<IAvoidPeriodService, AvoidPeriodService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddScoped<IExportService, ExportService>();
 
 // Adding this to attempt injecting the DbContext with HttpContext so I can access the current user and create a global query filter.
 builder.Services.AddHttpContextAccessor();

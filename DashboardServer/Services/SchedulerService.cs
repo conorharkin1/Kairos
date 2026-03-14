@@ -47,6 +47,8 @@ namespace DashboardServer.Services
             int minBlockLength = data.Rules!.MinSessionLength;
             int maxBlockLength = data.Rules.MaxSessionLength;
 
+            Dictionary<int, string> courseCodeLookup = data.Courses.ToDictionary(c => c.Id, c => c.CourseCode);
+
             // Step 2: Calculate the total hours each course gets allocated based on the course weights constraint
             Dictionary<int, double> courseHoursDict = CalculateHoursPerCourse(totalAvailableHours, data.CourseWeights);
 
@@ -57,7 +59,7 @@ namespace DashboardServer.Services
             Dictionary<int, double> hoursPerAssignment = CalculateHoursPerAssignment(data.Assignments, courseHoursDict, courseTotalUrgency, assignmentUrgencyDict);
 
             // Step 5: Convert those hoursPerAssignment into blocks based on scheduler rules constraint. Each block contains a priority and assignmentId
-            List<ScheduleBlock> blocks = ConstructScheduleBlocks(courseHoursDict, hoursPerAssignment, minBlockLength, data.Assignments, userId);
+            List<ScheduleBlock> blocks = ConstructScheduleBlocks(courseHoursDict, hoursPerAssignment, minBlockLength, data.Assignments, userId, courseCodeLookup);
 
             //Step 6: Calculate the priority of each block. Priority = (assignmentUrgency * 0.8) + (courseWeight * 0.2) where 0.8 and 0.2 are the behavioural constraints. (increase 0.8 to prioritise deadlines, increase 0.2 to prioritise courseweights)
             // Returns blocks sorted by priority from highest to lowest
@@ -175,7 +177,7 @@ namespace DashboardServer.Services
             return assignmentHoursDict;
         }
 
-        private static List<ScheduleBlock> CreateBlocks(double hoursToAllocate, int minBlockLength, int courseId, int? assignmentId, string assignmentName, string userId)
+        private static List<ScheduleBlock> CreateBlocks(double hoursToAllocate, int minBlockLength, int courseId, int? assignmentId, string assignmentName, string userId, Dictionary<int, string> courseCodeLookup)
         {
             List<ScheduleBlock> blocks = new List<ScheduleBlock>();
             var minutesToAllocate = hoursToAllocate * 60;
@@ -187,6 +189,7 @@ namespace DashboardServer.Services
                     userId,
                     courseId,
                     assignmentId,
+                    assignmentId != -1 ? $"Work on {assignmentName}" : $"Study for {courseCodeLookup[courseId]}",
                     assignmentName,
                     0,
                     assignmentId != -1 ? Models.BlockType.Assignment : Models.BlockType.Study
@@ -196,7 +199,7 @@ namespace DashboardServer.Services
             return blocks;
         }
 
-        private static List<ScheduleBlock> ConstructScheduleBlocks(Dictionary<int, double> courseHoursDict, Dictionary<int, double> hoursPerAssignment, int minBlockLength, List<Assignment> assignments, string userId)
+        private static List<ScheduleBlock> ConstructScheduleBlocks(Dictionary<int, double> courseHoursDict, Dictionary<int, double> hoursPerAssignment, int minBlockLength, List<Assignment> assignments, string userId, Dictionary<int, string> courseCodeLookup)
         {
             // loop through coursesHours pairs, construct assignment schedule blocks for the assignments and track the remainder of course time
             // create study schedule blocks from the remaining time. 
@@ -214,12 +217,12 @@ namespace DashboardServer.Services
                     if (assignment.CourseId == courseId)
                     {
                         double allocatedAssignmentHours = hoursPerAssignment[assignment.Id];
-                        blocks.AddRange(CreateBlocks(allocatedAssignmentHours, minBlockLength, courseId, assignment.Id, assignment.Name ?? "Assignment", userId));
+                        blocks.AddRange(CreateBlocks(allocatedAssignmentHours, minBlockLength, courseId, assignment.Id, assignment.Name ?? "Assignment", userId, courseCodeLookup));
                         courseHoursRemainingToAlloc -= allocatedAssignmentHours;
                     }
                 }
 
-                blocks.AddRange(CreateBlocks(courseHoursRemainingToAlloc, minBlockLength, courseId, null, "Study", userId));
+                blocks.AddRange(CreateBlocks(courseHoursRemainingToAlloc, minBlockLength, courseId, -1, "Study", userId, courseCodeLookup));
             }
 
             return blocks;
