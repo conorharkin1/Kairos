@@ -72,6 +72,9 @@ const changeView = (view) => {
     }
 }
 
+/// ATTRIBUTION:
+/// The below code for downloading a file was adapted from a solution on StackOverflow
+/// Source: https://stackoverflow.com/questions/53772331/vue-html-js-how-to-download-a-file-to-browser-using-the-download-tag
 const handleAction = async (action) => {
     if (action === 'export') {
         try {

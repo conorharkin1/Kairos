@@ -268,6 +268,9 @@ onMounted(async () => {
     text-overflow: ellipsis;
 }
 
+/// ATTRIBUTION
+/// The below styles were adapted from the defaults provided by the documentation of VueCal
+/// Source: https://antoniandre.github.io/vue-cal/examples/view#ex--css-variables
 .vuecal {
     flex-grow: 1;
     border-left: 3px solid $primary-text-light;

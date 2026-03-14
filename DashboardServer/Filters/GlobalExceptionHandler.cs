@@ -6,6 +6,12 @@ using Microsoft.AspNetCore.StaticAssets;
 
 namespace DashboardServer.Filters
 {
+    /// <summary>
+    /// ATTRIBUTION:
+    /// This class was adapted from a solution I found online
+    /// URL: https://www.milanjovanovic.tech/blog/global-error-handling-in-aspnetcore-8
+    /// Purpose: To centrally handle exceptions thrown in the application and return appropriate HTTP responses with error details.
+    /// </summary>
     public class GlobalExceptionHandler : IExceptionHandler
     {
         private readonly ILogger<GlobalExceptionHandler> _logger;
