@@ -385,6 +385,10 @@ namespace DashboardServer.Migrations
                     b.Property<string>("AssignmentName")
                         .HasColumnType("text");
 
+                    b.Property<string>("BlockId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<int>("BlockType")
                         .HasColumnType("integer");
 
@@ -393,6 +397,10 @@ namespace DashboardServer.Migrations
 
                     b.Property<DateTime>("EndTime")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<double>("Priority")
                         .HasColumnType("double precision");

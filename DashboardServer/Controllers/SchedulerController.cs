@@ -10,10 +10,12 @@ namespace DashboardServer.Controllers
     public class SchedulerController : ControllerBase
     {
         private readonly ISchedulerService _schedulerService;
+        private readonly IExportService _exportService;
 
-        public SchedulerController(ISchedulerService schedulerService)
+        public SchedulerController(ISchedulerService schedulerService, IExportService exportService)
         {
             _schedulerService = schedulerService;
+            _exportService = exportService;
         }
 
         [HttpPost]
@@ -28,6 +30,13 @@ namespace DashboardServer.Controllers
         {
             var schedule = await _schedulerService.GetSchedule();
             return Ok(schedule);
+        }
+
+        [HttpGet("export")]
+        public async Task<IActionResult> ExportSchedule()
+        {
+            var weeklySchedule = await _exportService.GetScheduleAsIcsAsync();
+            return File(weeklySchedule, "text/calendar");
         }
     }
 }
