@@ -7,5 +7,6 @@ namespace DashboardServer.Services.Interfaces
     {
         Task<SchedulerRulesResponseDTO> GetAsync();
         Task<SchedulerRulesResponseDTO> UpdateAsync(SchedulerRulesRequestDTO rules);
+        Task UpdateSchedulerPrioritiesAsync(double deadlineUrgencyWeighting, double coursePreferenceWeighting);
     }
 }

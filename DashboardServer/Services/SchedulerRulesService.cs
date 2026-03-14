@@ -1,6 +1,7 @@
 using AutoMapper;
 using DashboardServer.DTOs.ConstraintDTOs.Requests;
 using DashboardServer.DTOs.ConstraintDTOs.Responses;
+using DashboardServer.Exceptions;
 using DashboardServer.Models.Constraints;
 using DashboardServer.Repositories.Interfaces;
 using DashboardServer.Services.Interfaces;
@@ -49,6 +50,18 @@ namespace DashboardServer.Services
             }
 
             return _mapper.Map<SchedulerRulesResponseDTO>(rules);
+        }
+
+        public async Task UpdateSchedulerPrioritiesAsync(double deadlineUrgencyWeighting, double coursePreferenceWeighting)
+        {
+            var rules = await _repo.GetAsync();
+            if (rules == null)
+            {
+                throw new NotFoundException("No scheduler rules have been set yet");
+            }
+            
+            rules.UpdateSchedulerPriorities(deadlineUrgencyWeighting, coursePreferenceWeighting);
+            await _repo.Save();
         }
     }
 }

@@ -238,7 +238,10 @@ namespace DashboardServer.Services
                 normalisedCourseWeights[cw.CourseId] = (double)cw.Weight / totalWeight;
             }
 
-            // Formula -> Priority = (assignmentUrgency * 0.8) + (courseWeight * 0.2)
+            // Formula: Weighted linear combination.
+            // Priority = (weighting1 * variable1) + (weighting2 * variable2) ...
+            // For example: Priority = (assignmentUrgency * 0.7) + (courseWeight * 0.3)
+            // Default values are 0.7 and 0.3 to naturally value assignment deadlines more than course importance
             foreach (var assignment in assignments)
             {
                 double urgency = assignmentUrgencies[assignment.Id];

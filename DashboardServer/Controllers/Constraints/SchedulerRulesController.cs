@@ -31,5 +31,13 @@ namespace DashboardServer.Controllers.Constraints
             var updated = await _service.UpdateAsync(dto);
             return Ok(updated);
         }
+
+        [HttpPut("/feedback")]
+        public async Task<IActionResult> UpdateSchedulerPriorityCalculations(double deadlineUrgencyWeighting, double coursePreferenceWeighting)
+        {
+            await _service.UpdateSchedulerPrioritiesAsync(deadlineUrgencyWeighting, coursePreferenceWeighting);
+            return Ok();
+        }
+
     }
 }
