@@ -63,7 +63,7 @@ namespace DashboardServer.Services
 
             //Step 6: Calculate the priority of each block. Priority = (assignmentUrgency * 0.8) + (courseWeight * 0.2) where 0.8 and 0.2 are the behavioural constraints. (increase 0.8 to prioritise deadlines, increase 0.2 to prioritise courseweights)
             // Returns blocks sorted by priority from highest to lowest
-            blocks = CalculateBlockPriority(data.Assignments, blocks, assignmentUrgencyDict, data.CourseWeights);
+            blocks = CalculateBlockPriority(data.Assignments, blocks, assignmentUrgencyDict, data.CourseWeights, data.Rules);
 
             // initialise the schedule matrix with avoid periods constraint and max block length constraint
             int[,] initialMatrix = ConstructInitialScheduleMatrix(maxBlockLength, data.AvoidPeriods ?? []);
@@ -228,7 +228,7 @@ namespace DashboardServer.Services
             return blocks;
         }
 
-        private static List<ScheduleBlock> CalculateBlockPriority(List<Assignment> assignments, List<ScheduleBlock> blocks, Dictionary<int, double> assignmentUrgencies, List<CourseWeight> courseWeights)
+        private static List<ScheduleBlock> CalculateBlockPriority(List<Assignment> assignments, List<ScheduleBlock> blocks, Dictionary<int, double> assignmentUrgencies, List<CourseWeight> courseWeights, SchedulerRules rules)
         {
             // Normalise course weights
             Dictionary<int, double> normalisedCourseWeights = new Dictionary<int, double>();
@@ -247,7 +247,7 @@ namespace DashboardServer.Services
                 double urgency = assignmentUrgencies[assignment.Id];
                 double courseWeight = normalisedCourseWeights[assignment.CourseId];
 
-                double priority = (urgency * 0.7) + (courseWeight * 0.3);
+                double priority = (urgency * rules.DeadlineUrgencyWeighting) + (courseWeight * rules.CoursePreferenceWeighting);
 
                 foreach (var block in blocks.Where(b => b.AssignmentId == assignment.Id))
                 {

@@ -73,6 +73,11 @@ namespace DashboardServer.Models.Constraints
 
         public void UpdateSchedulerPriorities(double deadlineUrgencyWeighting, double coursePreferenceWeighting)
         {
+            if (deadlineUrgencyWeighting + coursePreferenceWeighting != 1.0)
+            {
+                throw new ValidationException("The sum of the weightings must be equal to 1");
+            }
+            
             DeadlineUrgencyWeighting = deadlineUrgencyWeighting;
             CoursePreferenceWeighting = coursePreferenceWeighting;
         }
