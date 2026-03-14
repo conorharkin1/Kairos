@@ -3,19 +3,28 @@
         <Icon icon="teenyicons:loader-solid" width="100" height="100" class="spinning" :class="{ 'constant-spinning': runningScheduler }"/>
         <button v-if="!runningScheduler" @click="runScheduler" class="btn-primary btn-good">Create a schedule</button>
     </div>
-    <div class="scheduler-landing-container" v-if="collectingFeedback">
-        <h2>Based on the generated schedule...</h2>
-        <h4>You can adjust how the scheduler prioritises assignment deadlines against your course preferences</h4>
-        <div class="slider">
-            <label>deadlineUrgencyWeighting</label>
-            <label>{{schedulerRules.deadlineUrgencyWeighting}}</label>
-            <br>
-            <label>coursePreferenceWeighting</label>
-            <label>{{1 - schedulerRules.deadlineUrgencyWeighting}}</label>
-            <Slider :min="0" :max="1" :step="0.1" v-model="schedulerRules.deadlineUrgencyWeighting"
-                            @hasUnsavedChanges="unsavedChanges = true" />
+    <div class="feedback-container" v-if="collectingFeedback">
+        <div class="feedback-header">
+            <h2>Based on the generated schedule...</h2>
+            <h4>You can adjust how the scheduler prioritises assignment deadlines against your course preferences</h4>
         </div>
-        <button @click="collectingFeedback = false">BACK</button>
+        <div class="settings-container">
+            <div class="setting">
+                <label>Deadline Urgency Weighting</label>
+                <label>{{schedulerRules.deadlineUrgencyWeighting}}</label>
+            </div>
+            <div class="setting-last">
+                <label>Course Preference Weighting</label>
+                <label>{{Math.round((1 - schedulerRules.deadlineUrgencyWeighting) * 10) / 10}}</label>
+            </div>
+        </div>
+        <div class="slider">
+            <Slider :min="0" :max="1" :step="0.1" v-model="schedulerRules.deadlineUrgencyWeighting" @hasUnsavedChanges="unsavedChanges = true" />
+        </div>
+        <div class="actions">
+            <button class="btn-primary btn-warning" @click="collectingFeedback = false">BACK</button>
+            <button class="btn-primary btn-info" @click="saveFeedback">Provide Feedback</button>
+        </div>
     </div>
 </template>
 
@@ -64,6 +73,21 @@ const fetchSchedulerRules = async () => {
     }
 }
 
+const saveFeedback = async () => {
+    try {
+        /// ATTRIBUTION:
+        /// The rounding logic was adapted from Stackoverflow
+        /// URL: https://stackoverflow.com/questions/7342957/how-do-you-round-to-one-decimal-place-in-javascript
+        schedulerRules.value.coursePreferenceWeighting = Math.round((1 - schedulerRules.value.deadlineUrgencyWeighting) * 10) / 10;
+        await api.put('constraint/rules/feedback', schedulerRules.value)
+        toast.success('Feedback provided! You will notice changes in the next generated schedule.')
+    } catch (error) {
+        if (!DisplayErrorMessage(error)) {
+            toast.error('An error occurred while providing feedback. Please try again.')
+        }
+    }
+}
+
 </script>
 
 <style scoped lang="scss">
@@ -76,9 +100,41 @@ const fetchSchedulerRules = async () => {
     gap: 3rem;
     margin: 2rem;
     padding: 0.5rem;
+    min-width: 100%;
 }
 
+.feedback-container {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    max-width: 70%;
+    align-items: center;
+    text-align: center;
+    color: $primary-text-light;
+    gap: 2rem;
+    margin: 1rem;
+    padding: 0.5rem;
+}
 
+.settings-container {
+    display: flex;
+    min-width: 100%;
+    justify-content: space-between;
+}
+
+.setting {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    text-align: start;
+}
+
+.setting-last {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    text-align: end;
+}
 
 .spinning {
     display: inline-block;
@@ -97,11 +153,18 @@ const fetchSchedulerRules = async () => {
     display: flex;
     flex-direction: column;
     flex-grow: 1;
+    min-width: 100%;
     align-items: center;
 
     .slider-component {
         width: 100%;
     }
+}
+.actions {
+    display: flex;
+    min-width: 100%;
+    gap: 10rem;
+    justify-content: center;
 }
 
 @keyframes spinning {

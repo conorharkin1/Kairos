@@ -32,10 +32,10 @@ namespace DashboardServer.Controllers.Constraints
             return Ok(updated);
         }
 
-        [HttpPut("/feedback")]
-        public async Task<IActionResult> UpdateSchedulerPriorityCalculations(double deadlineUrgencyWeighting, double coursePreferenceWeighting)
+        [HttpPut("feedback")]
+        public async Task<IActionResult> UpdateSchedulerPriorityCalculations([FromBody] SchedulerRulesRequestDTO dto)
         {
-            await _service.UpdateSchedulerPrioritiesAsync(deadlineUrgencyWeighting, coursePreferenceWeighting);
+            await _service.UpdateSchedulerPrioritiesAsync(dto.DeadlineUrgencyWeighting, dto.CoursePreferenceWeighting);
             return Ok();
         }
 

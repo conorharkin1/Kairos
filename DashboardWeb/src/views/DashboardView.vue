@@ -147,6 +147,8 @@ const setCurrentSelectedCourse = (courseId) => {
 .scheduler-container {
     display: flex;
     flex-direction: column;
+    justify-content: center;
+    align-items: center;
     width: 100%;
     height: 30vh;
     margin-top: 0.5rem;

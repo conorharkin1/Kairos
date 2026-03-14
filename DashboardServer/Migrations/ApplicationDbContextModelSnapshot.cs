@@ -255,6 +255,12 @@ namespace DashboardServer.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<double>("CoursePreferenceWeighting")
+                        .HasColumnType("double precision");
+
+                    b.Property<double>("DeadlineUrgencyWeighting")
+                        .HasColumnType("double precision");
+
                     b.Property<int>("MaxSessionLength")
                         .HasColumnType("integer");
 
