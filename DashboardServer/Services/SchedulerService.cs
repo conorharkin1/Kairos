@@ -42,10 +42,11 @@ namespace DashboardServer.Services
 
         private async Task ExecuteScheduler(string userId, SchedulerData data)
         {
-            // Step 1: Calculate the total available working hours of the week from DailyCapacities constraint
-            int totalAvailableHours = CalculateTotalHours(data.DailyCapacities);
             int minBlockLength = data.Rules!.MinSessionLength;
             int maxBlockLength = data.Rules.MaxSessionLength;
+
+            // Step 1: Calculate the total available working hours of the week from DailyCapacities constraint
+            int totalAvailableHours = CalculateTotalHours(data.DailyCapacities);
 
             Dictionary<int, string> courseCodeLookup = data.Courses.ToDictionary(c => c.Id, c => c.CourseCode);
 
@@ -73,6 +74,9 @@ namespace DashboardServer.Services
 
             //Step 8: Build the schedule matrix from the block queue and daily capacities constraint
             ScheduleBlock?[,] schedule = BuildSchedule(initialMatrix, data.DailyCapacities, blockQueue);
+
+            //Step 9: Shuffle schedule slightly so that assignment 'work sprints' are grouped
+            OrganiseSchedule(schedule);
 
             //Step 9: Save the schedule to the database
             await _schedulerRepository.SaveSchedule(userId, schedule);
@@ -177,7 +181,7 @@ namespace DashboardServer.Services
             return assignmentHoursDict;
         }
 
-        private static List<ScheduleBlock> CreateBlocks(double hoursToAllocate, int minBlockLength, int courseId, int? assignmentId, string assignmentName, string userId, Dictionary<int, string> courseCodeLookup)
+        private static List<ScheduleBlock> CreateBlocks(double hoursToAllocate, int minBlockLength, int courseId, int assignmentId, string assignmentName, string userId, Dictionary<int, string> courseCodeLookup)
         {
             List<ScheduleBlock> blocks = new List<ScheduleBlock>();
             var minutesToAllocate = hoursToAllocate * 60;
@@ -379,6 +383,35 @@ namespace DashboardServer.Services
                 return false;
 
             return true;
+        }
+
+        private static void OrganiseSchedule(ScheduleBlock?[,] schedule)
+        {
+            int slots = 24;
+            int days = 6;
+
+            for (int i = 0; i < days; i++)
+            {
+                for (int j = 0; j < slots - 2; j++)
+                {
+                    var current = schedule[j, i];
+                    var next = schedule[j + 1, i];
+                    var last = schedule[j + 2, i];
+
+                    if (current == null || next == null || last == null)
+                    {
+                        continue;
+                    }
+
+                    if (current.AssignmentId == last.AssignmentId && current.AssignmentId != next.AssignmentId)
+                    {
+                        var tempStart = current.StartTime;
+                        var tempEnd = current.EndTime;
+                        current.SetTimeSlot(next.StartTime, next.EndTime);
+                        next.SetTimeSlot(tempStart, tempEnd);
+                    }
+                }
+            }
         }
     }
 }

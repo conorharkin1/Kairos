@@ -27,7 +27,7 @@ namespace DashboardServer.Models.Constraints
 
         protected SchedulerRules() { }
 
-        public SchedulerRules(string userId, int minSessionLength = 30, int maxSessionLength = 180) : base(userId)
+        public SchedulerRules(string userId, int minSessionLength = 30, int maxSessionLength = 120) : base(userId)
         {
             if (minSessionLength <= 0)
             {

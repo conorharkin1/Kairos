@@ -10,20 +10,18 @@
         </div>
         <div class="settings-container">
             <div class="setting">
-                <label>Deadline Urgency Weighting</label>
-                <label>{{schedulerRules.deadlineUrgencyWeighting}}</label>
+                <label>Deadline Urgency: {{schedulerRules.deadlineUrgencyWeighting}}</label>
+            </div>
+            <div class="slider">
+                <Slider :min="0" :max="1" :step="0.1" v-model="schedulerRules.deadlineUrgencyWeighting" @hasUnsavedChanges="unsavedChanges = true" />
             </div>
             <div class="setting-last">
-                <label>Course Preference Weighting</label>
-                <label>{{Math.round((1 - schedulerRules.deadlineUrgencyWeighting) * 10) / 10}}</label>
+                <label>Course Preference: {{Math.round((1 - schedulerRules.deadlineUrgencyWeighting) * 10) / 10}}</label>
             </div>
-        </div>
-        <div class="slider">
-            <Slider :min="0" :max="1" :step="0.1" v-model="schedulerRules.deadlineUrgencyWeighting" @hasUnsavedChanges="unsavedChanges = true" />
         </div>
         <div class="actions">
             <button class="btn-primary btn-warning" @click="collectingFeedback = false">BACK</button>
-            <button class="btn-primary btn-info" @click="saveFeedback">Provide Feedback</button>
+            <button class="btn-primary btn-good" @click="saveFeedback">Save preference</button>
         </div>
     </div>
 </template>
@@ -81,6 +79,7 @@ const saveFeedback = async () => {
         schedulerRules.value.coursePreferenceWeighting = Math.round((1 - schedulerRules.value.deadlineUrgencyWeighting) * 10) / 10;
         await api.put('constraint/rules/feedback', schedulerRules.value)
         toast.success('Feedback provided! You will notice changes in the next generated schedule.')
+        collectingFeedback.value = false;
     } catch (error) {
         if (!DisplayErrorMessage(error)) {
             toast.error('An error occurred while providing feedback. Please try again.')
@@ -106,8 +105,7 @@ const saveFeedback = async () => {
 .feedback-container {
     display: flex;
     flex-direction: column;
-    flex: 1;
-    max-width: 70%;
+    max-width: 100%;
     align-items: center;
     text-align: center;
     color: $primary-text-light;
@@ -119,13 +117,13 @@ const saveFeedback = async () => {
 .settings-container {
     display: flex;
     min-width: 100%;
+    gap: 3rem;
     justify-content: space-between;
 }
 
 .setting {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
     text-align: start;
 }
 
@@ -153,7 +151,6 @@ const saveFeedback = async () => {
     display: flex;
     flex-direction: column;
     flex-grow: 1;
-    min-width: 100%;
     align-items: center;
 
     .slider-component {
