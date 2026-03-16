@@ -30,7 +30,7 @@
 </template>
 
 <script setup>
-import { ref, shallowRef, onMounted } from 'vue'
+import { ref, shallowRef } from 'vue'
 import ProfileComponent from '@/components/ProfileComponent.vue'
 import SideBarComponent from '@/components/SideBarComponent.vue'
 import CalendarComponent from '@/components/CalendarComponent.vue'
@@ -63,7 +63,6 @@ const sidebarViewsLeft = [
 ]
 const sidebarViewsRight = [
     { icon: 'la:download', width: 30, height: 30, tooltip: 'Export Schedule', action: 'export' },
-    { icon: 'teenyicons:loader-solid', width: 30, height: 30, tooltip: 'Generate Schedule', action: 'generate' },
 ]
 
 const changeView = (view) => {
@@ -148,6 +147,8 @@ const setCurrentSelectedCourse = (courseId) => {
 .scheduler-container {
     display: flex;
     flex-direction: column;
+    justify-content: center;
+    align-items: center;
     width: 100%;
     height: 30vh;
     margin-top: 0.5rem;

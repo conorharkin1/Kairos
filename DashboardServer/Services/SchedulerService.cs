@@ -42,10 +42,11 @@ namespace DashboardServer.Services
 
         private async Task ExecuteScheduler(string userId, SchedulerData data)
         {
-            // Step 1: Calculate the total available working hours of the week from DailyCapacities constraint
-            int totalAvailableHours = CalculateTotalHours(data.DailyCapacities);
             int minBlockLength = data.Rules!.MinSessionLength;
             int maxBlockLength = data.Rules.MaxSessionLength;
+
+            // Step 1: Calculate the total available working hours of the week from DailyCapacities constraint
+            int totalAvailableHours = CalculateTotalHours(data.DailyCapacities);
 
             Dictionary<int, string> courseCodeLookup = data.Courses.ToDictionary(c => c.Id, c => c.CourseCode);
 
@@ -63,7 +64,7 @@ namespace DashboardServer.Services
 
             //Step 6: Calculate the priority of each block. Priority = (assignmentUrgency * 0.8) + (courseWeight * 0.2) where 0.8 and 0.2 are the behavioural constraints. (increase 0.8 to prioritise deadlines, increase 0.2 to prioritise courseweights)
             // Returns blocks sorted by priority from highest to lowest
-            blocks = CalculateBlockPriority(data.Assignments, blocks, assignmentUrgencyDict, data.CourseWeights);
+            blocks = CalculateBlockPriority(data.Assignments, blocks, assignmentUrgencyDict, data.CourseWeights, data.Rules);
 
             // initialise the schedule matrix with avoid periods constraint and max block length constraint
             int[,] initialMatrix = ConstructInitialScheduleMatrix(maxBlockLength, data.AvoidPeriods ?? []);
@@ -73,6 +74,9 @@ namespace DashboardServer.Services
 
             //Step 8: Build the schedule matrix from the block queue and daily capacities constraint
             ScheduleBlock?[,] schedule = BuildSchedule(initialMatrix, data.DailyCapacities, blockQueue);
+
+            //Step 9: Shuffle schedule slightly so that assignment 'work sprints' are grouped
+            OrganiseSchedule(schedule);
 
             //Step 9: Save the schedule to the database
             await _schedulerRepository.SaveSchedule(userId, schedule);
@@ -177,7 +181,7 @@ namespace DashboardServer.Services
             return assignmentHoursDict;
         }
 
-        private static List<ScheduleBlock> CreateBlocks(double hoursToAllocate, int minBlockLength, int courseId, int? assignmentId, string assignmentName, string userId, Dictionary<int, string> courseCodeLookup)
+        private static List<ScheduleBlock> CreateBlocks(double hoursToAllocate, int minBlockLength, int courseId, int assignmentId, string assignmentName, string userId, Dictionary<int, string> courseCodeLookup)
         {
             List<ScheduleBlock> blocks = new List<ScheduleBlock>();
             var minutesToAllocate = hoursToAllocate * 60;
@@ -228,7 +232,7 @@ namespace DashboardServer.Services
             return blocks;
         }
 
-        private static List<ScheduleBlock> CalculateBlockPriority(List<Assignment> assignments, List<ScheduleBlock> blocks, Dictionary<int, double> assignmentUrgencies, List<CourseWeight> courseWeights)
+        private static List<ScheduleBlock> CalculateBlockPriority(List<Assignment> assignments, List<ScheduleBlock> blocks, Dictionary<int, double> assignmentUrgencies, List<CourseWeight> courseWeights, SchedulerRules rules)
         {
             // Normalise course weights
             Dictionary<int, double> normalisedCourseWeights = new Dictionary<int, double>();
@@ -238,13 +242,16 @@ namespace DashboardServer.Services
                 normalisedCourseWeights[cw.CourseId] = (double)cw.Weight / totalWeight;
             }
 
-            // Formula -> Priority = (assignmentUrgency * 0.8) + (courseWeight * 0.2)
+            // Formula: Weighted linear combination.
+            // Priority = (weighting1 * variable1) + (weighting2 * variable2) ...
+            // For example: Priority = (assignmentUrgency * 0.7) + (courseWeight * 0.3)
+            // Default values are 0.7 and 0.3 to naturally value assignment deadlines more than course importance
             foreach (var assignment in assignments)
             {
                 double urgency = assignmentUrgencies[assignment.Id];
                 double courseWeight = normalisedCourseWeights[assignment.CourseId];
 
-                double priority = (urgency * 0.7) + (courseWeight * 0.3);
+                double priority = (urgency * rules.DeadlineUrgencyWeighting) + (courseWeight * rules.CoursePreferenceWeighting);
 
                 foreach (var block in blocks.Where(b => b.AssignmentId == assignment.Id))
                 {
@@ -376,6 +383,35 @@ namespace DashboardServer.Services
                 return false;
 
             return true;
+        }
+
+        private static void OrganiseSchedule(ScheduleBlock?[,] schedule)
+        {
+            int slots = 24;
+            int days = 6;
+
+            for (int i = 0; i < days; i++)
+            {
+                for (int j = 0; j < slots - 2; j++)
+                {
+                    var current = schedule[j, i];
+                    var next = schedule[j + 1, i];
+                    var last = schedule[j + 2, i];
+
+                    if (current == null || next == null || last == null)
+                    {
+                        continue;
+                    }
+
+                    if (current.AssignmentId == last.AssignmentId && current.AssignmentId != next.AssignmentId)
+                    {
+                        var tempStart = current.StartTime;
+                        var tempEnd = current.EndTime;
+                        current.SetTimeSlot(next.StartTime, next.EndTime);
+                        next.SetTimeSlot(tempStart, tempEnd);
+                    }
+                }
+            }
         }
     }
 }

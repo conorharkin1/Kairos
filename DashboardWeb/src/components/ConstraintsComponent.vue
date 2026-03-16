@@ -105,7 +105,7 @@ const dailyCapacities = ref([])
 const courseWeights = ref([])
 const schedulerRules = ref({
     minSessionLength: 30,
-    maxSessionLength: 180
+    maxSessionLength: 120
 })
 const avoidPeriods = ref([])
 

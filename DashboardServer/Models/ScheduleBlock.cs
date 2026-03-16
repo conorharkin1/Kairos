@@ -4,7 +4,7 @@ namespace DashboardServer.Models
     {
         protected ScheduleBlock() { }
 
-        public ScheduleBlock(string userId, int courseId, int? assignmentId, string name, string? assignmentName, double priority, BlockType blockType) : base(userId)
+        public ScheduleBlock(string userId, int courseId, int assignmentId, string name, string? assignmentName, double priority, BlockType blockType) : base(userId)
         {
             BlockId = Guid.NewGuid().ToString();
             Name = name;
@@ -20,7 +20,7 @@ namespace DashboardServer.Models
         public int ScheduleId { get; private set; }
         public Schedule? Schedule { get; private set; }
         public double Priority { get; private set; }
-        public int? AssignmentId { get; private set; }
+        public int AssignmentId { get; private set; }
         public string? AssignmentName { get; private set; }
         public int CourseId { get; private set; }
         public Course? Course { get; private set; }
