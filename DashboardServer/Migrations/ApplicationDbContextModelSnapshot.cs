@@ -385,7 +385,7 @@ namespace DashboardServer.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<int?>("AssignmentId")
+                    b.Property<int>("AssignmentId")
                         .HasColumnType("integer");
 
                     b.Property<string>("AssignmentName")
