@@ -99,11 +99,16 @@ namespace DashboardServer.Services
             int totalWeight = 0;
             Dictionary<int, double> results = [];
 
+            // Each course has a user specified 'weight' as a percentage.
+            // Calculate the total weight across all courses.
             foreach (var weight in constraints.Select(w => w.Weight))
             {
                 totalWeight += weight;
             }
 
+            // Use the totalWeight calculated above to calculate the proportion of hours each course
+            // gets allocated. Eg. 10 total available hours, Course A is weighted 60% and Course B 40%
+            // The total hours will be split 60/40 between Course A and B.
             foreach (var con in constraints)
             {
                 double hours = totalAvailableHours * ((double)con.Weight / totalWeight);
@@ -137,7 +142,7 @@ namespace DashboardServer.Services
             }
 
             return (courseTotalUrgency, assignmentUrgency);
-
+ 
         }
         private static double CalculateAssignmentUrgency(DateTime dueDate)
         {
@@ -154,9 +159,12 @@ namespace DashboardServer.Services
             }
             else if (daysOut <= 7)
             {
+                // 3/4 = 0.75 ... 3/7 = 0.43
                 return 3 / daysOut;
             }
 
+            // 2/8 = 0.25 ... 2/13 = 0.15
+            // As deadline becomes further away, urgency decreases non-linearly
             return 2 / daysOut;
         }
 
