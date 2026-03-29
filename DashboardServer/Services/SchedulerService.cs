@@ -32,10 +32,7 @@ namespace DashboardServer.Services
 
             SchedulerData data = await _schedulerRepository.GetDataForScheduler();
 
-            if (!CanScheduleRun(data))
-            {
-                throw new ValidationException("The scheduler requires assignments, courses and constraints to create a schedule.");
-            }
+            await CanScheduleRun(data);
 
             await ExecuteScheduler(userId, data);
         }
@@ -72,8 +69,10 @@ namespace DashboardServer.Services
             //Step 7: Sort the blocks by highest priority. Add them to a queue.
             Queue<ScheduleBlock> blockQueue = new Queue<ScheduleBlock>(blocks);
 
+            Dictionary<int, DateTime?> assignmentDueDateLookup = data.Assignments.ToDictionary(a => a.Id, a => a.DueDate);
+
             //Step 8: Build the schedule matrix from the block queue and daily capacities constraint
-            ScheduleBlock?[,] schedule = BuildSchedule(initialMatrix, data.DailyCapacities, blockQueue);
+            ScheduleBlock?[,] schedule = BuildSchedule(initialMatrix, data.DailyCapacities, blockQueue, assignmentDueDateLookup, courseCodeLookup, userId);
 
             //Step 9: Shuffle schedule slightly so that assignment 'work sprints' are grouped
             OrganiseSchedule(schedule);
@@ -266,6 +265,11 @@ namespace DashboardServer.Services
                     block.SetPriority(priority);
                     priority -= 0.01;
                 }
+
+                foreach (var block in blocks.Where(b => b.AssignmentId == -1))
+                {
+                    block.SetPriority(normalisedCourseWeights[block.CourseId] * rules.CoursePreferenceWeighting);
+                }
             }
 
             blocks = blocks.OrderByDescending(b => b.Priority).ToList();
@@ -323,7 +327,7 @@ namespace DashboardServer.Services
 
         }
 
-        private static ScheduleBlock?[,] BuildSchedule(int[,] initialMatrix, List<DailyCapacity> dailyCapacities, Queue<ScheduleBlock> blockQueue)
+        private static ScheduleBlock?[,] BuildSchedule(int[,] initialMatrix, List<DailyCapacity> dailyCapacities, Queue<ScheduleBlock> blockQueue, Dictionary<int, DateTime?> assignmentDueDateLookup, Dictionary<int, string> courseCodeLookup, string userId)
         {
             int rows = 24;  // 9am to 9pm
             int cols = 7;   // days of week
@@ -332,23 +336,47 @@ namespace DashboardServer.Services
             DateTime startDate = DateTime.UtcNow.Date;
             int startDayIndex = (int)startDate.DayOfWeek;
 
+            List<ScheduleBlock> remainingBlocks = new List<ScheduleBlock>(blockQueue);
+
             for (int day = 0; day < cols; day++)
             {
                 int dayIndex = (startDayIndex + day) % 7;
-                int maxAllocatableHours = dailyCapacities.First(dc => dc.DayIndex == dayIndex).MaxHours;
+                DateTime slotDate = startDate.AddDays(day);
 
+                // Convert any assignment blocks past due date into study blocks
+                for (int i = 0; i < remainingBlocks.Count; i++)
+                {
+                    var block = remainingBlocks[i];
+
+                    if (block.AssignmentId != -1 &&
+                        assignmentDueDateLookup.TryGetValue(block.AssignmentId, out DateTime? dueDate) &&
+                        dueDate.HasValue &&
+                        slotDate.Date >= dueDate.Value.Date)
+                    {
+                        remainingBlocks[i] = new ScheduleBlock(
+                            userId,
+                            block.CourseId,
+                            -1,
+                            $"Study for {courseCodeLookup[block.CourseId]}",
+                            "Study",
+                            0,
+                            Models.BlockType.Study
+                        );
+                    }
+                }
+
+                int maxAllocatableHours = dailyCapacities.First(dc => dc.DayIndex == dayIndex).MaxHours;
+                
                 if (maxAllocatableHours == 0)
                     continue;
 
                 int slotsToAllocate = maxAllocatableHours * 2; // each slot is 30 mins
+                int blockIndex = 0;
 
                 for (int slot = 0; slot < rows; slot++)
                 {
-                    if (slotsToAllocate == 0)
+                    if (slotsToAllocate == 0 || blockIndex >= remainingBlocks.Count)
                         break;
-                    if (blockQueue.Count == 0)
-                        break;
-
 
                     // if bad slot
                     if (initialMatrix[slot, dayIndex] == -1)
@@ -357,46 +385,46 @@ namespace DashboardServer.Services
                     }
                     else
                     {
-                        var block = blockQueue.Dequeue();
-                        DateTime startTime = startDate.AddDays(day).AddHours(9).AddMinutes(slot * 30);
+                        var block = remainingBlocks[blockIndex++];
+                        DateTime startTime = slotDate.AddHours(9).AddMinutes(slot * 30);
                         block.SetTimeSlot(startTime, startTime.AddMinutes(30));
 
                         schedule[slot, dayIndex] = block;
                         slotsToAllocate--;
                     }
                 }
+
+                remainingBlocks.RemoveRange(0, blockIndex);
             }
 
             return schedule;
         }
 
-        private static bool CanScheduleRun(SchedulerData data)
+        private async static Task CanScheduleRun(SchedulerData data)
         {
             if (data.Assignments == null || data.Assignments.Count == 0)
-                return false;
+                throw new ValidationException("The scheduler requires assignments to create a schedule.");
 
             if (data.Courses == null || data.Courses.Count == 0)
-                return false;
+                throw new ValidationException("The scheduler requires courses to create a schedule.");
+
+            if (data.DailyCapacities.Sum(dc => dc.MaxHours) == 0)
+                throw new ValidationException("Your availability for the coming week is set to 0 hours. Navigate to the constraints view to update your daily availability.");
 
             if (data.DailyCapacities == null || data.DailyCapacities.Count == 0)
-                return false;
-            
-            if (data.CourseWeights == null || data.CourseWeights.Count == 0)
-                return false;
-            
-            if (data.Rules == null)
-                return false;
-            
-            if (data.DailyCapacities.Sum(dc => dc.MaxHours) == 0)
-                return false;
+                throw new ValidationException("The scheduler requires daily capacities to create a schedule.");
 
-            return true;
+            if (data.CourseWeights == null || data.CourseWeights.Count == 0)
+                throw new ValidationException("The scheduler requires course weights to create a schedule.");
+
+            if (data.Rules == null)
+                throw new ValidationException("The scheduler requires rules to create a schedule.");
         }
 
         private static void OrganiseSchedule(ScheduleBlock?[,] schedule)
         {
             int slots = 24;
-            int days = 6;
+            int days = 7;
 
             for (int i = 0; i < days; i++)
             {
