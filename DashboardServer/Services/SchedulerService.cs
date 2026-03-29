@@ -32,10 +32,12 @@ namespace DashboardServer.Services
 
             SchedulerData data = await _schedulerRepository.GetDataForScheduler();
 
-            if (!CanScheduleRun(data))
-            {
-                throw new ValidationException("The scheduler requires assignments, courses and constraints to create a schedule.");
-            }
+            await CanScheduleRun(data);
+
+            // if (!CanScheduleRun(data))
+            // {
+            //     throw new ValidationException("The scheduler requires assignments, courses and constraints to create a schedule.");
+            // }
 
             await ExecuteScheduler(userId, data);
         }
@@ -395,27 +397,25 @@ namespace DashboardServer.Services
             return schedule;
         }
 
-        private static bool CanScheduleRun(SchedulerData data)
+        private async static Task CanScheduleRun(SchedulerData data)
         {
             if (data.Assignments == null || data.Assignments.Count == 0)
-                return false;
+                throw new ValidationException("The scheduler requires assignments to create a schedule.");
 
             if (data.Courses == null || data.Courses.Count == 0)
-                return false;
+                throw new ValidationException("The scheduler requires courses to create a schedule.");
+
+            if (data.DailyCapacities.Sum(dc => dc.MaxHours) == 0)
+                throw new ValidationException("Your availability for the coming week is set to 0 hours. Navigate to the constraints view to update your daily availability.");
 
             if (data.DailyCapacities == null || data.DailyCapacities.Count == 0)
-                return false;
-            
-            if (data.CourseWeights == null || data.CourseWeights.Count == 0)
-                return false;
-            
-            if (data.Rules == null)
-                return false;
-            
-            if (data.DailyCapacities.Sum(dc => dc.MaxHours) == 0)
-                return false;
+                throw new ValidationException("The scheduler requires daily capacities to create a schedule.");
 
-            return true;
+            if (data.CourseWeights == null || data.CourseWeights.Count == 0)
+                throw new ValidationException("The scheduler requires course weights to create a schedule.");
+
+            if (data.Rules == null)
+                throw new ValidationException("The scheduler requires rules to create a schedule.");
         }
 
         private static void OrganiseSchedule(ScheduleBlock?[,] schedule)
