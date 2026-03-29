@@ -34,11 +34,6 @@ namespace DashboardServer.Services
 
             await CanScheduleRun(data);
 
-            // if (!CanScheduleRun(data))
-            // {
-            //     throw new ValidationException("The scheduler requires assignments, courses and constraints to create a schedule.");
-            // }
-
             await ExecuteScheduler(userId, data);
         }
 
