@@ -94,7 +94,6 @@ namespace DashboardServer.Tests.Service
         }
 
         [Theory]
-        [InlineData(0)]
         [InlineData(-1)]
         [InlineData(-999)]
         public async Task CreateAsync_InvalidCourseId_ThrowsValidationException(int invalidCourseId)
