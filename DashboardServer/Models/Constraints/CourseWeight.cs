@@ -15,7 +15,7 @@ namespace DashboardServer.Models.Constraints
 
         public CourseWeight(string userId, int courseId, int weight) : base(userId)
         {
-            if (courseId <= 0)
+            if (courseId < 0)
             {
                 throw new ValidationException("Valid Course Id is required");
             }

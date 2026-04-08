@@ -1,7 +1,6 @@
 using DashboardServer.Data;
 using DashboardServer.Models;
 using DashboardServer.Repositories;
-using DashboardServer.Repositories.Interfaces;
 using DashboardServer.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Moq;
@@ -12,7 +11,6 @@ namespace DashboardServer.Tests.Repository
     {
         private readonly ApplicationDbContext _dbContext;
         private readonly AssignmentRepository _repository;
-        private readonly IUserResolverService _userResolverService;
 
         public AssignmentRepositoryTests()
         {
@@ -21,10 +19,9 @@ namespace DashboardServer.Tests.Repository
                 .Options;
 
             var userResolverMock = new Mock<IUserResolverService>();
-            userResolverMock.Setup(x => x.UserId).Returns("123");
+            userResolverMock.Setup(x => x.UserId).Returns("user-123");
 
-            _userResolverService = userResolverMock.Object;
-            _dbContext = new ApplicationDbContext(options, _userResolverService);
+            _dbContext = new ApplicationDbContext(options, userResolverMock.Object);
             _repository = new AssignmentRepository(_dbContext);
         }
 
@@ -34,149 +31,44 @@ namespace DashboardServer.Tests.Repository
             _dbContext.Dispose();
         }
 
-        #region Create Tests
-
-        [Fact]
-        public async Task Create_ValidAssignment_ReturnsCreatedAssignmentWithIdAndUserId()
+        private Assignment BuildAssignment(string userId = "user-123", int courseId = 1, string name = "Test Assignment", string? description = null, DateTime? dueDate = null, string? htmlUrl = null, bool isComplete = false, bool isPriority = false)
         {
-            // Arrange
-            var userId = "123";
-            var assignment = new Assignment
-            {
-                Name = "Test Assignment",
-                DueDate = DateTime.Now.AddDays(7),
-            };
-
-            // Act
-            var created = await _repository.Create(userId, assignment);
-
-            // Assert
-            Assert.NotNull(created);
-            Assert.True(created.Id > 0);
-            Assert.Equal(userId, created.UserId);
-            Assert.Equal("Test Assignment", created.Name);
+            return new Assignment(userId, courseId, name, description, dueDate ?? DateTime.UtcNow.AddDays(7), htmlUrl, isComplete, isPriority);
         }
 
-        #endregion
+        [Fact]
+        public async Task CreateAsync_ValidAssignment_ReturnsAssignmentWithGeneratedId()
+        {
+            var assignment = BuildAssignment();
 
-        #region Update Tests
+            var result = await _repository.CreateAsync(assignment);
+
+            Assert.NotNull(result);
+            Assert.True(result.Id > 0);
+        }
 
         [Fact]
-        public async Task Update_ExistingAssignment_UpdatesAndReturnsAssignment()
+        public async Task CreateAsync_ValidAssignment_PersistsToDatabase()
         {
-            var userId = "123";
+            var assignment = BuildAssignment(name: "Persisted Assignment");
 
-            var assignment = new Assignment
-            {
-                Name = "Assignment 1",
-                DueDate = DateTime.Now.AddDays(1),
-                UserId = userId
-            };
+            var result = await _repository.CreateAsync(assignment);
 
-            _dbContext.Assignments.Add(assignment);
-            await _dbContext.SaveChangesAsync();
+            var fromDb = await _dbContext.Assignments.FindAsync(result.Id);
+            Assert.NotNull(fromDb);
+            Assert.Equal("Persisted Assignment", fromDb.Name);
+        }
 
-            var updatedAssignment = new Assignment
-            {
-                Name = "Updated Assignment 1",
-                DueDate = assignment.DueDate
-            };
+        [Fact]
+        public async Task DeleteAsync_ExistingAssignment_RemovesFromDatabase()
+        {
+            var assignment = BuildAssignment();
+            await _repository.CreateAsync(assignment);
 
-            var updated = await _repository.Update(userId, assignment.Id, updatedAssignment);
-
-            Assert.NotNull(updated);
-            Assert.Equal("Updated Assignment 1", updated.Name);
+            await _repository.DeleteAsync(assignment);
 
             var fromDb = await _dbContext.Assignments.FindAsync(assignment.Id);
-            Assert.NotNull(fromDb);
-            Assert.Equal("Updated Assignment 1", fromDb.Name);
+            Assert.Null(fromDb);
         }
-
-        [Fact]
-        public async Task Update_NonExistentAssignment_ThrowsKeyNotFoundException()
-        {
-            // Arrange
-            var userId = "123";
-            var nonExistentId = 999;
-            var updateData = new Assignment { Name = "Test" };
-
-            // Assert
-            var exception = await Assert.ThrowsAsync<KeyNotFoundException>(
-                () => _repository.Update(userId, nonExistentId, updateData));
-
-            Assert.Equal("Assignment not found", exception.Message);
-        }
-
-        [Fact]
-        public async Task Update_WithPartialData_UpdatesOnlyProvidedFields()
-        {
-            // Arrange
-            var userId = "123";
-            var assignment = new Assignment
-            {
-                Name = "Original",
-                Description = "Original Description",
-                DueDate = DateTime.Now,
-                HtmlUrl = "https://original.com"
-            };
-            var created = await _repository.Create(userId, assignment);
-
-            var updateData = new Assignment
-            {
-                Name = "Updated Name Only",
-                Description = created.Description,
-                DueDate = created.DueDate,
-                HtmlUrl = created.HtmlUrl
-            };
-
-            // Act
-            var result = await _repository.Update(userId, created.Id, updateData);
-
-            // Assert
-            Assert.Equal("Updated Name Only", result.Name);
-            Assert.Equal("Original Description", result.Description);
-        }
-
-        #endregion
-
-        #region Delete Tests
-
-        [Fact]
-        public async Task Delete_ExistingAssignment_RemovesAssignment()
-        {
-            // Arrange
-            var userId = "123";
-            var assignment = new Assignment
-            {
-                Name = "To Be Deleted",
-                DueDate = DateTime.Now.AddDays(3),
-                UserId = userId
-            };
-            _dbContext.Assignments.Add(assignment);
-            await _dbContext.SaveChangesAsync();
-
-            // Act
-            await _repository.Delete(userId, assignment.Id);
-
-            // Assert
-            var deleted = await _dbContext.Assignments.Where(a => a.Id == assignment.Id).FirstOrDefaultAsync();
-            Assert.Null(deleted);
-        }
-
-        [Fact]
-        public async Task Delete_NonExistentAssignment_ThrowsKeyNotFoundException()
-        {
-            // Arrange
-            var userId = "123";
-            var nonExistentId = 999;
-
-            // Assert
-            var exception = await Assert.ThrowsAsync<KeyNotFoundException>(
-                () => _repository.Delete(userId, nonExistentId));
-
-            Assert.Equal("Assignment not found", exception.Message);
-        }
-
-        #endregion
     }
 }

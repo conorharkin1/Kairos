@@ -42,13 +42,11 @@ namespace DashboardServer.Tests.Repository
             var userId = "user123";
             var encryptedApiKey = "encrypted_key_12345";
 
-            var user = new ApplicationUser
+            var user = new ApplicationUser("Test", "User")
             {
                 Id = userId,
                 UserName = "testuser",
-                Email = "test@example.com",
-                FirstName = "Test",
-                LastName = "User"
+                Email = "test@example.com"
             };
 
             await _dbContext.Users.AddAsync(user);
@@ -60,7 +58,7 @@ namespace DashboardServer.Tests.Repository
             // Assert
             var updatedUser = await _dbContext.Users.FindAsync(userId);
             Assert.NotNull(updatedUser);
-            Assert.Equal(encryptedApiKey, updatedUser.CanvasApiKey);
+            Assert.Equal(encryptedApiKey, updatedUser!.CanvasApiKey);
         }
 
         [Fact]
@@ -71,13 +69,13 @@ namespace DashboardServer.Tests.Repository
             var oldApiKey = "old_encrypted_key";
             var newApiKey = "new_encrypted_key";
 
-            var user = new ApplicationUser
+            var user = new ApplicationUser("Test", "User")
             {
                 Id = userId,
                 UserName = "testuser",
-                Email = "test@example.com",
-                CanvasApiKey = oldApiKey
+                Email = "test@example.com"
             };
+            user.SetApiKey(oldApiKey);
 
             await _dbContext.Users.AddAsync(user);
             await _dbContext.SaveChangesAsync();
@@ -88,8 +86,28 @@ namespace DashboardServer.Tests.Repository
             // Assert
             var updatedUser = await _dbContext.Users.FindAsync(userId);
             Assert.NotNull(updatedUser);
-            Assert.Equal(newApiKey, updatedUser.CanvasApiKey);
+            Assert.Equal(newApiKey, updatedUser!.CanvasApiKey);
             Assert.NotEqual(oldApiKey, updatedUser.CanvasApiKey);
+        }
+
+        [Fact]
+        public async Task SetApiKey_EmptyKey_ThrowsValidationException()
+        {
+            // Arrange
+            var userId = "user123";
+            var user = new ApplicationUser("Test", "User")
+            {
+                Id = userId,
+                UserName = "testuser",
+                Email = "test@example.com"
+            };
+
+            await _dbContext.Users.AddAsync(user);
+            await _dbContext.SaveChangesAsync();
+
+            // Act & Assert
+            await Assert.ThrowsAsync<DashboardServer.Exceptions.ValidationException>(
+                () => _repository.SetApiKey(userId, ""));
         }
 
         #endregion
@@ -103,13 +121,13 @@ namespace DashboardServer.Tests.Repository
             var userId = "user123";
             var encryptedApiKey = "encrypted_key_12345";
 
-            var user = new ApplicationUser
+            var user = new ApplicationUser("Test", "User")
             {
                 Id = userId,
                 UserName = "testuser",
-                Email = "test@example.com",
-                CanvasApiKey = encryptedApiKey
+                Email = "test@example.com"
             };
+            user.SetApiKey(encryptedApiKey);
 
             await _dbContext.Users.AddAsync(user);
             await _dbContext.SaveChangesAsync();
@@ -140,12 +158,11 @@ namespace DashboardServer.Tests.Repository
             // Arrange
             var userId = "user123";
 
-            var user = new ApplicationUser
+            var user = new ApplicationUser("Test", "User")
             {
                 Id = userId,
                 UserName = "testuser",
-                Email = "test@example.com",
-                CanvasApiKey = null
+                Email = "test@example.com"
             };
 
             await _dbContext.Users.AddAsync(user);
@@ -164,12 +181,11 @@ namespace DashboardServer.Tests.Repository
             // Arrange
             var userId = "user123";
 
-            var user = new ApplicationUser
+            var user = new ApplicationUser("Test", "User")
             {
                 Id = userId,
                 UserName = "testuser",
-                Email = "test@example.com",
-                CanvasApiKey = ""
+                Email = "test@example.com"
             };
 
             await _dbContext.Users.AddAsync(user);

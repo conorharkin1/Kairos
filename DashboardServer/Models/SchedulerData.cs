@@ -1,3 +1,4 @@
+using DashboardServer.Exceptions;
 using DashboardServer.Models.Constraints;
 
 namespace DashboardServer.Models
@@ -24,6 +25,36 @@ namespace DashboardServer.Models
             CourseWeights = courseWeights;
             DailyCapacities = dailyCapacities;
             Rules = rules;
+            AvoidPeriods = avoidPeriods;
+        }
+
+        public void SetAssignments(List<Assignment> assignments)
+        {
+            Assignments = assignments;
+        }
+        public void SetCourses(List<Course> courses)
+        {
+            Courses = courses;
+        }
+        public void SetCourseWeights(List<CourseWeight> courseWeights)
+        {
+            CourseWeights = courseWeights;
+        }
+        public void SetDailyCapacities(List<DailyCapacity> dailyCapacities)
+        {
+            if (dailyCapacities.Count != 7)
+            {
+                throw new ValidationException("There must be exactly 7 daily capacities, one for each day of the week.");
+            }
+
+            DailyCapacities = dailyCapacities;
+        }
+        public void SetRules(SchedulerRules rules)
+        {
+            Rules = rules;
+        }
+        public void SetAvoidPeriods(List<AvoidPeriod> avoidPeriods)
+        {
             AvoidPeriods = avoidPeriods;
         }
     }

@@ -23,7 +23,7 @@ namespace DashboardServer.Models
                 throw new ValidationException("Assignment name cannot be empty");
             }
 
-            if (courseId <= 0)
+            if (courseId < 0)
             {
                 throw new ValidationException("Valid Course Id is required");
             }
