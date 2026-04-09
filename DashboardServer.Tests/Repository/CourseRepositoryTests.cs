@@ -168,5 +168,50 @@ namespace DashboardServer.Tests.Repository
             Assert.NotNull(result);
             Assert.Empty(result);
         }
+
+        [Fact]
+        public async Task DeleteAsync_DeletesAssignmentsAndQuizzes_WhenCourseDeleted()
+        {
+            // Arrange
+            var userId = "user-123";
+            var course = BuildCourse(userId, "CS101", "Test Course");
+            var otherCourse = BuildCourse(userId, "CS102", "Other Course");
+
+            await _dbContext.Courses.AddRangeAsync(course, otherCourse);
+            await _dbContext.SaveChangesAsync();
+
+            var assignments = new List<Assignment>
+            {
+                new Assignment(userId, course.Id, "Assignment 1", null, DateTime.UtcNow.AddDays(1), null, false, false),
+                new Assignment(userId, course.Id, "Assignment 2", null, DateTime.UtcNow.AddDays(1), null, false, false),
+                new Assignment(userId, otherCourse.Id, "Other Assignment", null, DateTime.UtcNow.AddDays(1), null, false, false)
+            };
+
+            var quizzes = new List<Quiz>
+            {
+                new Quiz(userId, course.Id, "Quiz 1", DateTime.UtcNow.AddDays(1), null, null, false, false),
+                new Quiz(userId, otherCourse.Id, "Other Quiz", DateTime.UtcNow.AddDays(1), null, null, false, false)
+            };
+
+            await _dbContext.Assignments.AddRangeAsync(assignments);
+            await _dbContext.Quizzes.AddRangeAsync(quizzes);
+            await _dbContext.SaveChangesAsync();
+
+            // Act
+            await _repository.DeleteAsync(course);
+
+            // Assert
+            var deletedCourse = await _dbContext.Courses.FindAsync(course.Id);
+            Assert.Null(deletedCourse);
+
+            var remainingAssignments = await _dbContext.Assignments.ToListAsync();
+            var remainingQuizzes = await _dbContext.Quizzes.ToListAsync();
+
+            Assert.DoesNotContain(remainingAssignments, a => a.CourseId == course.Id);
+            Assert.Single(remainingAssignments); // Only assignments from the other course should remain
+
+            Assert.DoesNotContain(remainingQuizzes, q => q.CourseId == course.Id);
+            Assert.Single(remainingQuizzes); // Only quizzes from the other course should remain
+        }
     }
 }
