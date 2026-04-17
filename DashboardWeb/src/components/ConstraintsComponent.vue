@@ -94,7 +94,9 @@ const timeConfig = {
     noCalendar: true,
     dateFormat: "H:i",
     time_24hr: true,
-    minuteIncrement: 30
+    minuteIncrement: 30,
+    minTime: "09:00",
+    maxTime: "21:00"
 };
 
 const isLoading = ref(false)
