@@ -94,19 +94,18 @@ const updateApiKey = async () => {
 }
 
 const handleDeleteAccount = async () => {
-    isLoading.value = true
-
     const confirmed = window.confirm('Are you sure you want to delete your account? This action cannot be undone.')
-    if (confirmed) {
-        try {
-            await deleteAccount()
-        } catch (error) {
-            if (!DisplayErrorMessage(error)) {
-                toast.error('An error occurred while deleting your account. Please try again.')
-            }
-        } finally {
-            isLoading.value = false
+    if (!confirmed) return
+
+    isLoading.value = true
+    try {
+        await deleteAccount()
+    } catch (error) {
+        if (!DisplayErrorMessage(error)) {
+            toast.error('An error occurred while deleting your account. Please try again.')
         }
+    } finally {
+        isLoading.value = false
     }
 }
 
