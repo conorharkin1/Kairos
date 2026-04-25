@@ -5,11 +5,11 @@ namespace DashboardServer.DTOs.ConstraintDTOs.Requests
     public class SchedulerRulesRequestDTO
     {
         [Required]
-        [Range(1, int.MaxValue, ErrorMessage = "Min session length must be a positive integer")]
+        [Range(30, 240, ErrorMessage = "Min session length must be between 30 and 240 minutes")]
         public int MinSessionLength { get; set; }
 
         [Required]
-        [Range(1, int.MaxValue, ErrorMessage = "Max session length must be a positive integer")]
+        [Range(30, 240, ErrorMessage = "Max session length must be between 30 and 240 minutes")]
         public int MaxSessionLength { get; set; }
 
         [Range(0.0, 1.0, ErrorMessage = "Deadline urgency weighting must be between 0 and 1")]
