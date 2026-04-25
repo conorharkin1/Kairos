@@ -17,19 +17,26 @@ something Canvas in particular fails to do effectively.
 - Testing: XUnit and Moq
 
 ## Project Structure
-DashboardWeb -> The frontend project
-    - DashboardWeb/src contains the majority of the frontend source code
 
-DashboardServer -> The backend server
-    - Layered Architecture
-        -> Controller Layer
-        -> Service Layer
-        -> Repository Layer (Data Access Layer)
-    - DashboardServer/Models contains the data entities of the application
-    - DashboardServer/Data contains the EntityFramework Core configuration
+### DashboardWeb (Frontend)
+- The frontend project
+- `DashboardWeb/src` contains the majority of the frontend source code
 
-DashboardServer.Tests -> The testing project.
-- To run tests, cd to the DashboardServer.Tests project and run 'dotnet test'.
+### DashboardServer (Backend)
+- The backend server
+- Uses a layered architecture:
+  - Controller Layer
+  - Service Layer
+  - Repository Layer (Data Access Layer)
+- `DashboardServer/Models` contains the data entities of the application
+- `DashboardServer/Data` contains the Entity Framework Core configuration
+
+### DashboardServer.Tests (Testing)
+- The testing project
+- To run tests:
+  ```bash
+  cd DashboardServer.Tests
+  dotnet test
 
 
 ## Usage
