@@ -4,6 +4,10 @@ namespace DashboardServer.Models.Constraints
 {
     public class SchedulerRules : BaseEntity
     {
+        private const int SessionLengthStep = 30;
+        private const int SessionLengthMin = 30;
+        private const int SessionLengthMax = 240;
+
         /// <summary>
         /// Min length of each session 'block' in minutes
         /// </summary>
@@ -29,20 +33,7 @@ namespace DashboardServer.Models.Constraints
 
         public SchedulerRules(string userId, int minSessionLength = 30, int maxSessionLength = 120) : base(userId)
         {
-            if (minSessionLength <= 0)
-            {
-                throw new ValidationException("Min session length must be a positive integer");
-            }
-
-            if (maxSessionLength <= 0)
-            {
-                throw new ValidationException("Max session length must be a positive integer");
-            }
-
-            if (minSessionLength > maxSessionLength)
-            {
-                throw new ValidationException("Minimum session length cannot be greater than maximum session length");
-            }
+            ValidateSessionLengths(minSessionLength, maxSessionLength);
 
             MinSessionLength = minSessionLength;
             MaxSessionLength = maxSessionLength;
@@ -52,23 +43,34 @@ namespace DashboardServer.Models.Constraints
 
         public void Update(int minSessionLength, int maxSessionLength)
         {
-            if (minSessionLength <= 0)
-            {
-                throw new ValidationException("Min session length must be a positive integer");
-            }
+            ValidateSessionLengths(minSessionLength, maxSessionLength);
 
-            if (maxSessionLength <= 0)
-            {
-                throw new ValidationException("Max session length must be a positive integer");
-            }
+            MinSessionLength = minSessionLength;
+            MaxSessionLength = maxSessionLength;
+        }
+
+        private static void ValidateSessionLengths(int minSessionLength, int maxSessionLength)
+        {
+            ValidateSessionLength(minSessionLength, "Min");
+            ValidateSessionLength(maxSessionLength, "Max");
 
             if (minSessionLength > maxSessionLength)
             {
                 throw new ValidationException("Minimum session length cannot be greater than maximum session length");
             }
+        }
 
-            MinSessionLength = minSessionLength;
-            MaxSessionLength = maxSessionLength;
+        private static void ValidateSessionLength(int value, string label)
+        {
+            if (value < SessionLengthMin || value > SessionLengthMax)
+            {
+                throw new ValidationException($"{label} session length must be between {SessionLengthMin} and {SessionLengthMax} minutes");
+            }
+
+            if (value % SessionLengthStep != 0)
+            {
+                throw new ValidationException($"{label} session length must be a multiple of {SessionLengthStep} minutes");
+            }
         }
 
         public void UpdateSchedulerPriorities(double deadlineUrgencyWeighting, double coursePreferenceWeighting)

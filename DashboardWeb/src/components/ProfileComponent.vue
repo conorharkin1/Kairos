@@ -24,6 +24,9 @@
         <div class="profile-footer">
             <button @click="logout" class="btn-primary btn-grey">Logout</button>
             <button @click="updateDataFromCanvas" class="btn-primary btn-good" v-tooltip="'This will check the systems records against your Canvas and keep everything up to date'">Refresh Data from Canvas</button>
+            <button @click="toggleEmailOptOut" class="btn-primary" :class="user.isOptedOutForEmails ? 'btn-info' : 'btn-warning'" v-tooltip="user.isOptedOutForEmails ? 'Re-enable email notifications from the dashboard' : 'Stop receiving email notifications from the dashboard'">
+                {{ user.isOptedOutForEmails ? 'Enable Emails' : 'Disable Emails' }}
+            </button>
             <button @click="handleDeleteAccount" class="btn-primary btn-danger">Delete Account</button>
         </div>
     </div>
@@ -91,19 +94,35 @@ const updateApiKey = async () => {
 }
 
 const handleDeleteAccount = async () => {
+    const confirmed = window.confirm('Are you sure you want to delete your account? This action cannot be undone.')
+    if (!confirmed) return
+
+    isLoading.value = true
+    try {
+        await deleteAccount()
+    } catch (error) {
+        if (!DisplayErrorMessage(error)) {
+            toast.error('An error occurred while deleting your account. Please try again.')
+        }
+    } finally {
+        isLoading.value = false
+    }
+}
+
+const toggleEmailOptOut = async () => {
     isLoading.value = true
 
-    const confirmed = window.confirm('Are you sure you want to delete your account? This action cannot be undone.')
-    if (confirmed) {
-        try {
-            await deleteAccount()
-        } catch (error) {
-            if (!DisplayErrorMessage(error)) {
-                toast.error('An error occurred while deleting your account. Please try again.')
-            }
-        } finally {
-            isLoading.value = false
+    const newValue = !user.value.isOptedOutForEmails
+    try {
+        await api.put('/user/email-preferences', { isOptedOutForEmails: newValue })
+        user.value.isOptedOutForEmails = newValue
+        toast.success(newValue ? 'You have been unsubscribed from emails.' : 'You have been subscribed to emails.')
+    } catch (error) {
+        if (!DisplayErrorMessage(error)) {
+            toast.error('An error occurred while updating your email preferences. Please try again.')
         }
+    } finally {
+        isLoading.value = false
     }
 }
 
