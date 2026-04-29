@@ -4,8 +4,9 @@ using DashboardServer.Services.Interfaces;
 
 namespace DashboardServer.Services
 {
+    // ATTRIBUTION
+    // The Below code is adapted from the following source:
     // https://learn.microsoft.com/en-us/dotnet/api/system.security.cryptography.aes?view=net-9.0
-    // I thought I should reference the resource I used to help implement this.
     public class EncryptService : IEncryptService
     {
         public string Encrypt(string plainText, Guid key)
