@@ -3,6 +3,10 @@ import Dashboard from '@/views/DashboardView.vue'
 import LoginView from '@/views/LoginView.vue'
 import RegisterView from '@/views/RegisterView.vue'
 
+// ATTRIBUTION
+// The Below code is adapted from the following source:
+// https://router.vuejs.org/guide/
+
 const routes = [
     { path: '/', redirect: '/login' },
     { path: '/login', component: LoginView, meta: { requiresAuth: false }},
